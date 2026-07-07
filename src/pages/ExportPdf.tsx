@@ -479,47 +479,58 @@ export default function ExportPdf() {
     <div>
       <RangePicker />
 
-      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600 }}>{name || t('records.patientFallback')}</div>
-            <div className="muted" style={{ fontSize: 12 }}>
-              {range.from} ~ {range.to}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', minHeight: 56, justifyContent: 'flex-end', flexWrap: 'wrap', width: '100%' }}>
-            <div style={{ display: 'flex', minHeight: 56, alignItems: 'center', visibility: lastUrl ? 'visible' : 'hidden', flexShrink: 0 }}>
-              <button onClick={redownload} disabled={generating || !lastUrl}>
-                {t('exportPdf.redownload')}
-              </button>
-            </div>
-            <button
-              onClick={generate}
-              disabled={generating || loading || !data || selectedCount === 0}
-              style={{
-                minHeight: 56,
-                width: '100%',
-                maxWidth: 280,
-                boxSizing: 'border-box',
-                padding: '0 22px',
-                fontSize: 17,
-                fontWeight: 700,
-                background: selectedCount === 0 ? '#9CA3AF' : '#4CAF50',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 12,
-              }}
-            >
-              {generating
-                ? t('exportPdf.generating')
-                : loading
-                ? t('exportPdf.loadingData')
-                : selectedCount === 0
-                ? t('exportPdf.selectAtLeastOne')
-                : t('exportPdf.makePdfWithCount', { count: selectedCount })}
-            </button>
+      <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 700 }}>{name || t('records.patientFallback')}</div>
+          <div className="muted" style={{ fontSize: 13 }}>
+            {range.from} ~ {range.to}
           </div>
         </div>
+
+        <button
+          onClick={generate}
+          disabled={generating || loading || !data || selectedCount === 0}
+          style={{
+            minHeight: 56,
+            width: '100%',
+            padding: '0 22px',
+            fontSize: 17,
+            fontWeight: 700,
+            background: selectedCount === 0 ? '#9CA3AF' : '#4CAF50',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 12,
+          }}
+        >
+          {generating
+            ? t('exportPdf.generating')
+            : loading
+            ? t('exportPdf.loadingData')
+            : selectedCount === 0
+            ? t('exportPdf.selectAtLeastOne')
+            : t('exportPdf.makePdfWithCount', { count: selectedCount })}
+        </button>
+
+        {lastUrl && (
+          <button
+            onClick={redownload}
+            disabled={generating}
+            style={{
+              minHeight: 52,
+              width: '100%',
+              padding: '0 22px',
+              fontSize: 16,
+              fontWeight: 700,
+              background: '#fff',
+              color: '#4CAF50',
+              border: '2px solid #4CAF50',
+              borderRadius: 12,
+            }}
+          >
+            {t('exportPdf.redownload')}
+          </button>
+        )}
+
         <p className="muted" style={{ fontSize: 13, margin: 0 }}>
           {t('exportPdf.captureNote')}
         </p>

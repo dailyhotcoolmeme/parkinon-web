@@ -1,0 +1,336 @@
+:root {
+  --primary: #4CAF50;
+  --primary-dark: #388E3C;
+  --accent: #4CAF50;
+  --bg: #ffffff;
+  --bg-alt: #f6f8f6;
+  --border: #e5e7eb;
+  --text: #1a1a1a;
+  --text-sub: #6b7280;
+  --danger: #e53935;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+  font-size: 18px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; margin: 0; padding: 0; }
+body { background: var(--bg); }
+a { color: var(--primary-dark); text-decoration: none; }
+button {
+  font-family: inherit;
+  font-size: 18px;
+  min-height: 56px;
+  padding: 0 20px;
+  border-radius: 12px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+button:hover { background: var(--primary-dark); }
+button.ghost { background: #fff; color: var(--text); border: 1px solid var(--border); }
+button.ghost:hover { background: var(--bg-alt); }
+
+.layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+.app-header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0;
+}
+.brand-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+}
+@media (min-width: 768px) {
+  .brand-row { height: 64px; padding: 0 24px; }
+}
+.brand {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+@media (min-width: 768px) {
+  .brand { font-size: 20px; gap: 10px; }
+}
+
+/* 앱 톱바와 동일한 배지: 초록 둥근 사각형 배경 + 흰 심볼(주기적으로 한 바퀴 회전). */
+.brand-symbol-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #4CAF50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+@media (min-width: 768px) {
+  .brand-symbol-badge { width: 30px; height: 30px; }
+}
+.brand-symbol-spin {
+  display: block;
+  width: 70%;
+  height: 70%;
+  animation: pn-brand-spin 9.5s linear infinite;
+}
+/* 앱과 동일한 타이밍: 6초 동안 한 바퀴 돌고 3.5초 정지(0deg) 후 반복. */
+@keyframes pn-brand-spin {
+  0% { transform: rotate(0deg); }
+  63.16% { transform: rotate(360deg); }
+  63.17% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
+}
+.brand-sub {
+  font-size: 15px;
+  color: var(--text-sub);
+  font-weight: 600;
+  margin-left: 4px;
+}
+.header-tabs {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  border-top: 1px solid var(--border);
+  padding: 0 16px;
+  min-height: 44px;
+}
+@media (min-width: 768px) {
+  .header-tabs { padding: 0 24px; min-height: 48px; }
+}
+.header-tabs::-webkit-scrollbar { display: none; }
+.tab-link {
+  /* 스와이프(가로 스크롤) 탭이라 굳이 화면폭에 맞춰 억지로 늘리지 않고,
+     각 탭이 자기 내용 폭 + 여유 패딩만큼만 차지하게 해 탭 사이 간격을 벌린다. */
+  flex: 0 0 auto;
+  text-align: center;
+  white-space: nowrap;
+  padding: 12px 14px;
+  color: var(--text-sub);
+  font-weight: 600;
+  font-size: 15px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+.tab-link.active {
+  color: var(--accent);
+  border-bottom: 3px solid var(--accent);
+}
+
+.app-footer {
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+  margin-top: 32px;
+  padding: 24px 16px 32px;
+}
+.app-footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-sub);
+  line-height: 1.8;
+}
+.footer-links { margin-top: 6px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.footer-links a { color: var(--text-sub); }
+.footer-sep { color: #d1d5db; }
+
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.main { flex: 1; padding: 24px 16px 32px; max-width: 1100px; width: 100%; margin: 0 auto; overflow-x: hidden; }
+.main h1 { font-size: 24px; margin: 0 0 16px; display: flex; align-items: center; gap: 12px; }
+.main h1 img.title-logo { width: 32px; height: 32px; }
+.main h2 { font-size: 22px; margin: 32px 0 12px; }
+.section-title { font-size: 18px; font-weight: 700; margin: 56px 0 14px; color: var(--text); }
+.page-foot > .section-title:first-child { margin-top: 32px; }
+
+/* 모든 체크박스 색상 통일 */
+input[type="checkbox"] { accent-color: #4CAF50; }
+
+/* react-day-picker v10 — 시작·끝 원형 강조, 중간 옅은 배경 */
+.rdp-root {
+  --rdp-accent-color: #4CAF50 !important;
+  --rdp-accent-background-color: #E8F5E9 !important;
+  --rdp-day_button-width: 38px !important;
+  --rdp-day_button-height: 38px !important;
+  --rdp-day_button-border-radius: 50% !important;
+  --rdp-range_middle-background-color: #E8F5E9 !important;
+  --rdp-range_middle-color: #4CAF50 !important;
+  --rdp-today-color: #4CAF50 !important;
+}
+/* 셀(td) 자체 배경/그라데이션 모두 제거 — 길쭉한 모양 방지 */
+/* 달력 내부 모든 버튼(chevron 포함) 배경 제거 — 전역 button 규칙 차단 */
+.rdp-root button {
+  background: transparent !important;
+  color: inherit !important;
+}
+.rdp-root .rdp-chevron { fill: #555 !important; }
+
+/* 달력 너비 100% + 셀(td) 균등 폭 — 오른쪽 공백 방지 */
+.rdp-root .rdp-month_grid,
+.rdp-root table { width: 100% !important; table-layout: fixed !important; }
+.rdp-root .rdp-weekdays th { width: 14.2857% !important; text-align: center !important; }
+.rdp-root .rdp-day {
+  width: 14.2857% !important;
+  padding: 2px !important;
+  vertical-align: middle !important;
+  text-align: center !important;
+  background: transparent !important;
+  background-image: none !important;
+  height: 40px !important;
+}
+/* 버튼 = 픽셀 고정 정사각형 → 정원 */
+.rdp-root .rdp-day_button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  max-width: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 50% !important;
+  background: transparent;
+  color: inherit;
+  margin: 0 auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+}
+/* 시작·끝 셀: 원형 버튼만 진녹색 강조 */
+.rdp-root .rdp-range_start .rdp-day_button,
+.rdp-root .rdp-range_end .rdp-day_button,
+.rdp-root .rdp-selected .rdp-day_button {
+  background: #4CAF50 !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+}
+/* 중간 범위 셀: 옅은 녹색 전체 띠 (사각형) */
+.rdp-root .rdp-range_middle {
+  background: #E8F5E9 !important;
+  background-image: none !important;
+}
+.rdp-root .rdp-range_middle .rdp-day_button {
+  background: transparent !important;
+  color: #2e7d32 !important;
+  border-radius: 0 !important;
+}
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.range-section { margin-bottom: 8px; }
+
+.summary-card { box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.summary-title { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+
+.avg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+@media (min-width: 600px) {
+  .avg-grid { grid-template-columns: repeat(3, 1fr); }
+}
+.avg-pill { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.avg-label { font-size: 13px; color: var(--text-sub); }
+.avg-value { font-size: 20px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+
+.icon-btn { width: 44px; height: 44px; min-height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: transparent; color: var(--text); border: none; border-radius: 10px; cursor: pointer; }
+.icon-btn:hover { background: var(--bg-alt); }
+.page-foot { padding-bottom: 32px; }
+.recharts-default-tooltip { border-radius: 10px !important; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.tab {
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.tab:hover { background: var(--bg-alt); color: var(--text); }
+.tab.active, .tab.active:hover { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
+.tab.active * { color: #fff !important; }
+.muted { color: var(--text-sub); font-size: 16px; }
+.center { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 16px; padding: 24px; text-align: center; }
+.brand-lg { font-size: 36px; font-weight: 800; color: var(--primary-dark); }
+
+.chart-wrap { width: 100%; height: 160px; overflow: hidden; }
+.chart-wrap::-webkit-scrollbar { display: none; }
+.export-btn-fixed { position: fixed; top: 16px; right: 16px; z-index: 50; }
+
+.menu-item { transition: background 0.15s ease; }
+.menu-item:hover { background: #f5f7f7 !important; }
+
+/* ─────────────────────────────────────────────
+   통일 로딩 시스템 — keyframes / 스켈레톤
+   ───────────────────────────────────────────── */
+@keyframes pn-spin { to { transform: rotate(360deg); } }
+@keyframes pn-pulse {
+  from { transform: scale(1); opacity: .85; }
+  to   { transform: scale(1.06); opacity: 1; }
+}
+/* 불확정 바: alternate 와 함께 사용 → 헤드가 좌(-40%)↔우(100%) 왕복(yoyo) */
+@keyframes pn-bar {
+  0%   { left: -40%; }
+  100% { left: 100%; }
+}
+@keyframes pn-pop {
+  0%   { transform: scale(.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes pn-backdrop {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes pn-skel-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* 불확정 바 헤드: pn-bar 가 left 0%→100% 왕복(40% 폭 헤드) */
+@keyframes pn-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* 스켈레톤 회색 블록 + shimmer (좌→우 1.4s linear 무한) */
+.pn-skel-block {
+  background: #EFEFEF;
+  background-image: linear-gradient(
+    90deg,
+    #EFEFEF 0%,
+    #F7F7F7 50%,
+    #EFEFEF 100%
+  );
+  background-size: 200% 100%;
+  animation: pn-shimmer 1.4s linear infinite;
+}

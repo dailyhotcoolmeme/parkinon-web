@@ -134,16 +134,29 @@ export default function BrandProgressOverlay({
             </svg>
           </div>
         ) : (
-          <img
-            src="/parkinon-symbol-green.png"
-            alt=""
-            aria-hidden
+          <div
             style={{
               width: 48,
               height: 48,
-              animation: 'pn-spin 0.9s linear infinite',
+              borderRadius: 12,
+              background: '#4CAF50',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-          />
+          >
+            {/* 배지는 정적, 내부 흰 심볼만 회전 (TopBar 브랜드 배지와 동일) */}
+            <img
+              src="/parkinon-symbol.png"
+              alt=""
+              aria-hidden
+              style={{
+                width: 30,
+                height: 30,
+                animation: 'pn-spin 0.9s linear infinite',
+              }}
+            />
+          </div>
         )}
 
         {/* 타이틀 */}

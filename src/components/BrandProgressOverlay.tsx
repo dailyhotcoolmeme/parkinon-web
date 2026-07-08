@@ -141,7 +141,7 @@ export default function BrandProgressOverlay({
             style={{
               width: 48,
               height: 48,
-              animation: 'pn-pulse 1.6s ease-in-out infinite alternate',
+              animation: 'pn-spin 0.9s linear infinite',
             }}
           />
         )}
@@ -253,7 +253,7 @@ function Dot({ state }: { state: 'done' | 'active' | 'wait' }) {
             height: 7,
             borderRadius: '50%',
             background: '#4CAF50',
-            animation: 'pn-pulse 1.6s ease-in-out infinite alternate',
+            animation: 'pn-spin 0.9s linear infinite',
           }}
         />
       </span>

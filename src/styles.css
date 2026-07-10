@@ -110,9 +110,14 @@ button.ghost:hover { background: var(--bg-alt); }
   overflow-x: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
-  border-top: 1px solid var(--border);
   padding: 0 16px;
   min-height: 44px;
+}
+/* 톱바(브랜드 행)와 탭 사이 구분선 — 푸터 선처럼 화면 전체 폭에 걸침.
+   .app-header 직속 자식이라 max-width 제약을 받지 않고 헤더 전체 폭(=페이지 폭)만큼 그어진다. */
+.header-divider {
+  height: 1px;
+  background: var(--border);
 }
 @media (min-width: 768px) {
   .header-tabs { padding: 0 24px; min-height: 48px; }

@@ -8,7 +8,9 @@ export default function Layout() {
   const { t, lang } = useT();
   const [name, setName] = useState<string>('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const SUPPORT_EMAIL = 'contact@ourmine.co.kr';
 
   useEffect(() => {
     (async () => {
@@ -44,8 +46,7 @@ export default function Layout() {
   return (
     <div className="layout">
       <header className="app-header">
-        <div className="app-header-inner">
-          <div className="brand-row">
+        <div className="app-header-inner brand-row">
             <div className="brand">
               <div className="brand-symbol-badge">
                 <img src="/parkinon-symbol.png" alt="" className="brand-symbol-spin" />
@@ -146,7 +147,8 @@ export default function Layout() {
               )}
             </div>
           </div>
-          <nav className="header-tabs no-scrollbar">
+          <div className="header-divider" />
+          <nav className="app-header-inner header-tabs no-scrollbar">
             <NavLink to="/records" end className={({ isActive }) => (isActive ? 'tab-link active' : 'tab-link')}>{t('layout.tabOverview')}</NavLink>
             <NavLink to="/records/medication" className={({ isActive }) => (isActive ? 'tab-link active' : 'tab-link')}>{t('layout.tabMedication')}</NavLink>
             <NavLink to="/records/symptom" className={({ isActive }) => (isActive ? 'tab-link active' : 'tab-link')}>{t('layout.tabBodyState')}</NavLink>
@@ -154,7 +156,6 @@ export default function Layout() {
             <NavLink to="/records/exercise" className={({ isActive }) => (isActive ? 'tab-link active' : 'tab-link')}>{t('layout.tabExercise')}</NavLink>
             <NavLink to="/records/sleep-constipation" className={({ isActive }) => (isActive ? 'tab-link active' : 'tab-link')}>{t('layout.tabSleepConstipation')}</NavLink>
           </nav>
-        </div>
       </header>
       <main className="main">
         <Outlet />
@@ -171,7 +172,19 @@ export default function Layout() {
             <span className="footer-sep">·</span>
             <a href={lang === 'en' ? '/privacy/en' : '/privacy'}>{t('layout.privacy')}</a>
             <span className="footer-sep">·</span>
-            <a href="mailto:contact@ourmine.co.kr">contact@ourmine.co.kr</a>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              title={SUPPORT_EMAIL}
+              onClick={() => {
+                // 메일 앱이 없는 기기에선 mailto가 아무 동작도 안 할 수 있어,
+                // 주소를 클립보드에 복사하고 '복사됨' 피드백을 준다(메일 앱 있으면 함께 열림).
+                navigator.clipboard?.writeText(SUPPORT_EMAIL)
+                  .then(() => { setEmailCopied(true); setTimeout(() => setEmailCopied(false), 1500); })
+                  .catch(() => {});
+              }}
+            >
+              {emailCopied ? t('layout.emailCopied') : SUPPORT_EMAIL}
+            </a>
           </div>
         </div>
       </footer>

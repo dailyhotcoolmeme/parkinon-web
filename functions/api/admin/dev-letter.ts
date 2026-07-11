@@ -1,0 +1,76 @@
+import { guard, json, type Ctx, type AdminEnv } from '../../_lib/adminAuth';
+
+// 개발자 일기(dev_letter) 본문 조회/저장.
+// - 단일 행(id=1). body_ko / body_en 는 "빈 줄(문단 사이)" 기준으로 앱에서 문단이 나뉜다.
+// - 공개 읽기 RLS가 있어 앱(anon)은 직접 SELECT 하지만, admin은 service_role 로 조회/수정한다.
+
+// service_role 직접 REST 호출 (RLS 우회). RPC가 아니라 단순 테이블이라 PostgREST 테이블 API 사용.
+async function restGet(env: AdminEnv, path: string): Promise<any> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      Accept: 'application/json',
+    },
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`GET ${path} ${res.status}: ${text}`);
+  return text ? JSON.parse(text) : null;
+}
+
+async function restPatch(env: AdminEnv, path: string, body: unknown): Promise<any> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`PATCH ${path} ${res.status}: ${text}`);
+  return text ? JSON.parse(text) : null;
+}
+
+// GET: 현재 본문(한/영) 반환. { body_ko, body_en, updated_at }
+export const onRequestGet = async ({ request, env }: Ctx): Promise<Response> => {
+  const blocked = await guard(env, request);
+  if (blocked) return blocked;
+  try {
+    const rows = await restGet(env, 'dev_letter?id=eq.1&select=body_ko,body_en,updated_at');
+    const row = Array.isArray(rows) && rows[0] ? rows[0] : { body_ko: '', body_en: '', updated_at: null };
+    return json(200, row);
+  } catch (e) {
+    return json(500, { error: String(e) });
+  }
+};
+
+// POST: 본문 저장. body: { body_ko, body_en }
+export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> => {
+  const blocked = await guard(env, request);
+  if (blocked) return blocked;
+  let payload: any;
+  try {
+    payload = await request.json();
+  } catch {
+    return json(400, { error: 'invalid json' });
+  }
+  const body_ko = typeof payload?.body_ko === 'string' ? payload.body_ko : null;
+  const body_en = typeof payload?.body_en === 'string' ? payload.body_en : null;
+  if (body_ko === null || body_en === null) {
+    return json(400, { error: 'body_ko and body_en are required strings' });
+  }
+  try {
+    const updated = await restPatch(env, 'dev_letter?id=eq.1', {
+      body_ko,
+      body_en,
+      updated_at: new Date().toISOString(),
+    });
+    const row = Array.isArray(updated) && updated[0] ? updated[0] : null;
+    return json(200, { ok: true, updated_at: row?.updated_at ?? null });
+  } catch (e) {
+    return json(500, { error: String(e) });
+  }
+};

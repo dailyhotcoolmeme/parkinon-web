@@ -25,6 +25,12 @@ interface ReportRow {
 }
 
 type ReportStatus = 'open' | 'resolved';
+type AdminView = 'reports' | 'devletter';
+
+// 빈 줄(문단 사이) 기준 문단 수 — 앱과 동일 규칙.
+function countParagraphs(text: string): number {
+  return text.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean).length;
+}
 
 function targetLabel(t: string): string {
   if (t === 'post') return '게시글';
@@ -164,6 +170,31 @@ const ADMIN_CSS = `
 }
 .adm-rowcard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; }
 .adm-rowcard.is-hidden { background: #fafafa; }
+
+/* 상단 뷰 전환 내비 (신고 검토 / 개발자 일기) */
+.adm-nav { display: flex; gap: 4px; }
+.adm button.adm-nav-btn {
+  font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.2;
+  background: none; border: 1px solid transparent; color: #6b7280; cursor: pointer;
+  padding: 6px 12px; border-radius: 8px; height: auto; min-height: 0;
+}
+.adm button.adm-nav-btn:hover { color: #374151; background: #f6f8f6; }
+.adm button.adm-nav-btn.is-active { color: #2e7d32; background: #e8f5e9; }
+
+/* 개발자 일기 편집기 */
+.adm-dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 860px) { .adm-dl-grid { grid-template-columns: 1fr; } }
+.adm-dl-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; }
+.adm-dl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.adm-dl-lang { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.adm-dl-count { font-size: 12px; color: #6b7280; }
+.adm-textarea {
+  font-family: inherit; font-size: 14px; line-height: 1.7; color: #1a1a1a;
+  width: 100%; min-height: 440px; resize: vertical;
+  padding: 12px 14px; border-radius: 8px; border: 1px solid #e5e7eb; background: #fff;
+  white-space: pre-wrap;
+}
+.adm-textarea:focus { outline: none; border-color: #4CAF50; }
 `;
 
 export default function Admin() {
@@ -173,6 +204,8 @@ export default function Admin() {
   const [loginErr, setLoginErr] = useState('');
   const [loginBusy, setLoginBusy] = useState(false);
 
+  const [view, setView] = useState<AdminView>('reports'); // 신고 검토 / 개발자 일기
+
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
@@ -180,11 +213,62 @@ export default function Admin() {
   const [status, setStatus] = useState<ReportStatus>('open'); // 진행중/종결 탭
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
+  // 개발자 일기 편집 상태
+  const [dlKo, setDlKo] = useState('');
+  const [dlEn, setDlEn] = useState('');
+  const [dlLoaded, setDlLoaded] = useState(false);
+  const [dlLoading, setDlLoading] = useState(false);
+  const [dlSaving, setDlSaving] = useState(false);
+  const [dlErr, setDlErr] = useState('');
+  const [dlSavedMsg, setDlSavedMsg] = useState('');
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setAuthed(false);
     setRows([]);
+    setDlLoaded(false);
+    setDlKo('');
+    setDlEn('');
   }, []);
+
+  const loadDevLetter = useCallback(async () => {
+    setDlLoading(true);
+    setDlErr('');
+    setDlSavedMsg('');
+    try {
+      const res = await api('/api/admin/dev-letter');
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setDlKo(body.body_ko || '');
+      setDlEn(body.body_en || '');
+      setDlLoaded(true);
+    } catch (e) {
+      setDlErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setDlLoading(false);
+    }
+  }, [logout]);
+
+  async function saveDevLetter() {
+    setDlSaving(true);
+    setDlErr('');
+    setDlSavedMsg('');
+    try {
+      const res = await api('/api/admin/dev-letter', {
+        method: 'POST',
+        body: JSON.stringify({ body_ko: dlKo, body_en: dlEn }),
+      });
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setDlSavedMsg('저장되었습니다. 앱에는 다음 실행 시 반영됩니다.');
+    } catch (e) {
+      setDlErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setDlSaving(false);
+    }
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -209,6 +293,14 @@ export default function Admin() {
     Promise.resolve().then(() => { if (!cancelled) load(); });
     return () => { cancelled = true; };
   }, [authed, load]);
+
+  // 개발자 일기 탭 첫 진입 시 1회 로드.
+  useEffect(() => {
+    if (!authed || view !== 'devletter' || dlLoaded || dlLoading) return;
+    let cancelled = false;
+    Promise.resolve().then(() => { if (!cancelled) loadDevLetter(); });
+    return () => { cancelled = true; };
+  }, [authed, view, dlLoaded, dlLoading, loadDevLetter]);
 
   async function doLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -458,11 +550,83 @@ export default function Admin() {
       <div className="adm-page">
         <header className="adm-header">
           <div className="adm-header-inner">
-            <h1 className="adm-title">파킨온 운영자 · 신고 검토</h1>
+            <h1 className="adm-title">파킨온 운영자</h1>
+            <nav className="adm-nav">
+              <button
+                className={`adm-nav-btn${view === 'reports' ? ' is-active' : ''}`}
+                onClick={() => setView('reports')}
+              >
+                신고 검토
+              </button>
+              <button
+                className={`adm-nav-btn${view === 'devletter' ? ' is-active' : ''}`}
+                onClick={() => setView('devletter')}
+              >
+                개발자 일기
+              </button>
+            </nav>
             <button className="adm-ghost" onClick={logout}>로그아웃</button>
           </div>
         </header>
 
+        {view === 'devletter' ? (
+          <main className="adm-main">
+            <div className="adm-note">
+              앱 첫 실행 시 뜨는 <b>개발자 일기</b> 본문을 편집합니다. <b>한국어</b>는 국내 사용자에게,
+              <b> 영어</b>는 해외 사용자에게 각각 표시됩니다. <b>빈 줄</b>로 문단을 나눕니다(빈 줄 하나 = 문단 구분).
+              저장하면 앱은 <b>다음 실행</b> 때 새 내용을 불러옵니다.
+            </div>
+
+            {dlErr && <div className="adm-err" style={{ marginTop: 12 }}>{dlErr}</div>}
+            {dlSavedMsg && (
+              <div style={{ marginTop: 12, fontSize: 13, color: '#2e7d32' }}>{dlSavedMsg}</div>
+            )}
+
+            {dlLoading && !dlLoaded ? (
+              <div className="adm-empty">불러오는 중…</div>
+            ) : (
+              <>
+                <div className="adm-dl-grid" style={{ marginTop: 16 }}>
+                  <div className="adm-dl-card">
+                    <div className="adm-dl-head">
+                      <span className="adm-dl-lang">한국어 (국내 사용자)</span>
+                      <span className="adm-dl-count">{countParagraphs(dlKo)}개 문단</span>
+                    </div>
+                    <textarea
+                      className="adm-textarea"
+                      value={dlKo}
+                      onChange={(e) => { setDlKo(e.target.value); setDlSavedMsg(''); }}
+                      placeholder="개발자 일기 (한국어). 빈 줄로 문단을 나눕니다."
+                      spellCheck={false}
+                    />
+                  </div>
+                  <div className="adm-dl-card">
+                    <div className="adm-dl-head">
+                      <span className="adm-dl-lang">English (해외 사용자)</span>
+                      <span className="adm-dl-count">{countParagraphs(dlEn)}개 문단</span>
+                    </div>
+                    <textarea
+                      className="adm-textarea"
+                      value={dlEn}
+                      onChange={(e) => { setDlEn(e.target.value); setDlSavedMsg(''); }}
+                      placeholder="Developer's letter (English). Separate paragraphs with a blank line."
+                      spellCheck={false}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
+                  <button onClick={saveDevLetter} disabled={dlSaving || !dlLoaded} style={{ height: 40, padding: '0 20px' }}>
+                    {dlSaving ? '저장 중…' : '저장'}
+                  </button>
+                  <button className="adm-ghost" onClick={loadDevLetter} disabled={dlLoading || dlSaving} style={{ height: 40, padding: '0 16px' }}>
+                    되돌리기(마지막 저장본 불러오기)
+                  </button>
+                </div>
+              </>
+            )}
+          </main>
+        ) : (
         <main className="adm-main">
           <div className="adm-note">
             신고 <b>{AUTO_HIDE_THRESHOLD}건</b> 이상 누적되면 콘텐츠는 <b>자동으로 숨김</b> 처리됩니다.
@@ -619,6 +783,7 @@ export default function Admin() {
             </>
           )}
         </main>
+        )}
       </div>
     </div>
   );

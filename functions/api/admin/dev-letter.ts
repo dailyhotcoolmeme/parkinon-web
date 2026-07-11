@@ -34,20 +34,24 @@ async function restPatch(env: AdminEnv, path: string, body: unknown): Promise<an
   return text ? JSON.parse(text) : null;
 }
 
-// GET: 현재 본문(한/영) 반환. { body_ko, body_en, updated_at }
+// GET: 현재 본문(한/영) 반환. { body_ko, body_en, updated_at, popup_version }
 export const onRequestGet = async ({ request, env }: Ctx): Promise<Response> => {
   const blocked = await guard(env, request);
   if (blocked) return blocked;
   try {
-    const rows = await restGet(env, 'dev_letter?id=eq.1&select=body_ko,body_en,updated_at');
-    const row = Array.isArray(rows) && rows[0] ? rows[0] : { body_ko: '', body_en: '', updated_at: null };
+    const rows = await restGet(env, 'dev_letter?id=eq.1&select=body_ko,body_en,updated_at,popup_version');
+    const row = Array.isArray(rows) && rows[0]
+      ? rows[0]
+      : { body_ko: '', body_en: '', updated_at: null, popup_version: 1 };
     return json(200, row);
   } catch (e) {
     return json(500, { error: String(e) });
   }
 };
 
-// POST: 본문 저장. body: { body_ko, body_en }
+// POST: 본문 저장. body: { body_ko, body_en, force? }
+//  - force=true 이면 popup_version 을 +1 → 이미 '다시 보지 않기' 한 사용자에게도 다음 실행 때 1회 재노출.
+//  - force 없으면 문구만 저장(팝업이 뜨는 사용자만 새 문구를 보게 됨).
 export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> => {
   const blocked = await guard(env, request);
   if (blocked) return blocked;
@@ -59,17 +63,32 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
   }
   const body_ko = typeof payload?.body_ko === 'string' ? payload.body_ko : null;
   const body_en = typeof payload?.body_en === 'string' ? payload.body_en : null;
+  const force = payload?.force === true;
   if (body_ko === null || body_en === null) {
     return json(400, { error: 'body_ko and body_en are required strings' });
   }
   try {
-    const updated = await restPatch(env, 'dev_letter?id=eq.1', {
+    const patch: Record<string, unknown> = {
       body_ko,
       body_en,
       updated_at: new Date().toISOString(),
-    });
+    };
+    if (force) {
+      // PostgREST 는 col = col + 1 식을 지원하지 않으므로 현재 값을 읽어 +1.
+      const rows = await restGet(env, 'dev_letter?id=eq.1&select=popup_version');
+      const cur = Array.isArray(rows) && rows[0] && typeof rows[0].popup_version === 'number'
+        ? rows[0].popup_version
+        : 1;
+      patch.popup_version = cur + 1;
+    }
+    const updated = await restPatch(env, 'dev_letter?id=eq.1', patch);
     const row = Array.isArray(updated) && updated[0] ? updated[0] : null;
-    return json(200, { ok: true, updated_at: row?.updated_at ?? null });
+    return json(200, {
+      ok: true,
+      forced: force,
+      updated_at: row?.updated_at ?? null,
+      popup_version: row?.popup_version ?? null,
+    });
   } catch (e) {
     return json(500, { error: String(e) });
   }

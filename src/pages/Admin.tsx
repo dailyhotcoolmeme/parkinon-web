@@ -98,6 +98,8 @@ const ADMIN_CSS = `
 .adm button.adm-danger { background: #fff; color: #c62828; border-color: #f3c6c6; }
 .adm button.adm-danger:hover { background: #fdecec; }
 .adm button.adm-sm { height: 24px; padding: 0 11px; font-size: 13px; }
+.adm button.adm-warn { background: #e65100; color: #fff; }
+.adm button.adm-warn:hover { background: #d84315; }
 
 .adm-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; }
 .adm-note {
@@ -250,19 +252,30 @@ export default function Admin() {
     }
   }, [logout]);
 
-  async function saveDevLetter() {
+  async function saveDevLetter(force: boolean) {
+    if (force) {
+      const ok = window.confirm(
+        '저장하고, 예전에 "다시 보지 않기"를 누른 사용자에게도 팝업을 한 번 더 띄웁니다.\n' +
+        '(사용자가 다시 "다시 보지 않기"를 누르면 이후로는 다시 안 뜹니다.)\n\n진행할까요?',
+      );
+      if (!ok) return;
+    }
     setDlSaving(true);
     setDlErr('');
     setDlSavedMsg('');
     try {
       const res = await api('/api/admin/dev-letter', {
         method: 'POST',
-        body: JSON.stringify({ body_ko: dlKo, body_en: dlEn }),
+        body: JSON.stringify({ body_ko: dlKo, body_en: dlEn, force }),
       });
       if (res.status === 401) { logout(); return; }
       const body = await res.json();
       if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
-      setDlSavedMsg('저장되었습니다. 앱에는 다음 실행 시 반영됩니다.');
+      setDlSavedMsg(
+        force
+          ? '저장 + 강제 노출 설정 완료. 예전에 닫은 사용자도 다음 앱 실행 때 팝업을 다시 보게 됩니다.'
+          : '저장되었습니다. 팝업이 뜨는 사용자에게만 다음 실행 시 새 문구가 보입니다.',
+      );
     } catch (e) {
       setDlErr(String(e instanceof Error ? e.message : e));
     } finally {
@@ -616,12 +629,26 @@ export default function Admin() {
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
-                  <button onClick={saveDevLetter} disabled={dlSaving || !dlLoaded} style={{ height: 40, padding: '0 20px' }}>
+                  <button onClick={() => saveDevLetter(false)} disabled={dlSaving || !dlLoaded} style={{ height: 40, padding: '0 20px' }}>
                     {dlSaving ? '저장 중…' : '저장'}
+                  </button>
+                  <button
+                    className="adm-warn"
+                    onClick={() => saveDevLetter(true)}
+                    disabled={dlSaving || !dlLoaded}
+                    style={{ height: 40, padding: '0 20px' }}
+                    title="예전에 '다시 보지 않기'를 누른 사용자에게도 팝업을 다시 띄웁니다."
+                  >
+                    저장 + 모두에게 다시 띄우기
                   </button>
                   <button className="adm-ghost" onClick={loadDevLetter} disabled={dlLoading || dlSaving} style={{ height: 40, padding: '0 16px' }}>
                     되돌리기(마지막 저장본 불러오기)
                   </button>
+                </div>
+                <div className="adm-note" style={{ marginTop: 12 }}>
+                  <b>저장</b> = 문구만 바꿉니다(현재 팝업이 뜨는 사용자만 새 문구를 봅니다).<br />
+                  <b>저장 + 모두에게 다시 띄우기</b> = 예전에 <b>'다시 보지 않기'</b>를 누른 사용자에게도 팝업을 한 번 더 띄웁니다.
+                  그 사용자가 다시 '다시 보지 않기'를 누르면 이후로는 안 뜹니다.
                 </div>
               </>
             )}

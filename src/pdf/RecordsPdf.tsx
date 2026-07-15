@@ -219,8 +219,8 @@ const SCORE_LABEL_KO: Record<1 | 2 | 3 | 4 | 5, string> = {
 };
 const SCORE_LABEL_EN: Record<1 | 2 | 3 | 4 | 5, string> = {
   1: 'Very bad',
-  2: 'Bad',
-  3: 'OK',
+  2: 'Not great',
+  3: 'Okay',
   4: 'Good',
   5: 'Very good',
 };

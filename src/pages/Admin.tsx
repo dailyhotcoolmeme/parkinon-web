@@ -25,7 +25,7 @@ interface ReportRow {
 }
 
 type ReportStatus = 'open' | 'resolved';
-type AdminView = 'reports' | 'devletter';
+type AdminView = 'reports' | 'devletter' | 'users';
 
 // 빈 줄(문단 사이) 기준 문단 수 — 앱과 동일 규칙.
 function countParagraphs(text: string): number {
@@ -56,6 +56,44 @@ function fmtTime(iso: string | null): string {
   } catch {
     return iso;
   }
+}
+
+// ── 사용자 현황 헬퍼 ──
+const ACTION_LABELS: Record<string, string> = {
+  screen_view: '화면 이동',
+  app_foreground: '앱 열기',
+  login: '로그인',
+  logout: '로그아웃',
+  med_taken: '약 복용',
+  bodystate_saved: '몸상태·기분 기록',
+  exercise_saved: '운동 기록',
+};
+function actionLabel(a: string): string {
+  return ACTION_LABELS[a] || a;
+}
+function roleLabel(r: string | null): string {
+  return r === 'patient' ? '환자' : r === 'caregiver' ? '보호자' : (r || '-');
+}
+// 환자+보호자를 group_id 로 세트 묶음. 세트는 최근 활동 순.
+function groupSets(rows: any[]): { group_id: string | null; members: any[] }[] {
+  const byGroup = new Map<string, any[]>();
+  const singles: any[] = [];
+  for (const r of rows) {
+    if (r.group_id) {
+      if (!byGroup.has(r.group_id)) byGroup.set(r.group_id, []);
+      byGroup.get(r.group_id)!.push(r);
+    } else singles.push(r);
+  }
+  const sets: { group_id: string | null; members: any[] }[] = [];
+  byGroup.forEach((members, gid) => {
+    members.sort((a, b) => (a.role === 'patient' ? 0 : 1) - (b.role === 'patient' ? 0 : 1));
+    sets.push({ group_id: gid, members });
+  });
+  for (const r of singles) sets.push({ group_id: null, members: [r] });
+  const lastOf = (s: { members: any[] }) =>
+    Math.max(0, ...s.members.map((m) => (m.last_active ? Date.parse(m.last_active) : 0)));
+  sets.sort((a, b) => lastOf(b) - lastOf(a));
+  return sets;
 }
 
 async function api(path: string, opts: RequestInit = {}): Promise<Response> {
@@ -224,6 +262,15 @@ export default function Admin() {
   const [dlErr, setDlErr] = useState('');
   const [dlSavedMsg, setDlSavedMsg] = useState('');
 
+  // 사용자 현황 상태
+  const [userRows, setUserRows] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersLoaded, setUsersLoaded] = useState(false);
+  const [usersErr, setUsersErr] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [timeline, setTimeline] = useState<any[]>([]);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setAuthed(false);
@@ -283,6 +330,40 @@ export default function Admin() {
     }
   }
 
+  // ── 사용자 현황 ──
+  const loadUsers = useCallback(async () => {
+    setUsersLoading(true);
+    setUsersErr('');
+    try {
+      const res = await api('/api/admin/user-activity');
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setUserRows(body.rows || []);
+      setUsersLoaded(true);
+    } catch (e) {
+      setUsersErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [logout]);
+
+  async function openTimeline(usr: any) {
+    setSelectedUser(usr);
+    setTimeline([]);
+    setTimelineLoading(true);
+    try {
+      const res = await api(`/api/admin/user-activity?user_id=${usr.user_id}`);
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (res.ok) setTimeline(body.rows || []);
+    } catch {
+      /* noop */
+    } finally {
+      setTimelineLoading(false);
+    }
+  }
+
   const load = useCallback(async () => {
     setLoading(true);
     setErr('');
@@ -314,6 +395,14 @@ export default function Admin() {
     Promise.resolve().then(() => { if (!cancelled) loadDevLetter(); });
     return () => { cancelled = true; };
   }, [authed, view, dlLoaded, dlLoading, loadDevLetter]);
+
+  // 사용자 현황 탭 첫 진입 시 1회 로드.
+  useEffect(() => {
+    if (!authed || view !== 'users' || usersLoaded || usersLoading) return;
+    let cancelled = false;
+    Promise.resolve().then(() => { if (!cancelled) loadUsers(); });
+    return () => { cancelled = true; };
+  }, [authed, view, usersLoaded, usersLoading, loadUsers]);
 
   async function doLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -572,6 +661,12 @@ export default function Admin() {
                 신고 검토
               </button>
               <button
+                className={`adm-nav-btn${view === 'users' ? ' is-active' : ''}`}
+                onClick={() => setView('users')}
+              >
+                사용자 현황
+              </button>
+              <button
                 className={`adm-nav-btn${view === 'devletter' ? ' is-active' : ''}`}
                 onClick={() => setView('devletter')}
               >
@@ -650,6 +745,98 @@ export default function Admin() {
                   <b>저장 + 모두에게 다시 띄우기</b> = 예전에 <b>'다시 보지 않기'</b>를 누른 사용자에게도 팝업을 한 번 더 띄웁니다.
                   그 사용자가 다시 '다시 보지 않기'를 누르면 이후로는 안 뜹니다.
                 </div>
+              </>
+            )}
+          </main>
+        ) : view === 'users' ? (
+          <main className="adm-main">
+            {!selectedUser ? (
+              <>
+                <div className="adm-note">
+                  앱 사용자를 <b>환자+보호자 세트</b>로 묶어 보여줍니다. 사용자를 누르면 그 사람의
+                  <b> 모든 활동(화면 이동·약복용·기록 등)</b> 타임라인이 나옵니다. (기록은 이 기능 배포 이후부터 쌓입니다.)
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '14px 0' }}>
+                  <button className="adm-ghost" onClick={loadUsers} disabled={usersLoading}>
+                    {usersLoading ? '불러오는 중…' : '새로고침'}
+                  </button>
+                  <span style={{ color: '#6b7280', fontSize: 13 }}>{userRows.length}명</span>
+                </div>
+                {usersErr && <div className="adm-err" style={{ marginBottom: 12 }}>{usersErr}</div>}
+                {usersLoading && userRows.length === 0 ? (
+                  <div className="adm-empty">불러오는 중…</div>
+                ) : userRows.length === 0 ? (
+                  <div className="adm-card"><div className="adm-empty">사용자가 없습니다.</div></div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {groupSets(userRows).map((set, si) => (
+                      <div key={set.group_id || `s${si}`} className="adm-card" style={{ padding: 12 }}>
+                        {set.members.length > 1 && (
+                          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>👨‍👩‍👧 연동 세트 ({set.members.length}명)</div>
+                        )}
+                        {set.members.map((m) => (
+                          <div
+                            key={m.user_id}
+                            onClick={() => openTimeline(m)}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+                              padding: '10px 8px', borderTop: set.members.indexOf(m) > 0 ? '1px solid #f1f3f1' : 'none',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <span className="adm-chip" style={{ background: m.role === 'patient' ? '#E8F5E9' : '#f1f5f9', color: m.role === 'patient' ? '#2e7d32' : '#475569' }}>
+                              {roleLabel(m.role)}
+                            </span>
+                            <b style={{ fontSize: 14, color: '#1a1a1a' }}>{m.name || '(이름 없음)'}</b>
+                            <span className="adm-meta">{m.is_kakao ? '카카오' : '구글/애플'}{m.birth_year ? ` · ${m.birth_year}년생` : ''}</span>
+                            <span className="adm-meta" style={{ marginLeft: 'auto' }}>
+                              최근 활동 {m.last_active ? fmtTime(m.last_active) : '없음'}
+                            </span>
+                            <span className="adm-chip" style={{ background: '#f1f5f9', color: '#475569' }}>
+                              오늘 {m.actions_1d} · 7일 {m.actions_7d} · 누적 {m.actions_total}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+                  <button className="adm-ghost" onClick={() => setSelectedUser(null)}>← 목록</button>
+                  <b style={{ fontSize: 16 }}>{selectedUser.name || '(이름 없음)'}</b>
+                  <span className="adm-chip" style={{ background: '#f1f5f9', color: '#475569' }}>{roleLabel(selectedUser.role)}</span>
+                  <button className="adm-ghost" onClick={() => openTimeline(selectedUser)} disabled={timelineLoading} style={{ marginLeft: 'auto' }}>
+                    {timelineLoading ? '불러오는 중…' : '새로고침'}
+                  </button>
+                </div>
+                {timelineLoading && timeline.length === 0 ? (
+                  <div className="adm-empty">불러오는 중…</div>
+                ) : timeline.length === 0 ? (
+                  <div className="adm-card"><div className="adm-empty">아직 활동 기록이 없습니다.</div></div>
+                ) : (
+                  <div className="adm-card" style={{ overflowX: 'auto' }}>
+                    <table className="adm-table">
+                      <thead><tr><th>시각</th><th>액션</th><th>화면</th><th>상세</th></tr></thead>
+                      <tbody>
+                        {timeline.map((r) => (
+                          <tr key={r.id}>
+                            <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{fmtTime(r.created_at)}</span></td>
+                            <td style={{ whiteSpace: 'nowrap', fontWeight: 500 }}>{actionLabel(r.action)}</td>
+                            <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{r.screen || '-'}</span></td>
+                            <td>
+                              <span className="adm-meta" style={{ wordBreak: 'break-all' }}>
+                                {r.detail ? JSON.stringify(r.detail) : ''}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </>
             )}
           </main>

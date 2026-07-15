@@ -49,10 +49,10 @@ export function parseTriggerMinutes(label: string | null | undefined): number | 
 export function formatIntervalLabel(minutes: number): string {
   if (isEnLang()) {
     if (minutes <= 0) return 'right after taking';
-    if (minutes < 60) return `${minutes} min after`;
+    if (minutes < 60) return `${minutes} min after taking`;
     const h = Math.floor(minutes / 60);
     const rem = minutes % 60;
-    return rem === 0 ? `${h} hr after` : `${h} hr ${rem} min after`;
+    return rem === 0 ? `${h} hr after taking` : `${h} hr ${rem} min after taking`;
   }
   if (minutes <= 0) return '복용 직후';
   if (minutes < 60) return `${minutes}분 후`;

@@ -1118,94 +1118,77 @@ export default function Admin() {
             ) : noticeRows.length === 0 ? (
               <div className="adm-card"><div className="adm-empty">등록된 공지글이 없습니다.</div></div>
             ) : (
-              <div className="adm-tablewrap adm-card" style={{ overflowX: 'auto' }}>
-                <table className="adm-table">
-                  <thead>
-                    <tr>
-                      <th>제목</th>
-                      <th>작성자</th>
-                      <th>본문</th>
-                      <th>작성일</th>
-                      <th>상태</th>
-                      <th>조치</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {noticeRows.map((n) =>
-                      ntEditingId === n.id ? (
-                        <tr key={n.id}>
-                          <td colSpan={6}>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 0' }}>
-                              <input
-                                className="adm-input"
-                                value={ntEditTitle}
-                                onChange={(e) => setNtEditTitle(e.target.value)}
-                                placeholder="제목"
-                              />
-                              <input
-                                className="adm-input"
-                                value={ntEditAuthor}
-                                onChange={(e) => setNtEditAuthor(e.target.value)}
-                                placeholder="작성자명"
-                              />
-                              <textarea
-                                className="adm-input"
-                                value={ntEditContent}
-                                onChange={(e) => setNtEditContent(e.target.value)}
-                                rows={6}
-                                style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
-                              />
-                              <div style={{ display: 'flex', gap: 8 }}>
-                                <button onClick={saveEditNotice} disabled={ntEditSaving}>
-                                  {ntEditSaving ? '저장 중…' : '저장'}
-                                </button>
-                                <button className="adm-ghost" onClick={cancelEditNotice} disabled={ntEditSaving}>
-                                  취소
-                                </button>
-                              </div>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={n.id} className={n.hidden ? 'is-hidden' : ''}>
-                          <td style={{ fontWeight: 600 }}>{n.title}</td>
-                          <td className="adm-meta">{n.author_name_override || '-'}</td>
-                          <td><div className="adm-preview">{n.content}</div></td>
-                          <td className="adm-meta">{new Date(n.created_at).toLocaleString('ko-KR')}</td>
-                          <td>
-                            <span
-                              className="adm-chip"
-                              style={n.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
-                            >
-                              {n.hidden ? '숨김' : '노출중'}
-                            </span>
-                          </td>
-                          <td>
-                            <div className="adm-actions">
-                              <button className="adm-ghost" onClick={() => startEditNotice(n)}>
-                                수정
-                              </button>
-                              <button
-                                className="adm-ghost"
-                                disabled={ntBusyKey === n.id}
-                                onClick={() => toggleNoticeHidden(n.id, !n.hidden)}
-                              >
-                                {n.hidden ? '노출하기' : '숨기기'}
-                              </button>
-                              <button
-                                className="adm-danger"
-                                disabled={ntBusyKey === n.id}
-                                onClick={() => deleteNotice(n.id)}
-                              >
-                                삭제
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ),
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {noticeRows.map((n) => (
+                  <div key={n.id} className="adm-card" style={{ padding: 14 }}>
+                    {ntEditingId === n.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <input
+                          className="adm-input"
+                          value={ntEditTitle}
+                          onChange={(e) => setNtEditTitle(e.target.value)}
+                          placeholder="제목"
+                        />
+                        <input
+                          className="adm-input"
+                          value={ntEditAuthor}
+                          onChange={(e) => setNtEditAuthor(e.target.value)}
+                          placeholder="작성자명"
+                        />
+                        <textarea
+                          className="adm-input"
+                          value={ntEditContent}
+                          onChange={(e) => setNtEditContent(e.target.value)}
+                          rows={6}
+                          style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
+                        />
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={saveEditNotice} disabled={ntEditSaving}>
+                            {ntEditSaving ? '저장 중…' : '저장'}
+                          </button>
+                          <button className="adm-ghost" onClick={cancelEditNotice} disabled={ntEditSaving}>
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, fontSize: 14 }}>{n.title}</span>
+                          <span
+                            className="adm-chip"
+                            style={n.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
+                          >
+                            {n.hidden ? '숨김' : '노출중'}
+                          </span>
+                        </div>
+                        <div className="adm-meta" style={{ marginTop: 4 }}>
+                          {n.author_name_override || '-'}{' · '}{new Date(n.created_at).toLocaleString('ko-KR')}
+                        </div>
+                        <div className="adm-preview" style={{ marginTop: 8, maxWidth: 'none' }}>{n.content}</div>
+                        <div className="adm-actions" style={{ marginTop: 10 }}>
+                          <button className="adm-ghost" onClick={() => startEditNotice(n)}>
+                            수정
+                          </button>
+                          <button
+                            className="adm-ghost"
+                            disabled={ntBusyKey === n.id}
+                            onClick={() => toggleNoticeHidden(n.id, !n.hidden)}
+                          >
+                            {n.hidden ? '노출하기' : '숨기기'}
+                          </button>
+                          <button
+                            className="adm-danger"
+                            disabled={ntBusyKey === n.id}
+                            onClick={() => deleteNotice(n.id)}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </>
                     )}
-                  </tbody>
-                </table>
+                  </div>
+                ))}
               </div>
             )}
           </main>

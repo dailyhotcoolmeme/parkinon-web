@@ -284,6 +284,11 @@ export default function Admin() {
   const [ntAuthor, setNtAuthor] = useState('');
   const [ntSaving, setNtSaving] = useState(false);
   const [ntBusyKey, setNtBusyKey] = useState<string | null>(null);
+  const [ntEditingId, setNtEditingId] = useState<string | null>(null);
+  const [ntEditTitle, setNtEditTitle] = useState('');
+  const [ntEditContent, setNtEditContent] = useState('');
+  const [ntEditAuthor, setNtEditAuthor] = useState('');
+  const [ntEditSaving, setNtEditSaving] = useState(false);
 
   // 정보·나눔 일반 게시글 관리 상태(공지 제외 — 전체 열람+수정/삭제/숨김)
   const [apRows, setApRows] = useState<any[]>([]);
@@ -308,6 +313,7 @@ export default function Admin() {
     setDlSigEn('');
     setNoticesLoaded(false);
     setNoticeRows([]);
+    setNtEditingId(null);
     setApLoaded(false);
     setApRows([]);
   }, []);
@@ -445,6 +451,47 @@ export default function Admin() {
       window.alert(String(e instanceof Error ? e.message : e));
     } finally {
       setNtBusyKey(null);
+    }
+  }
+
+  function startEditNotice(row: any) {
+    setNtEditingId(row.id);
+    setNtEditTitle(row.title || '');
+    setNtEditContent(row.content || '');
+    setNtEditAuthor(row.author_name_override || '');
+  }
+
+  function cancelEditNotice() {
+    setNtEditingId(null);
+    setNtEditTitle('');
+    setNtEditContent('');
+    setNtEditAuthor('');
+  }
+
+  async function saveEditNotice() {
+    if (!ntEditingId) return;
+    if (!ntEditTitle.trim() || !ntEditContent.trim() || !ntEditAuthor.trim()) {
+      window.alert('제목·본문·작성자명을 모두 입력해주세요.');
+      return;
+    }
+    setNtEditSaving(true);
+    try {
+      const res = await api('/api/admin/notices', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: ntEditingId, title: ntEditTitle, content: ntEditContent, author_name: ntEditAuthor }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setNoticeRows((prev) =>
+        prev.map((r) =>
+          r.id === ntEditingId ? { ...r, title: ntEditTitle, content: ntEditContent, author_name_override: ntEditAuthor } : r,
+        ),
+      );
+      cancelEditNotice();
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setNtEditSaving(false);
     }
   }
 
@@ -1084,40 +1131,79 @@ export default function Admin() {
                     </tr>
                   </thead>
                   <tbody>
-                    {noticeRows.map((n) => (
-                      <tr key={n.id} className={n.hidden ? 'is-hidden' : ''}>
-                        <td style={{ fontWeight: 600 }}>{n.title}</td>
-                        <td className="adm-meta">{n.author_name_override || '-'}</td>
-                        <td><div className="adm-preview">{n.content}</div></td>
-                        <td className="adm-meta">{new Date(n.created_at).toLocaleString('ko-KR')}</td>
-                        <td>
-                          <span
-                            className="adm-chip"
-                            style={n.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
-                          >
-                            {n.hidden ? '숨김' : '노출중'}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="adm-actions">
-                            <button
-                              className="adm-ghost"
-                              disabled={ntBusyKey === n.id}
-                              onClick={() => toggleNoticeHidden(n.id, !n.hidden)}
+                    {noticeRows.map((n) =>
+                      ntEditingId === n.id ? (
+                        <tr key={n.id}>
+                          <td colSpan={6}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '6px 0' }}>
+                              <input
+                                className="adm-input"
+                                value={ntEditTitle}
+                                onChange={(e) => setNtEditTitle(e.target.value)}
+                                placeholder="제목"
+                              />
+                              <input
+                                className="adm-input"
+                                value={ntEditAuthor}
+                                onChange={(e) => setNtEditAuthor(e.target.value)}
+                                placeholder="작성자명"
+                              />
+                              <textarea
+                                className="adm-input"
+                                value={ntEditContent}
+                                onChange={(e) => setNtEditContent(e.target.value)}
+                                rows={6}
+                                style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
+                              />
+                              <div style={{ display: 'flex', gap: 8 }}>
+                                <button onClick={saveEditNotice} disabled={ntEditSaving}>
+                                  {ntEditSaving ? '저장 중…' : '저장'}
+                                </button>
+                                <button className="adm-ghost" onClick={cancelEditNotice} disabled={ntEditSaving}>
+                                  취소
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={n.id} className={n.hidden ? 'is-hidden' : ''}>
+                          <td style={{ fontWeight: 600 }}>{n.title}</td>
+                          <td className="adm-meta">{n.author_name_override || '-'}</td>
+                          <td><div className="adm-preview">{n.content}</div></td>
+                          <td className="adm-meta">{new Date(n.created_at).toLocaleString('ko-KR')}</td>
+                          <td>
+                            <span
+                              className="adm-chip"
+                              style={n.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
                             >
-                              {n.hidden ? '노출하기' : '숨기기'}
-                            </button>
-                            <button
-                              className="adm-danger"
-                              disabled={ntBusyKey === n.id}
-                              onClick={() => deleteNotice(n.id)}
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {n.hidden ? '숨김' : '노출중'}
+                            </span>
+                          </td>
+                          <td>
+                            <div className="adm-actions">
+                              <button className="adm-ghost" onClick={() => startEditNotice(n)}>
+                                수정
+                              </button>
+                              <button
+                                className="adm-ghost"
+                                disabled={ntBusyKey === n.id}
+                                onClick={() => toggleNoticeHidden(n.id, !n.hidden)}
+                              >
+                                {n.hidden ? '노출하기' : '숨기기'}
+                              </button>
+                              <button
+                                className="adm-danger"
+                                disabled={ntBusyKey === n.id}
+                                onClick={() => deleteNotice(n.id)}
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               </div>

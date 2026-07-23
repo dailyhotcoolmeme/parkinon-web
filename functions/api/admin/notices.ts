@@ -34,6 +34,22 @@ async function restPost(env: AdminEnv, path: string, body: unknown): Promise<any
   return text ? JSON.parse(text) : null;
 }
 
+async function restPatch(env: AdminEnv, path: string, body: unknown): Promise<any> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`PATCH ${path} ${res.status}: ${text}`);
+  return text ? JSON.parse(text) : null;
+}
+
 // GET: 공지 목록 (숨김 포함, 관리 목적)
 export const onRequestGet = async ({ request, env }: Ctx): Promise<Response> => {
   const blocked = await guard(env, request);
@@ -79,6 +95,37 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
       hidden: false,
     });
     return json(200, { ok: true, data: Array.isArray(inserted) ? inserted[0] : inserted });
+  } catch (e) {
+    return json(500, { error: String(e) });
+  }
+};
+
+// PATCH: 공지 제목/본문/작성자명 수정. body: { id, title, content, author_name }
+export const onRequestPatch = async ({ request, env }: Ctx): Promise<Response> => {
+  const blocked = await guard(env, request);
+  if (blocked) return blocked;
+
+  let body: { id?: string; title?: string; content?: string; author_name?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return json(400, { error: 'bad request' });
+  }
+  const title = (body.title || '').trim();
+  const content = (body.content || '').trim();
+  const authorName = (body.author_name || '').trim();
+  if (!body.id || !title || !content || !authorName) {
+    return json(400, { error: 'id, title, content, author_name 필드가 필요합니다.' });
+  }
+
+  try {
+    const updated = await restPatch(env, `posts?id=eq.${body.id}`, {
+      title,
+      content,
+      author_name_override: authorName,
+      updated_at: new Date().toISOString(),
+    });
+    return json(200, { ok: true, data: Array.isArray(updated) ? updated[0] : updated });
   } catch (e) {
     return json(500, { error: String(e) });
   }

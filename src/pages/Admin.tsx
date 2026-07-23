@@ -116,9 +116,9 @@ const ADMIN_CSS = `
 .adm-header { background: #fff; border-bottom: 1px solid #e5e7eb; }
 .adm-header-inner {
   max-width: 1120px; margin: 0 auto; padding: 14px 20px;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 12px;
 }
-.adm-title { font-size: 16px; font-weight: 700; margin: 0; color: #1a1a1a; }
+.adm-title { font-size: 16px; font-weight: 700; margin: 0; color: #1a1a1a; flex-shrink: 0; white-space: nowrap; }
 .adm-main { max-width: 1120px; margin: 0 auto; padding: 20px; }
 
 /* 버튼 — 전역 56px 규칙을 덮어씀. myamen-pastor 보조버튼(text-xs 12px / px-3 py-1.5 ≈ 28px) 기준 */
@@ -211,12 +211,18 @@ const ADMIN_CSS = `
 .adm-rowcard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px; }
 .adm-rowcard.is-hidden { background: #fafafa; }
 
-/* 상단 뷰 전환 내비 (신고 검토 / 개발자 일기) */
-.adm-nav { display: flex; gap: 4px; }
+/* 상단 뷰 전환 내비 (신고 검토 / 개발자 일기) — 탭이 늘어나 좁은 화면에서 넘칠 때 세로 글자쪼개짐 대신 가로 스크롤(스크롤바 숨김) */
+.adm-nav {
+  display: flex; gap: 4px; flex: 1; min-width: 0;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; -ms-overflow-style: none;
+}
+.adm-nav::-webkit-scrollbar { display: none; }
 .adm button.adm-nav-btn {
   font-family: inherit; font-size: 14px; font-weight: 600; line-height: 1.2;
   background: none; border: 1px solid transparent; color: #6b7280; cursor: pointer;
   padding: 6px 12px; border-radius: 8px; height: auto; min-height: 0;
+  white-space: nowrap; flex-shrink: 0;
 }
 .adm button.adm-nav-btn:hover { color: #374151; background: #f6f8f6; }
 .adm button.adm-nav-btn.is-active { color: #2e7d32; background: #e8f5e9; }
@@ -960,7 +966,7 @@ export default function Admin() {
                 게시글 관리
               </button>
             </nav>
-            <button className="adm-ghost" onClick={logout}>로그아웃</button>
+            <button className="adm-ghost" onClick={logout} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>로그아웃</button>
           </div>
         </header>
 

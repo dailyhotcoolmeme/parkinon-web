@@ -25,7 +25,7 @@ interface ReportRow {
 }
 
 type ReportStatus = 'open' | 'resolved';
-type AdminView = 'reports' | 'devletter' | 'users';
+type AdminView = 'reports' | 'devletter' | 'users' | 'notices';
 
 // 빈 줄(문단 사이) 기준 문단 수 — 앱과 동일 규칙.
 function countParagraphs(text: string): number {
@@ -256,6 +256,9 @@ export default function Admin() {
   // 개발자 일기 편집 상태
   const [dlKo, setDlKo] = useState('');
   const [dlEn, setDlEn] = useState('');
+  // 마지막 서명 줄(예: "2026년 7월 3일 개발자 올림") — 앱에선 항상 서명 스타일로 렌더됨.
+  const [dlSigKo, setDlSigKo] = useState('');
+  const [dlSigEn, setDlSigEn] = useState('');
   const [dlLoaded, setDlLoaded] = useState(false);
   const [dlLoading, setDlLoading] = useState(false);
   const [dlSaving, setDlSaving] = useState(false);
@@ -271,6 +274,17 @@ export default function Admin() {
   const [timeline, setTimeline] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
 
+  // 정보·나눔 탭 공지글 관리 상태
+  const [noticeRows, setNoticeRows] = useState<any[]>([]);
+  const [noticesLoading, setNoticesLoading] = useState(false);
+  const [noticesLoaded, setNoticesLoaded] = useState(false);
+  const [noticesErr, setNoticesErr] = useState('');
+  const [ntTitle, setNtTitle] = useState('');
+  const [ntContent, setNtContent] = useState('');
+  const [ntAuthor, setNtAuthor] = useState('');
+  const [ntSaving, setNtSaving] = useState(false);
+  const [ntBusyKey, setNtBusyKey] = useState<string | null>(null);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setAuthed(false);
@@ -278,6 +292,10 @@ export default function Admin() {
     setDlLoaded(false);
     setDlKo('');
     setDlEn('');
+    setDlSigKo('');
+    setDlSigEn('');
+    setNoticesLoaded(false);
+    setNoticeRows([]);
   }, []);
 
   const loadDevLetter = useCallback(async () => {
@@ -291,6 +309,8 @@ export default function Admin() {
       if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
       setDlKo(body.body_ko || '');
       setDlEn(body.body_en || '');
+      setDlSigKo(body.signature_ko || '');
+      setDlSigEn(body.signature_en || '');
       setDlLoaded(true);
     } catch (e) {
       setDlErr(String(e instanceof Error ? e.message : e));
@@ -313,7 +333,7 @@ export default function Admin() {
     try {
       const res = await api('/api/admin/dev-letter', {
         method: 'POST',
-        body: JSON.stringify({ body_ko: dlKo, body_en: dlEn, force }),
+        body: JSON.stringify({ body_ko: dlKo, body_en: dlEn, signature_ko: dlSigKo, signature_en: dlSigEn, force }),
       });
       if (res.status === 401) { logout(); return; }
       const body = await res.json();
@@ -327,6 +347,90 @@ export default function Admin() {
       setDlErr(String(e instanceof Error ? e.message : e));
     } finally {
       setDlSaving(false);
+    }
+  }
+
+  // ── 정보·나눔 공지글 ──
+  const loadNotices = useCallback(async () => {
+    setNoticesLoading(true);
+    setNoticesErr('');
+    try {
+      const res = await api('/api/admin/notices');
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setNoticeRows(body.rows || []);
+      setNoticesLoaded(true);
+    } catch (e) {
+      setNoticesErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setNoticesLoading(false);
+    }
+  }, [logout]);
+
+  async function createNotice() {
+    if (!ntTitle.trim() || !ntContent.trim() || !ntAuthor.trim()) {
+      window.alert('제목·본문·작성자명을 모두 입력해주세요.');
+      return;
+    }
+    setNtSaving(true);
+    setNoticesErr('');
+    try {
+      const res = await api('/api/admin/notices', {
+        method: 'POST',
+        body: JSON.stringify({ title: ntTitle, content: ntContent, author_name: ntAuthor }),
+      });
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setNtTitle('');
+      setNtContent('');
+      setNtAuthor('');
+      await loadNotices();
+    } catch (e) {
+      setNoticesErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setNtSaving(false);
+    }
+  }
+
+  async function toggleNoticeHidden(id: string, nextHidden: boolean) {
+    setNtBusyKey(id);
+    try {
+      const res = await api('/api/admin/hide', {
+        method: 'POST',
+        body: JSON.stringify({
+          target_type: 'post',
+          target_id: id,
+          hidden: nextHidden,
+          reason: nextHidden ? '관리자 수동 숨김(공지)' : null,
+        }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setNoticeRows((prev) => prev.map((r) => (r.id === id ? { ...r, hidden: nextHidden } : r)));
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setNtBusyKey(null);
+    }
+  }
+
+  async function deleteNotice(id: string) {
+    if (!window.confirm('이 공지글을 영구 삭제할까요? 되돌릴 수 없습니다.')) return;
+    setNtBusyKey(id);
+    try {
+      const res = await api('/api/admin/delete', {
+        method: 'POST',
+        body: JSON.stringify({ target_type: 'post', target_id: id }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setNoticeRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setNtBusyKey(null);
     }
   }
 
@@ -403,6 +507,14 @@ export default function Admin() {
     Promise.resolve().then(() => { if (!cancelled) loadUsers(); });
     return () => { cancelled = true; };
   }, [authed, view, usersLoaded, usersLoading, loadUsers]);
+
+  // 공지글 탭 첫 진입 시 1회 로드.
+  useEffect(() => {
+    if (!authed || view !== 'notices' || noticesLoaded || noticesLoading) return;
+    let cancelled = false;
+    Promise.resolve().then(() => { if (!cancelled) loadNotices(); });
+    return () => { cancelled = true; };
+  }, [authed, view, noticesLoaded, noticesLoading, loadNotices]);
 
   async function doLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -672,6 +784,12 @@ export default function Admin() {
               >
                 개발자 일기
               </button>
+              <button
+                className={`adm-nav-btn${view === 'notices' ? ' is-active' : ''}`}
+                onClick={() => setView('notices')}
+              >
+                공지글 관리
+              </button>
             </nav>
             <button className="adm-ghost" onClick={logout}>로그아웃</button>
           </div>
@@ -723,6 +841,37 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {/* 마지막 서명 줄 — 앱에서 항상 서명 스타일(가운데·굵게)로 렌더됨 */}
+                <div className="adm-dl-grid" style={{ marginTop: 16 }}>
+                  <div className="adm-dl-card">
+                    <div className="adm-dl-head">
+                      <span className="adm-dl-lang">마지막 서명 줄 (한국어)</span>
+                    </div>
+                    <input
+                      value={dlSigKo}
+                      onChange={(e) => { setDlSigKo(e.target.value); setDlSavedMsg(''); }}
+                      placeholder="예: 2026년 7월 15일 개발자 올림"
+                      spellCheck={false}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', fontSize: 14, border: '1px solid #d0d7d0', borderRadius: 8 }}
+                    />
+                  </div>
+                  <div className="adm-dl-card">
+                    <div className="adm-dl-head">
+                      <span className="adm-dl-lang">Signature line (English)</span>
+                    </div>
+                    <input
+                      value={dlSigEn}
+                      onChange={(e) => { setDlSigEn(e.target.value); setDlSavedMsg(''); }}
+                      placeholder="e.g. July 15, 2026 — From the developer"
+                      spellCheck={false}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', fontSize: 14, border: '1px solid #d0d7d0', borderRadius: 8 }}
+                    />
+                  </div>
+                </div>
+                <div className="adm-note" style={{ marginTop: 8 }}>
+                  마지막 <b>서명 줄</b>은 앱에서 항상 <b>가운데 정렬·굵은 글씨(서명 스타일)</b>로 표시됩니다. "몇월 며칠 개발자 올림" 형식으로 쓰시면 됩니다.
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => saveDevLetter(false)} disabled={dlSaving || !dlLoaded} style={{ height: 40, padding: '0 20px' }}>
                     {dlSaving ? '저장 중…' : '저장'}
@@ -746,6 +895,110 @@ export default function Admin() {
                   그 사용자가 다시 '다시 보지 않기'를 누르면 이후로는 안 뜹니다.
                 </div>
               </>
+            )}
+          </main>
+        ) : view === 'notices' ? (
+          <main className="adm-main">
+            <div className="adm-note">
+              정보·나눔 탭 게시판 <b>맨 위에 항상 고정</b>으로 노출되는 공지글을 관리합니다.
+              작성자명은 실제 계정과 무관하게 <b>자유롭게 입력</b>할 수 있습니다.
+            </div>
+
+            <div className="adm-card" style={{ padding: 16, marginTop: 16 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>새 공지 작성</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <input
+                  className="adm-input"
+                  placeholder="제목"
+                  value={ntTitle}
+                  onChange={(e) => setNtTitle(e.target.value)}
+                />
+                <input
+                  className="adm-input"
+                  placeholder="작성자명 (예: 파킨온 운영팀)"
+                  value={ntAuthor}
+                  onChange={(e) => setNtAuthor(e.target.value)}
+                />
+                <textarea
+                  className="adm-input"
+                  placeholder="본문"
+                  value={ntContent}
+                  onChange={(e) => setNtContent(e.target.value)}
+                  rows={6}
+                  style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
+                />
+                <div>
+                  <button onClick={createNotice} disabled={ntSaving} style={{ height: 40, padding: '0 20px' }}>
+                    {ntSaving ? '게시 중…' : '공지 게시'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
+              <button className="adm-ghost" onClick={loadNotices} disabled={noticesLoading}>
+                {noticesLoading ? '불러오는 중…' : '새로고침'}
+              </button>
+              <span style={{ color: '#6b7280', fontSize: 13 }}>{noticeRows.length}건</span>
+            </div>
+
+            {noticesErr && <div className="adm-err" style={{ marginBottom: 12 }}>{noticesErr}</div>}
+
+            {noticesLoading && noticeRows.length === 0 ? (
+              <div className="adm-empty">불러오는 중…</div>
+            ) : noticeRows.length === 0 ? (
+              <div className="adm-card"><div className="adm-empty">등록된 공지글이 없습니다.</div></div>
+            ) : (
+              <div className="adm-tablewrap adm-card" style={{ overflowX: 'auto' }}>
+                <table className="adm-table">
+                  <thead>
+                    <tr>
+                      <th>제목</th>
+                      <th>작성자</th>
+                      <th>본문</th>
+                      <th>작성일</th>
+                      <th>상태</th>
+                      <th>조치</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {noticeRows.map((n) => (
+                      <tr key={n.id} className={n.hidden ? 'is-hidden' : ''}>
+                        <td style={{ fontWeight: 600 }}>{n.title}</td>
+                        <td className="adm-meta">{n.author_name_override || '-'}</td>
+                        <td><div className="adm-preview">{n.content}</div></td>
+                        <td className="adm-meta">{new Date(n.created_at).toLocaleString('ko-KR')}</td>
+                        <td>
+                          <span
+                            className="adm-chip"
+                            style={n.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
+                          >
+                            {n.hidden ? '숨김' : '노출중'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="adm-actions">
+                            <button
+                              className="adm-ghost"
+                              disabled={ntBusyKey === n.id}
+                              onClick={() => toggleNoticeHidden(n.id, !n.hidden)}
+                            >
+                              {n.hidden ? '노출하기' : '숨기기'}
+                            </button>
+                            <button
+                              className="adm-danger"
+                              disabled={ntBusyKey === n.id}
+                              onClick={() => deleteNotice(n.id)}
+                            >
+                              삭제
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </main>
         ) : view === 'users' ? (

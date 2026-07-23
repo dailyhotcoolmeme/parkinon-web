@@ -895,7 +895,7 @@ export default function Admin() {
             className="adm-card"
             style={{ width: '100%', maxWidth: 360, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
           >
-            <h1 className="adm-title" style={{ fontSize: 18 }}>운영자 로그인</h1>
+            <h1 className="adm-title" style={{ fontSize: 18 }}>관리자 로그인</h1>
             <p style={{ margin: '4px 0 0', fontSize: 14, color: '#6b7280' }}>신고 검토·조치 관리 · 접속이 제한된 페이지입니다.</p>
             <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
@@ -933,7 +933,7 @@ export default function Admin() {
       <div className="adm-page">
         <header className="adm-header">
           <div className="adm-header-inner">
-            <h1 className="adm-title">파킨온 운영자</h1>
+            <h1 className="adm-title">파킨온 관리자</h1>
             <nav className="adm-nav">
               <button
                 className={`adm-nav-btn${view === 'reports' ? ' is-active' : ''}`}
@@ -965,8 +965,8 @@ export default function Admin() {
               >
                 게시글 관리
               </button>
+              <button className="adm-nav-btn" onClick={logout}>로그아웃</button>
             </nav>
-            <button className="adm-ghost" onClick={logout} style={{ flexShrink: 0, whiteSpace: 'nowrap' }}>로그아웃</button>
           </div>
         </header>
 

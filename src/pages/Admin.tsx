@@ -25,7 +25,7 @@ interface ReportRow {
 }
 
 type ReportStatus = 'open' | 'resolved';
-type AdminView = 'reports' | 'devletter' | 'users' | 'notices';
+type AdminView = 'reports' | 'devletter' | 'users' | 'notices' | 'allposts';
 
 // 빈 줄(문단 사이) 기준 문단 수 — 앱과 동일 규칙.
 function countParagraphs(text: string): number {
@@ -285,6 +285,18 @@ export default function Admin() {
   const [ntSaving, setNtSaving] = useState(false);
   const [ntBusyKey, setNtBusyKey] = useState<string | null>(null);
 
+  // 정보·나눔 일반 게시글 관리 상태(공지 제외 — 전체 열람+수정/삭제/숨김)
+  const [apRows, setApRows] = useState<any[]>([]);
+  const [apLoading, setApLoading] = useState(false);
+  const [apLoaded, setApLoaded] = useState(false);
+  const [apErr, setApErr] = useState('');
+  const [apQuery, setApQuery] = useState('');
+  const [apBusyKey, setApBusyKey] = useState<string | null>(null);
+  const [apEditingId, setApEditingId] = useState<string | null>(null);
+  const [apEditTitle, setApEditTitle] = useState('');
+  const [apEditContent, setApEditContent] = useState('');
+  const [apEditSaving, setApEditSaving] = useState(false);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setAuthed(false);
@@ -296,6 +308,8 @@ export default function Admin() {
     setDlSigEn('');
     setNoticesLoaded(false);
     setNoticeRows([]);
+    setApLoaded(false);
+    setApRows([]);
   }, []);
 
   const loadDevLetter = useCallback(async () => {
@@ -434,6 +448,100 @@ export default function Admin() {
     }
   }
 
+  // ── 정보·나눔 일반 게시글(공지 제외) ──
+  const loadAllPosts = useCallback(async () => {
+    setApLoading(true);
+    setApErr('');
+    try {
+      const qs = apQuery.trim() ? `&q=${encodeURIComponent(apQuery.trim())}` : '';
+      const res = await api(`/api/admin/posts?limit=200${qs}`);
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setApRows(body.rows || []);
+      setApLoaded(true);
+    } catch (e) {
+      setApErr(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApLoading(false);
+    }
+  }, [apQuery, logout]);
+
+  function startEditPost(row: any) {
+    setApEditingId(row.id);
+    setApEditTitle(row.title || '');
+    setApEditContent(row.content || '');
+  }
+
+  function cancelEditPost() {
+    setApEditingId(null);
+    setApEditTitle('');
+    setApEditContent('');
+  }
+
+  async function saveEditPost() {
+    if (!apEditingId) return;
+    if (!apEditTitle.trim() || !apEditContent.trim()) {
+      window.alert('제목과 본문을 모두 입력해주세요.');
+      return;
+    }
+    setApEditSaving(true);
+    try {
+      const res = await api('/api/admin/posts', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: apEditingId, title: apEditTitle, content: apEditContent }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) => prev.map((r) => (r.id === apEditingId ? { ...r, title: apEditTitle, content: apEditContent } : r)));
+      cancelEditPost();
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApEditSaving(false);
+    }
+  }
+
+  async function toggleAllPostHidden(id: string, nextHidden: boolean) {
+    setApBusyKey(id);
+    try {
+      const res = await api('/api/admin/hide', {
+        method: 'POST',
+        body: JSON.stringify({
+          target_type: 'post',
+          target_id: id,
+          hidden: nextHidden,
+          reason: nextHidden ? '관리자 수동 숨김' : null,
+        }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) => prev.map((r) => (r.id === id ? { ...r, hidden: nextHidden } : r)));
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApBusyKey(null);
+    }
+  }
+
+  async function deleteAllPost(id: string) {
+    if (!window.confirm('이 게시글을 영구 삭제할까요? 되돌릴 수 없습니다.')) return;
+    setApBusyKey(id);
+    try {
+      const res = await api('/api/admin/delete', {
+        method: 'POST',
+        body: JSON.stringify({ target_type: 'post', target_id: id }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) => prev.filter((r) => r.id !== id));
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApBusyKey(null);
+    }
+  }
+
   // ── 사용자 현황 ──
   const loadUsers = useCallback(async () => {
     setUsersLoading(true);
@@ -515,6 +623,14 @@ export default function Admin() {
     Promise.resolve().then(() => { if (!cancelled) loadNotices(); });
     return () => { cancelled = true; };
   }, [authed, view, noticesLoaded, noticesLoading, loadNotices]);
+
+  // 게시글 관리 탭 첫 진입 시 1회 로드.
+  useEffect(() => {
+    if (!authed || view !== 'allposts' || apLoaded || apLoading) return;
+    let cancelled = false;
+    Promise.resolve().then(() => { if (!cancelled) loadAllPosts(); });
+    return () => { cancelled = true; };
+  }, [authed, view, apLoaded, apLoading, loadAllPosts]);
 
   async function doLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -790,6 +906,12 @@ export default function Admin() {
               >
                 공지글 관리
               </button>
+              <button
+                className={`adm-nav-btn${view === 'allposts' ? ' is-active' : ''}`}
+                onClick={() => setView('allposts')}
+              >
+                게시글 관리
+              </button>
             </nav>
             <button className="adm-ghost" onClick={logout}>로그아웃</button>
           </div>
@@ -998,6 +1120,105 @@ export default function Admin() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+          </main>
+        ) : view === 'allposts' ? (
+          <main className="adm-main">
+            <div className="adm-note">
+              정보·나눔 탭 <b>일반 게시글 전체</b>를 열람·수정·삭제·숨김 처리합니다(공지글은 별도 탭).
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0', flexWrap: 'wrap' }}>
+              <input
+                className="adm-input"
+                placeholder="제목 검색"
+                value={apQuery}
+                onChange={(e) => setApQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') loadAllPosts(); }}
+                style={{ maxWidth: 260 }}
+              />
+              <button className="adm-ghost" onClick={loadAllPosts} disabled={apLoading}>
+                {apLoading ? '불러오는 중…' : '검색/새로고침'}
+              </button>
+              <span style={{ color: '#6b7280', fontSize: 13 }}>{apRows.length}건</span>
+            </div>
+
+            {apErr && <div className="adm-err" style={{ marginBottom: 12 }}>{apErr}</div>}
+
+            {apLoading && apRows.length === 0 ? (
+              <div className="adm-empty">불러오는 중…</div>
+            ) : apRows.length === 0 ? (
+              <div className="adm-card"><div className="adm-empty">게시글이 없습니다.</div></div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {apRows.map((p) => (
+                  <div key={p.id} className="adm-card" style={{ padding: 14 }}>
+                    {apEditingId === p.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <input
+                          className="adm-input"
+                          value={apEditTitle}
+                          onChange={(e) => setApEditTitle(e.target.value)}
+                          placeholder="제목"
+                        />
+                        <textarea
+                          className="adm-input"
+                          value={apEditContent}
+                          onChange={(e) => setApEditContent(e.target.value)}
+                          rows={6}
+                          style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
+                        />
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={saveEditPost} disabled={apEditSaving}>
+                            {apEditSaving ? '저장 중…' : '저장'}
+                          </button>
+                          <button className="adm-ghost" onClick={cancelEditPost} disabled={apEditSaving}>
+                            취소
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 700, fontSize: 14 }}>{p.title}</span>
+                          <span
+                            className="adm-chip"
+                            style={p.hidden ? { background: '#fdecec', color: '#c62828' } : { background: '#e8f5e9', color: '#2e7d32' }}
+                          >
+                            {p.hidden ? '숨김' : '노출중'}
+                          </span>
+                        </div>
+                        <div className="adm-meta" style={{ marginTop: 4 }}>
+                          {p.author?.name || '알 수 없음'}
+                          {p.author?.role ? ` · ${roleLabel(p.author.role)}` : ''}
+                          {' · '}{new Date(p.created_at).toLocaleString('ko-KR')}
+                          {' · '}조회 {p.view_count ?? 0} · 댓글 {p.comment_count ?? 0}
+                        </div>
+                        <div className="adm-preview" style={{ marginTop: 8, maxWidth: 'none' }}>{p.content}</div>
+                        <div className="adm-actions" style={{ marginTop: 10 }}>
+                          <button className="adm-ghost" onClick={() => startEditPost(p)}>
+                            수정
+                          </button>
+                          <button
+                            className="adm-ghost"
+                            disabled={apBusyKey === p.id}
+                            onClick={() => toggleAllPostHidden(p.id, !p.hidden)}
+                          >
+                            {p.hidden ? '노출하기' : '숨기기'}
+                          </button>
+                          <button
+                            className="adm-danger"
+                            disabled={apBusyKey === p.id}
+                            onClick={() => deleteAllPost(p.id)}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </main>

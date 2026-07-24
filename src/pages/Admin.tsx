@@ -71,6 +71,121 @@ const ACTION_LABELS: Record<string, string> = {
 function actionLabel(a: string): string {
   return ACTION_LABELS[a] || a;
 }
+
+// 앱 내부 화면 라우트명(영문) → 관리자 표시용 한글. RootNavigator 등 전체 name= 목록 기준.
+const SCREEN_LABELS: Record<string, string> = {
+  Alarm: '알람 화면',
+  AlarmSoundSettings: '알림음 설정',
+  AppointmentWrite: '진료 일정 작성',
+  BlockedUsers: '차단 사용자 관리',
+  BodyState: '몸상태',
+  BodyStateTab: '몸상태 탭',
+  CaregiverInfo: '보호자 정보 입력',
+  CaregiverMeasurement: '보호자 검사',
+  Diary: '일기',
+  Exercise: '운동',
+  ExerciseDuration: '운동 시간 선택',
+  ExerciseMain: '운동 메인',
+  ExerciseRecord: '운동 기록',
+  ExerciseVideo: '운동 영상 목록',
+  ExerciseVideoPlayer: '운동 영상 재생',
+  FamilyCheck: '가족 확인',
+  FamilyInvite: '가족 초대',
+  FamilyLink: '가족 연동',
+  Feed: '정보·나눔',
+  FeedMain: '정보·나눔 메인',
+  Login: '로그인',
+  Main: '메인(탭)',
+  MeasurementConsent: '검사 동의',
+  MeasurementMenu: '검사 메뉴',
+  MeasurementRecords: '검사 기록',
+  MeasurementResult: '검사 결과',
+  MedicalRecordDetail: '진료기록 상세',
+  MedicalRecordList: '진료기록 목록',
+  MedicalRecordWrite: '진료기록 작성',
+  Medication: '약복용',
+  MedicationManage: '약 관리',
+  MedTimeOnboarding: '복용시간 온보딩',
+  MenuHome: '메뉴',
+  MyInfo: '내 정보',
+  NotificationHistory: '알림 내역',
+  OnboardingAuth: '로그인(온보딩)',
+  OnboardingGuest: '온보딩(비로그인)',
+  OnboardingSlide: '온보딩 슬라이드',
+  OverseasMedTab: '해외 복약 탭',
+  PatientInfo: '환자 정보 입력',
+  PostDetail: '게시글 상세',
+  PostWrite: '게시글 작성',
+  Privacy: '개인정보처리방침',
+  ProfileEdit: '프로필 수정',
+  ReactionGame: '반응속도 검사',
+  RecordDetail: '기록 상세',
+  Records: '기록 보기',
+  RecordSound: '알림음 녹음',
+  RoleSelect: '역할 선택',
+  SensitiveInfoConsent: '민감정보 동의',
+  Settings: '설정',
+  Splash: '스플래시',
+  SubscriptionManage: '구독 관리',
+  TapGame: '탭 반응 검사',
+  Terms: '이용약관',
+  VideoList: '영상 목록',
+  VideoRecord: '영상 기록',
+};
+function screenLabel(s: string | null | undefined): string {
+  if (!s) return '-';
+  return SCREEN_LABELS[s] || s;
+}
+
+const MEAL_TIME_LABELS: Record<string, string> = {
+  morning: '아침', lunch: '점심', dinner: '저녁', bedtime: '취침',
+};
+const TRIGGERED_BY_LABELS: Record<string, string> = {
+  notification: '알림 응답', manual: '수동 입력',
+};
+const EXERCISE_TYPE_LABELS: Record<string, string> = {
+  walk: '걷기', strength: '근력', balance: '균형', stretch: '스트레칭',
+  bike: '자전거', swim: '수영', dance: '댄스', boxing: '복싱', yoga: '요가', jog: '조깅',
+};
+// 약효추적 trigger_time_label('after_medication'/'30min_after'/'2hour_after' 등) → 한글.
+function triggerLabelKo(label: string): string {
+  if (label === 'after_medication') return '복용 직후';
+  if (label === '2hour_after') return '2시간 후';
+  const m = /^(\d+)min_after$/.exec(label);
+  if (m) return `${m[1]}분 후`;
+  return label;
+}
+
+// "상세" 컬럼 — action 별 detail(JSON)을 관리자가 읽을 수 있는 한글 요약으로.
+function formatDetail(action: string, detail: any): string {
+  if (!detail) return '';
+  switch (action) {
+    case 'screen_view':
+      // 화면 컬럼과 중복(같은 라우트명)이라 상세는 비움.
+      return '';
+    case 'med_taken': {
+      const meal = detail.meal_time ? MEAL_TIME_LABELS[detail.meal_time] || detail.meal_time : null;
+      return meal ? `${meal} 슬롯` : '-';
+    }
+    case 'bodystate_saved': {
+      const parts: string[] = [];
+      if (detail.body_state != null) parts.push(`몸상태 ${detail.body_state}`);
+      if (detail.mood != null) parts.push(`기분 ${detail.mood}`);
+      if (detail.sleep_quality != null) parts.push(`수면 ${detail.sleep_quality}`);
+      if (detail.constipation != null) parts.push(`변비 ${detail.constipation ? '있음' : '없음'}`);
+      if (detail.trigger_time_label) parts.push(triggerLabelKo(detail.trigger_time_label));
+      if (detail.triggered_by) parts.push(TRIGGERED_BY_LABELS[detail.triggered_by] || detail.triggered_by);
+      return parts.join(' · ') || '-';
+    }
+    case 'exercise_saved': {
+      const type = detail.exercise_type ? (EXERCISE_TYPE_LABELS[detail.exercise_type] || detail.exercise_type) : '-';
+      const dur = detail.duration_minutes != null ? `${detail.duration_minutes}분` : '';
+      return [type, dur].filter(Boolean).join(' · ');
+    }
+    default:
+      return JSON.stringify(detail);
+  }
+}
 function roleLabel(r: string | null): string {
   return r === 'patient' ? '환자' : r === 'caregiver' ? '보호자' : (r || '-');
 }
@@ -1374,10 +1489,10 @@ export default function Admin() {
                           <tr key={r.id}>
                             <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{fmtTime(r.created_at)}</span></td>
                             <td style={{ whiteSpace: 'nowrap', fontWeight: 500 }}>{actionLabel(r.action)}</td>
-                            <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{r.screen || '-'}</span></td>
+                            <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{screenLabel(r.screen)}</span></td>
                             <td>
                               <span className="adm-meta" style={{ wordBreak: 'break-all' }}>
-                                {r.detail ? JSON.stringify(r.detail) : ''}
+                                {formatDetail(r.action, r.detail)}
                               </span>
                             </td>
                           </tr>

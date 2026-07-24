@@ -296,8 +296,13 @@ const ADMIN_CSS = `
 .adm button.adm-tab:hover { color: #374151; background: none; }
 .adm button.adm-tab.is-active { color: #2e7d32; border-bottom-color: #4CAF50; background: none; }
 
+/* 항상 가로 스크롤(모바일에서 숨기지 않음) — .adm-tablewrap 은 760px 이하에서 display:none 되므로
+   좁은 화면에서도 계속 보여야 하는 테이블(사용자 활동 타임라인 등)은 이걸 쓴다. 스크롤바는 숨김. */
+.adm-scrollx { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; -ms-overflow-style: none; }
+.adm-scrollx::-webkit-scrollbar { display: none; }
+
 /* 데스크탑 테이블 — myamen-pastor 기준: 본문 14px(text-sm), 헤더 12px(text-xs)/weight 500/패딩 12px 8px */
-.adm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.adm-table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px; }
 .adm-table thead th {
   text-align: left; font-weight: 500; font-size: 13px; color: #6b7280;
   padding: 8px 12px; border-bottom: 1px solid #e5e7eb; white-space: nowrap;
@@ -1481,7 +1486,7 @@ export default function Admin() {
                 ) : timeline.length === 0 ? (
                   <div className="adm-card"><div className="adm-empty">아직 활동 기록이 없습니다.</div></div>
                 ) : (
-                  <div className="adm-card" style={{ overflowX: 'auto' }}>
+                  <div className="adm-card adm-scrollx">
                     <table className="adm-table">
                       <thead><tr><th>시각</th><th>액션</th><th>화면</th><th>상세</th></tr></thead>
                       <tbody>
@@ -1490,8 +1495,8 @@ export default function Admin() {
                             <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{fmtTime(r.created_at)}</span></td>
                             <td style={{ whiteSpace: 'nowrap', fontWeight: 500 }}>{actionLabel(r.action)}</td>
                             <td style={{ whiteSpace: 'nowrap' }}><span className="adm-meta">{screenLabel(r.screen)}</span></td>
-                            <td>
-                              <span className="adm-meta" style={{ wordBreak: 'break-all' }}>
+                            <td style={{ whiteSpace: 'nowrap' }}>
+                              <span className="adm-meta">
                                 {formatDetail(r.action, r.detail)}
                               </span>
                             </td>

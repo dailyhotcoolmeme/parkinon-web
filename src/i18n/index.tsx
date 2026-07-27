@@ -42,14 +42,26 @@ interface LocaleCtx {
 
 const LocaleContext = createContext<LocaleCtx | null>(null);
 
+/**
+ * 문서 제목은 index.html 에 한국어로 고정돼 있어(정적 파일) 영어 사용자에게도 그대로 보인다.
+ * 언어가 정해질 때마다 갱신해 로딩 중 탭 제목까지 사용자 언어를 따르게 한다.
+ */
+function applyDocTitle(l: Lang): void {
+  try {
+    document.title = l === 'ko' ? '파킨온 - 기록 보기' : 'ParkinON — Records';
+  } catch { /* document 없음 — 무시 */ }
+}
+
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => detectInitialLang());
   // lib/queries.ts, lib/doseSlots.ts 등 React 밖의 순수 함수도 같은 언어를 보게 동기화.
   setCurrentLang(lang);
+  applyDocTitle(lang);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
     setCurrentLang(l);
+    applyDocTitle(l);
     try { localStorage.setItem(STORAGE_KEY, l); } catch { /* 무시 */ }
   }, []);
 

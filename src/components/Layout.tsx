@@ -10,7 +10,7 @@ export default function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const SUPPORT_EMAIL = 'contact@ourmine.co.kr';
+  const SUPPORT_EMAIL = 'admin@ourmine.co.kr';
 
   useEffect(() => {
     (async () => {
@@ -162,7 +162,7 @@ export default function Layout() {
       </main>
       <footer className="app-footer">
         <div className="app-footer-inner">
-          <div>© 2026 ParkinON · Ourmine</div>
+          <div>© 2026 ParkinON · ourmine</div>
           <div className="footer-links">
             {/* /terms, /privacy는 public/ 정적 파일 — SPA Link(클라이언트 라우팅)로 가면
                 일치하는 라우트가 없어 "*" 와일드카드에 걸려 홈으로 리다이렉트된다.

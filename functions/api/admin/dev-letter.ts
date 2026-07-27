@@ -39,10 +39,10 @@ export const onRequestGet = async ({ request, env }: Ctx): Promise<Response> => 
   const blocked = await guard(env, request);
   if (blocked) return blocked;
   try {
-    const rows = await restGet(env, 'dev_letter?id=eq.1&select=body_ko,body_en,updated_at,popup_version');
+    const rows = await restGet(env, 'dev_letter?id=eq.1&select=body_ko,body_en,signature_ko,signature_en,updated_at,popup_version');
     const row = Array.isArray(rows) && rows[0]
       ? rows[0]
-      : { body_ko: '', body_en: '', updated_at: null, popup_version: 1 };
+      : { body_ko: '', body_en: '', signature_ko: '', signature_en: '', updated_at: null, popup_version: 1 };
     return json(200, row);
   } catch (e) {
     return json(500, { error: String(e) });
@@ -63,6 +63,9 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
   }
   const body_ko = typeof payload?.body_ko === 'string' ? payload.body_ko : null;
   const body_en = typeof payload?.body_en === 'string' ? payload.body_en : null;
+  // 서명(마지막 줄)은 선택 — 넘어오면 저장, 없으면 기존 값 유지.
+  const signature_ko = typeof payload?.signature_ko === 'string' ? payload.signature_ko : null;
+  const signature_en = typeof payload?.signature_en === 'string' ? payload.signature_en : null;
   const force = payload?.force === true;
   if (body_ko === null || body_en === null) {
     return json(400, { error: 'body_ko and body_en are required strings' });
@@ -73,6 +76,8 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
       body_en,
       updated_at: new Date().toISOString(),
     };
+    if (signature_ko !== null) patch.signature_ko = signature_ko;
+    if (signature_en !== null) patch.signature_en = signature_en;
     if (force) {
       // PostgREST 는 col = col + 1 식을 지원하지 않으므로 현재 값을 읽어 +1.
       const rows = await restGet(env, 'dev_letter?id=eq.1&select=popup_version');

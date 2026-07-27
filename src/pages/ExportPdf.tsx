@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isEnLang } from '../i18n/currentLang';
 import { useRange } from '../context/RangeContext';
 import { usePatientId } from '../lib/usePatientId';
 import {
@@ -333,7 +334,7 @@ export default function ExportPdf() {
           },
           {
             key: 'exercise', data: exercise, valueKey: 'minutes',
-            color: '#4CAF50', yDomain: [0, 180], yTicks: [0, 30, 60, 90, 120, 150, 180], yUnit: '분',
+            color: '#4CAF50', yDomain: [0, 180], yTicks: [0, 30, 60, 90, 120, 150, 180], yUnit: isEnLang() ? 'min' : '분',
             showTrendline,
           },
         ];
@@ -346,7 +347,7 @@ export default function ExportPdf() {
             data: tapData,
             color: '#F57C00', // 화면 SymptomDetail 의 탭핑 막대 색과 동일
             yDomain: [0, tapDomainMax],
-            yUnit: '회',
+            yUnit: isEnLang() ? 'taps' : '회',
           });
         }
         if (rtHasAny) {

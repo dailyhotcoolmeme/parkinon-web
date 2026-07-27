@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { isEnLang } from '../i18n/currentLang';
 import { useRange } from '../context/RangeContext';
 import type { SlotDayStatRow } from '../lib/queries';
 
@@ -39,7 +40,7 @@ export function SlotOnOffRatio({ rows }: { rows: SlotDayStatRow[] }) {
   if (!total) {
     return (
       <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>
-        기록 없음
+        {isEnLang() ? 'No records' : '기록 없음'}
       </div>
     );
   }
@@ -47,11 +48,11 @@ export function SlotOnOffRatio({ rows }: { rows: SlotDayStatRow[] }) {
     <div style={{ fontSize: 12, color: '#555', marginBottom: 6, fontWeight: 500, display: 'flex', gap: 16, alignItems: 'flex-start', justifyContent: 'flex-start', flexWrap: 'wrap' }}>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <span style={{ color: '#2e7d32', fontWeight: 700 }}>ON {onPct}%</span>
-        <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>4점 이상 기록 비율</span>
+        <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>{isEnLang() ? 'Share of records scored 4+' : '4점 이상 기록 비율'}</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
         <span style={{ color: '#c62828', fontWeight: 700 }}>OFF {offPct}%</span>
-        <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>2점 이하 기록 비율</span>
+        <span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>{isEnLang() ? 'Share of records scored 2 or less' : '2점 이하 기록 비율'}</span>
       </div>
     </div>
   );
@@ -60,8 +61,8 @@ export function SlotOnOffRatio({ rows }: { rows: SlotDayStatRow[] }) {
 export function OnOffLegend() {
   return (
     <p className="muted" style={{ marginTop: 6, marginBottom: 0, fontSize: 11, lineHeight: 1.5 }}>
-      * ON: 남긴 기록 중 점수 4점 이상 비중<br />
-      * OFF: 남긴 기록 중 점수 2점 이하 비중
+      {isEnLang() ? '* ON: share of records scored 4 or higher' : '* ON: 남긴 기록 중 점수 4점 이상 비중'}<br />
+      {isEnLang() ? '* OFF: share of records scored 2 or lower' : '* OFF: 남긴 기록 중 점수 2점 이하 비중'}
     </p>
   );
 }

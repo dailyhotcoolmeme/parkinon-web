@@ -15,6 +15,17 @@ const FALLBACK_LANG: Lang = 'en';
  * 그 값으로 확정한다(앱과 동일 계정=동일 언어). 새로고침 대비 localStorage에도 저장.
  */
 function detectInitialLang(): Lang {
+  // ⚠️ URL 의 ?lang= 이 최우선. 앱이 "웹으로 보기"로 넘길 때 계정 언어를 실어 보내므로,
+  //   토큰 교환(계정 확인) 전인 로딩 화면부터 정확한 언어로 뜬다.
+  //   이게 없으면 이전 방문 때 저장된 localStorage 값이나 브라우저 언어를 쓰게 되어,
+  //   영어 사용자에게 한국어 로딩 화면이 보인다(오너 제보 2026-07-27).
+  try {
+    const q = new URLSearchParams(window.location.search).get('lang');
+    if (q === 'ko' || q === 'en') {
+      try { localStorage.setItem(STORAGE_KEY, q); } catch { /* 무시 */ }
+      return q;
+    }
+  } catch { /* URL 파싱 불가 — 무시 */ }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'ko' || stored === 'en') return stored;

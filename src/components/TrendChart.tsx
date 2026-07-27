@@ -3,6 +3,7 @@ import {
 } from 'recharts';
 import { useMemo, useState } from 'react';
 import { useRange } from '../context/RangeContext';
+import { isEnLang } from '../i18n/currentLang';
 import type { MedChange } from '../lib/queries';
 
 export type Series = {
@@ -97,7 +98,7 @@ export default function TrendChart({ data, series, yDomain, yUnit, refLines, hei
                 key={`trend-${s.key}`}
                 type="linear"
                 dataKey={`__trend_${s.key}`}
-                name={`${s.name} 추세`}
+                name={isEnLang() ? `${s.name} trend` : `${s.name} 추세`}
                 stroke={s.color}
                 strokeDasharray="5 5"
                 strokeWidth={1.5}

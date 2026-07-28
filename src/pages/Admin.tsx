@@ -216,25 +216,38 @@ function roleLabel(r: string | null): string {
   return r === 'patient' ? '환자' : r === 'caregiver' ? '보호자' : (r || '-');
 }
 // 환자+보호자를 group_id 로 세트 묶음. 세트는 최근 활동 순.
+// 환자+보호자를 그룹 단위 세트로 묶는다.
+// ⚠️ 세트 순서는 rows 로 들어온 순서를 그대로 따른다(각 세트의 첫 등장 위치 기준).
+//    예전엔 여기서 last_active 로 다시 정렬해, 호출부에서 어떤 정렬을 골라도
+//    화면은 항상 "최근 활동순"으로 나왔다(오너 제보 2026-07-28).
+//    정렬 기준은 호출부(visibleUserRows)가 정한다.
 function groupSets(rows: any[]): { group_id: string | null; members: any[] }[] {
   const byGroup = new Map<string, any[]>();
-  const singles: any[] = [];
-  for (const r of rows) {
+  const order: (string | null)[] = []; // 세트 등장 순서
+  const singles: { key: string; row: any }[] = [];
+  rows.forEach((r, i) => {
     if (r.group_id) {
-      if (!byGroup.has(r.group_id)) byGroup.set(r.group_id, []);
+      if (!byGroup.has(r.group_id)) {
+        byGroup.set(r.group_id, []);
+        order.push(r.group_id);
+      }
       byGroup.get(r.group_id)!.push(r);
-    } else singles.push(r);
-  }
-  const sets: { group_id: string | null; members: any[] }[] = [];
-  byGroup.forEach((members, gid) => {
-    members.sort((a, b) => (a.role === 'patient' ? 0 : 1) - (b.role === 'patient' ? 0 : 1));
-    sets.push({ group_id: gid, members });
+    } else {
+      const key = `__single_${i}`;
+      singles.push({ key, row: r });
+      order.push(key);
+    }
   });
-  for (const r of singles) sets.push({ group_id: null, members: [r] });
-  const lastOf = (s: { members: any[] }) =>
-    Math.max(0, ...s.members.map((m) => (m.last_active ? Date.parse(m.last_active) : 0)));
-  sets.sort((a, b) => lastOf(b) - lastOf(a));
-  return sets;
+  const singleByKey = new Map(singles.map((s) => [s.key, s.row]));
+  return order.map((key) => {
+    if (key && byGroup.has(key)) {
+      const members = [...byGroup.get(key)!];
+      // 세트 안에서는 환자를 위로.
+      members.sort((a, b) => (a.role === 'patient' ? 0 : 1) - (b.role === 'patient' ? 0 : 1));
+      return { group_id: key, members };
+    }
+    return { group_id: null, members: [singleByKey.get(key as string)] };
+  });
 }
 
 async function api(path: string, opts: RequestInit = {}): Promise<Response> {

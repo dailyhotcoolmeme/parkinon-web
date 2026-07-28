@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // 파킨온 운영자용 신고 검토·조치 관리자 페이지.
 // 인증/RPC는 전부 Cloudflare Pages Function(/api/admin/*) 경유. service_role 키는 서버에만 존재.
@@ -70,6 +70,32 @@ const ACTION_LABELS: Record<string, string> = {
 };
 function actionLabel(a: string): string {
   return ACTION_LABELS[a] || a;
+}
+
+// ── 알림 수신 상태 ──
+// 파킨온은 알림이 핵심이라 "누가 못 받고 있는지"를 한눈에 봐야 한다.
+// 서버(admin_user_list)가 push_token 유무 + 앱 내 알림 설정으로 3가지로 판정해 내려준다.
+// 기기 설정 차단과 권한 미요청은 서버에서 구분할 수 없어 '토큰 없음' 하나로 합쳤다.
+const PUSH_STATES: Record<string, { label: string; color: string; bg: string; desc: string }> = {
+  receiving: { label: '받는 중', color: '#2e7d32', bg: '#E8F5E9', desc: '알림 정상 수신' },
+  app_off:   { label: '앱에서 끔', color: '#b45309', bg: '#FEF3C7', desc: '앱 내 설정에서 알림을 끔' },
+  no_token:  { label: '토큰 없음', color: '#b91c1c', bg: '#FEE2E2', desc: '권한 거부·미요청이거나 토큰 만료 — 알림이 전혀 가지 않음' },
+};
+function pushState(s: string) {
+  return PUSH_STATES[s] ?? { label: s || '알 수 없음', color: '#475569', bg: '#f1f5f9', desc: '' };
+}
+
+// 목록 정렬용 값 추출. 문자열/숫자/날짜를 비교 가능한 형태로 통일한다.
+function userSortValue(u: any, key: string): string | number {
+  switch (key) {
+    case 'name':        return (u.name || '').toLowerCase();
+    case 'role':        return u.role || '';
+    case 'created_at':  return u.created_at ? new Date(u.created_at).getTime() : 0;
+    case 'last_active': return u.last_active ? new Date(u.last_active).getTime() : 0;
+    case 'push_state':  return u.push_state || '';
+    case 'actions_total': return Number(u.actions_total || 0);
+    default:            return 0;
+  }
 }
 
 // 앱 내부 화면 라우트명(영문) → 관리자 표시용 한글. RootNavigator 등 전체 name= 목록 기준.
@@ -396,6 +422,28 @@ export default function Admin() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersLoaded, setUsersLoaded] = useState(false);
   const [usersErr, setUsersErr] = useState('');
+  // 검색어(이름) · 알림상태 필터 · 정렬
+  const [userQuery, setUserQuery] = useState('');
+  const [pushFilter, setPushFilter] = useState<'all' | 'receiving' | 'app_off' | 'no_token'>('all');
+  const [userSort, setUserSort] = useState<{ key: string; dir: 'asc' | 'desc' }>({ key: 'last_active', dir: 'desc' });
+
+  // 검색어·알림상태 필터·정렬을 적용한 목록. 세트 묶음은 이 결과를 groupSets 로 감싸 만든다.
+  const visibleUserRows = useMemo(() => {
+    const q = userQuery.trim().toLowerCase();
+    const rows = userRows.filter((u) => {
+      if (pushFilter !== 'all' && u.push_state !== pushFilter) return false;
+      if (q && !String(u.name || '').toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const { key, dir } = userSort;
+    return [...rows].sort((a, b) => {
+      const va = userSortValue(a, key);
+      const vb = userSortValue(b, key);
+      if (va < vb) return dir === 'asc' ? -1 : 1;
+      if (va > vb) return dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [userRows, userQuery, pushFilter, userSort]);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [timeline, setTimeline] = useState<any[]>([]);
   const [timelineLoading, setTimelineLoading] = useState(false);
@@ -1425,20 +1473,84 @@ export default function Admin() {
                   앱 사용자를 <b>환자+보호자 세트</b>로 묶어 보여줍니다. 사용자를 누르면 그 사람의
                   <b> 모든 활동(화면 이동·약복용·기록 등)</b> 타임라인이 나옵니다. (기록은 이 기능 배포 이후부터 쌓입니다.)
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '14px 0' }}>
+                {/* 알림 상태 요약 — 누르면 그 상태만 필터링 */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '14px 0 10px' }}>
+                  {(['all', 'receiving', 'app_off', 'no_token'] as const).map((k) => {
+                    const n = k === 'all' ? userRows.length : userRows.filter((u) => u.push_state === k).length;
+                    const st = k === 'all' ? null : pushState(k);
+                    const on = pushFilter === k;
+                    return (
+                      <button
+                        key={k}
+                        className="adm-ghost"
+                        onClick={() => setPushFilter(k)}
+                        style={{
+                          borderColor: on ? (st?.color ?? '#4CAF50') : '#e5e7eb',
+                          background: on ? (st?.bg ?? '#E8F5E9') : '#fff',
+                          color: on ? (st?.color ?? '#2e7d32') : '#374151',
+                          fontWeight: on ? 700 : 400,
+                        }}
+                      >
+                        {k === 'all' ? '전체' : st!.label} {n}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="adm-note" style={{ fontSize: 12, lineHeight: 1.7 }}>
+                  <b>알림 상태</b> — {' '}
+                  {(['receiving', 'app_off', 'no_token'] as const).map((k, i) => (
+                    <span key={k}>
+                      {i > 0 && ' · '}
+                      <b style={{ color: pushState(k).color }}>{pushState(k).label}</b> {pushState(k).desc}
+                    </span>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '12px 0', flexWrap: 'wrap' }}>
+                  <input
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    placeholder="이름으로 검색"
+                    style={{
+                      flex: '1 1 200px', minWidth: 160, padding: '8px 12px', fontSize: 14,
+                      border: '1px solid #e5e7eb', borderRadius: 8,
+                    }}
+                  />
+                  <select
+                    value={`${userSort.key}:${userSort.dir}`}
+                    onChange={(e) => {
+                      const [key, dir] = e.target.value.split(':');
+                      setUserSort({ key, dir: dir as 'asc' | 'desc' });
+                    }}
+                    style={{ padding: '8px 10px', fontSize: 13, border: '1px solid #e5e7eb', borderRadius: 8 }}
+                  >
+                    <option value="last_active:desc">최근 활동순</option>
+                    <option value="created_at:desc">최신 가입순</option>
+                    <option value="created_at:asc">오래된 가입순</option>
+                    <option value="actions_total:desc">활동 많은순</option>
+                    <option value="name:asc">이름순</option>
+                    <option value="push_state:asc">알림 상태순</option>
+                  </select>
                   <button className="adm-ghost" onClick={loadUsers} disabled={usersLoading}>
                     {usersLoading ? '불러오는 중…' : '새로고침'}
                   </button>
-                  <span style={{ color: '#6b7280', fontSize: 13 }}>{userRows.length}명</span>
+                  <span style={{ color: '#6b7280', fontSize: 13 }}>
+                    {visibleUserRows.length}명
+                    {visibleUserRows.length !== userRows.length && ` / 전체 ${userRows.length}명`}
+                  </span>
                 </div>
                 {usersErr && <div className="adm-err" style={{ marginBottom: 12 }}>{usersErr}</div>}
                 {usersLoading && userRows.length === 0 ? (
                   <div className="adm-empty">불러오는 중…</div>
-                ) : userRows.length === 0 ? (
-                  <div className="adm-card"><div className="adm-empty">사용자가 없습니다.</div></div>
+                ) : visibleUserRows.length === 0 ? (
+                  <div className="adm-card">
+                    <div className="adm-empty">
+                      {userRows.length === 0 ? '사용자가 없습니다.' : '조건에 맞는 사용자가 없습니다.'}
+                    </div>
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {groupSets(userRows).map((set, si) => (
+                    {groupSets(visibleUserRows).map((set, si) => (
                       <div key={set.group_id || `s${si}`} className="adm-card" style={{ padding: 12 }}>
                         {set.members.length > 1 && (
                           <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>👨‍👩‍👧 연동 세트 ({set.members.length}명)</div>
@@ -1457,7 +1569,23 @@ export default function Admin() {
                               {roleLabel(m.role)}
                             </span>
                             <b style={{ fontSize: 14, color: '#1a1a1a' }}>{m.name || '(이름 없음)'}</b>
-                            <span className="adm-meta">{m.is_kakao ? '카카오' : '구글/애플'}{m.birth_year ? ` · ${m.birth_year}년생` : ''}</span>
+                            {/* 알림 수신 상태 — 파킨온의 핵심 기능이라 이름 바로 옆에 둔다 */}
+                            <span
+                              className="adm-chip"
+                              title={pushState(m.push_state).desc}
+                              style={{ background: pushState(m.push_state).bg, color: pushState(m.push_state).color, fontWeight: 600 }}
+                            >
+                              {pushState(m.push_state).label}
+                            </span>
+                            {m.banned && (
+                              <span className="adm-chip" style={{ background: '#FEE2E2', color: '#b91c1c', fontWeight: 600 }}>차단됨</span>
+                            )}
+                            <span className="adm-meta">
+                              {m.is_kakao ? '카카오' : '구글/애플'}
+                              {m.birth_year ? ` · ${m.birth_year}년생` : ''}
+                              {m.language ? ` · ${m.language}` : ''}
+                              {m.created_at ? ` · 가입 ${fmtTime(m.created_at)}` : ''}
+                            </span>
                             <span className="adm-meta" style={{ marginLeft: 'auto' }}>
                               최근 활동 {m.last_active ? fmtTime(m.last_active) : '없음'}
                             </span>

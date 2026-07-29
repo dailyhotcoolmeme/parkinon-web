@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import ko from './ko.json';
 import en from './en.json';
+import fr from './fr.json';
+import ja from './ja.json';
 import { setCurrentLang } from './currentLang';
 
-export type Lang = 'ko' | 'en';
+export type Lang = 'ko' | 'en' | 'fr' | 'ja';
 
-const RESOURCES: Record<Lang, Record<string, string>> = { ko, en };
+const RESOURCES: Record<Lang, Record<string, string>> = { ko, en, fr, ja };
 const STORAGE_KEY = 'parkinon-web-lang';
 const FALLBACK_LANG: Lang = 'en';
 
@@ -21,17 +23,20 @@ function detectInitialLang(): Lang {
   //   영어 사용자에게 한국어 로딩 화면이 보인다(오너 제보 2026-07-27).
   try {
     const q = new URLSearchParams(window.location.search).get('lang');
-    if (q === 'ko' || q === 'en') {
+    if (q === 'ko' || q === 'en' || q === 'fr' || q === 'ja') {
       try { localStorage.setItem(STORAGE_KEY, q); } catch { /* 무시 */ }
       return q;
     }
   } catch { /* URL 파싱 불가 — 무시 */ }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'ko' || stored === 'en') return stored;
+    if (stored === 'ko' || stored === 'en' || stored === 'fr' || stored === 'ja') return stored;
   } catch { /* localStorage 접근 불가(사파리 프라이빗 등) — 무시 */ }
-  const nav = typeof navigator !== 'undefined' ? navigator.language : '';
-  return nav.toLowerCase().startsWith('ko') ? 'ko' : FALLBACK_LANG;
+  const nav = (typeof navigator !== 'undefined' ? navigator.language : '').toLowerCase();
+  if (nav.startsWith('ko')) return 'ko';
+  if (nav.startsWith('fr')) return 'fr';
+  if (nav.startsWith('ja')) return 'ja';
+  return FALLBACK_LANG;
 }
 
 interface LocaleCtx {
@@ -48,7 +53,11 @@ const LocaleContext = createContext<LocaleCtx | null>(null);
  */
 function applyDocTitle(l: Lang): void {
   try {
-    document.title = l === 'ko' ? '파킨온 - 기록 보기' : 'ParkinON — Records';
+    document.title =
+      l === 'ko' ? '파킨온 - 기록 보기'
+      : l === 'fr' ? 'ParkinON — Suivi'
+      : l === 'ja' ? 'ParkinON — 記録'
+      : 'ParkinON — Records';
   } catch { /* document 없음 — 무시 */ }
 }
 

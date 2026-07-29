@@ -15,6 +15,12 @@ export function getCurrentLang(): Lang {
   return current;
 }
 
+/**
+ * "한국어가 아닌가" — 이름과 달리 en 전용이 아니다.
+ * fr/ja 추가(2026-07-30) 때 `current === 'en'` 그대로면 프랑스어·일본어 사용자가
+ * 한국어 분기로 떨어져 한글이 노출된다. 이분법 호출부(약 120곳)의 의미는 전부
+ * "해외면 영어/현지 표기"이므로 non-ko 판정으로 뒤집는 것이 맞다.
+ */
 export function isEnLang(): boolean {
-  return current === 'en';
+  return current !== 'ko';
 }

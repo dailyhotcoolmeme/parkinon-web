@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export type ExchangeErrorCode = 'invalid' | 'expired' | 'used' | 'locked' | 'unknown';
 
 export type ExchangeResult =
-  | { ok: true; language: 'ko' | 'en' }
+  | { ok: true; language: 'ko' | 'en' | 'fr' | 'ja' }
   | { ok: false; code: ExchangeErrorCode };
 
 /**
@@ -32,7 +32,10 @@ export async function exchangeWebToken(code: string): Promise<ExchangeResult> {
     const { error: setErr } = await supabase.auth.setSession({ access_token, refresh_token });
     if (setErr) return { ok: false, code: 'unknown' };
 
-    const language = (data as { language?: string } | null)?.language === 'en' ? 'en' : 'ko';
+    // ko/en 이분법이면 fr/ja 계정이 한국어로 떨어진다 — 지원 언어는 그대로, 모르는 값만 en.
+    const raw = (data as { language?: string } | null)?.language ?? 'ko';
+    const language = (['ko', 'en', 'fr', 'ja'] as const).includes(raw as never)
+      ? (raw as 'ko' | 'en' | 'fr' | 'ja') : 'en';
     return { ok: true, language };
   } catch {
     return { ok: false, code: 'unknown' };

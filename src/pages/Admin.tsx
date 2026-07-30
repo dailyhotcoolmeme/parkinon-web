@@ -498,7 +498,9 @@ export default function Admin() {
   const [apNewType, setApNewType] = useState('info');
   const [apNewSaving, setApNewSaving] = useState(false);
   // 운영자 표시 이름 — 실제 계정명(가족용 실명) 대신 이 이름으로 글·댓글이 나간다.
-  const [apOperatorName, setApOperatorName] = useState('파킨온 운영자');
+  const [apOperatorName, setApOperatorName] = useState('운영자');
+  // 대댓글 대상 — { 게시글id: 부모 댓글id }. 없으면 일반 댓글로 등록된다.
+  const [apReplyTo, setApReplyTo] = useState<Record<string, { id: string; author: string } | null>>({});
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -712,10 +714,14 @@ export default function Admin() {
     }
   }, [apQuery, logout]);
 
-  /** 운영자 이름으로 댓글 작성. 실제 계정과 무관한 표시 이름이 붙는다. */
-  async function submitOperatorComment(postId: string, parentId?: string | null) {
+  /**
+   * 운영자 이름으로 댓글 작성. 실제 계정과 무관한 표시 이름이 붙는다.
+   * 대댓글 대상이 지정돼 있으면 그 댓글의 답글로 등록된다.
+   */
+  async function submitOperatorComment(postId: string) {
     const text = (apCommentText[postId] || '').trim();
     if (!text) return;
+    const parentId = apReplyTo[postId]?.id ?? null;
     if (!apOperatorName.trim()) {
       window.alert('운영자 표시 이름을 입력해주세요.');
       return;
@@ -728,7 +734,7 @@ export default function Admin() {
           post_id: postId,
           content: text,
           author_name: apOperatorName.trim(),
-          parent_id: parentId ?? null,
+          parent_id: parentId,
         }),
       });
       if (res.status === 401) { logout(); return; }
@@ -743,6 +749,7 @@ export default function Admin() {
         ),
       );
       setApCommentText((prev) => ({ ...prev, [postId]: '' }));
+      setApReplyTo((prev) => ({ ...prev, [postId]: null }));
     } catch (e) {
       window.alert(String(e instanceof Error ? e.message : e));
     } finally {
@@ -1654,26 +1661,70 @@ export default function Admin() {
                                       {c.hidden ? ' · 숨김' : ''}
                                     </div>
                                     <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{c.content}</div>
+                                    <button
+                                      className="adm-ghost"
+                                      style={{ marginTop: 6, padding: '2px 10px', fontSize: 12 }}
+                                      onClick={() =>
+                                        setApReplyTo((prev) => ({
+                                          ...prev,
+                                          // 앱 댓글은 2단(댓글 → 대댓글)이라, 대댓글에 답하면
+                                          // 그 부모 댓글에 달아 같은 묶음으로 보이게 한다.
+                                          [p.id]: {
+                                            id: c.parent_id || c.id,
+                                            author: c.author_name_override || c.author?.name || '알 수 없음',
+                                          },
+                                        }))
+                                      }
+                                    >
+                                      답글
+                                    </button>
                                   </div>
                                 ))}
                             </div>
                           )}
 
                           {/* 운영자 댓글 달기 */}
+                          {apReplyTo[p.id] && (
+                            <div
+                              style={{
+                                marginTop: 10,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                background: '#eef6ff',
+                                borderRadius: 8,
+                                padding: '6px 10px',
+                                fontSize: 13,
+                              }}
+                            >
+                              <span><b>{apReplyTo[p.id]!.author}</b> 님에게 답글 다는 중</span>
+                              <button
+                                className="adm-ghost"
+                                style={{ padding: '2px 10px', fontSize: 12 }}
+                                onClick={() => setApReplyTo((prev) => ({ ...prev, [p.id]: null }))}
+                              >
+                                취소
+                              </button>
+                            </div>
+                          )}
                           <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
                             <input
                               className="adm-input"
                               value={apCommentText[p.id] || ''}
                               onChange={(e) => setApCommentText((prev) => ({ ...prev, [p.id]: e.target.value }))}
                               onKeyDown={(e) => { if (e.key === 'Enter') submitOperatorComment(p.id); }}
-                              placeholder={`${apOperatorName || '운영자'} 이름으로 댓글 달기`}
+                              placeholder={
+                                apReplyTo[p.id]
+                                  ? `${apOperatorName || '운영자'} 이름으로 답글 달기`
+                                  : `${apOperatorName || '운영자'} 이름으로 댓글 달기`
+                              }
                               style={{ flex: 1 }}
                             />
                             <button
                               onClick={() => submitOperatorComment(p.id)}
                               disabled={apCommentBusy === p.id || !(apCommentText[p.id] || '').trim()}
                             >
-                              {apCommentBusy === p.id ? '등록 중…' : '댓글 등록'}
+                              {apCommentBusy === p.id ? '등록 중…' : apReplyTo[p.id] ? '답글 등록' : '댓글 등록'}
                             </button>
                           </div>
                         </div>

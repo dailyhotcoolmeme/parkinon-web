@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { isEnLang } from '../i18n/currentLang';
+import { tr } from '../i18n';
 
 /**
  * 앱(dose_slots / track_intervals / trigger_time_label)과 동일한 복용 슬롯·약효추적 간격 모델.
@@ -13,6 +13,8 @@ import { isEnLang } from '../i18n/currentLang';
  */
 
 export type DoseSlot = {
+  /** 'morning'|'lunch'|'dinner'|'bedtime' — 언어 무관 키. 표시명은 이 키로 만든다. */
+  legacyKey: string | null;
   id: string;
   label: string;
   /** "HH:MM" 형식 (정렬·표시용) */
@@ -47,26 +49,15 @@ export function parseTriggerMinutes(label: string | null | undefined): number | 
  *   0 → "복용 직후", <60 → "N분 후", 60의 배수 → "N시간 후", 그 외 → "N시간 M분 후"
  */
 export function formatIntervalLabel(minutes: number): string {
-  if (isEnLang()) {
-    if (minutes <= 0) return 'right after taking';
-    if (minutes < 60) return `${minutes} min after taking`;
-    const h = Math.floor(minutes / 60);
-    const rem = minutes % 60;
-    return rem === 0 ? `${h} hr after taking` : `${h} hr ${rem} min after taking`;
-  }
-  if (minutes <= 0) return '복용 직후';
-  if (minutes < 60) return `${minutes}분 후`;
   const h = Math.floor(minutes / 60);
   const rem = minutes % 60;
-  return rem === 0 ? `${h}시간 후` : `${h}시간 ${rem}분 후`;
+  if (minutes <= 0) return tr('interval.rightAfter');
+  if (minutes < 60) return tr('interval.minLater', { m: minutes });
+  return rem === 0 ? tr('interval.hourLater', { h }) : tr('interval.hourMinLater', { h, m: rem });
 }
 
 /** 표준 복용 라벨(시각이 라벨에 포함돼 있지 않은 것). 앱 slotTitle 로직과 동일. */
-const STANDARD_SLOT_LABELS = new Set(['아침', '점심', '저녁', '취침']);
-// 표준 라벨 표시명 영문화 — 앱(medUtils.ts EN_MEAL_PERIOD)과 동일 어휘로 통일.
-const EN_STANDARD_SLOT_LABELS: Record<string, string> = {
-  '아침': 'Morning', '점심': 'Lunch', '저녁': 'Dinner', '취침': 'Bedtime',
-};
+const STANDARD_SLOT_KEYS = new Set(['morning', 'lunch', 'dinner', 'bedtime']);
 
 /**
  * "HH:MM"(24시간) → 12시간제 "H:MM" (오전/오후 없이).
@@ -90,12 +81,26 @@ function formatClock12(time: string): string | null {
  * - 비표준 라벨(이미 시각 포함, 예 "오후 3:00","밤 10:30"): 라벨 그대로(시각 중복 방지).
  * - time 데이터가 없는 레거시 슬롯: 라벨만(시각 못 붙이면 폴백).
  */
-export function slotDisplayTitle(label: string | null | undefined, time?: string | null): string {
-  const raw = String(label ?? '').trim();
-  if (!STANDARD_SLOT_LABELS.has(raw)) return raw;
-  const display = isEnLang() ? (EN_STANDARD_SLOT_LABELS[raw] ?? raw) : raw;
+export function slotDisplayTitle(legacyKey: string | null | undefined, time?: string | null): string {
+  // DB 의 label(한글)은 비어 있다 — 표시명은 legacy_key 와 시각에서 만든다.
+  // (앱·서버와 같은 규칙: 시스템 표시값은 키로 저장하고 표시명은 번역에서 꺼낸다.)
+  const key = String(legacyKey ?? '').trim();
   const clock = formatClock12(time ?? '');
+  const display = STANDARD_SLOT_KEYS.has(key) ? tr(`slot.${key}`) : periodWord(time ?? '');
+  if (!display) return clock ?? '';
   return clock ? `${display} ${clock}` : display;
+}
+
+/** 시각 → 시간대 단어(비표준 슬롯의 자동 이름). 앱 periodWord 와 같은 구간. */
+function periodWord(time: string): string {
+  const h = parseInt(String(time).split(':')[0] ?? '', 10);
+  if (Number.isNaN(h)) return '';
+  if (h < 6) return tr('period.dawn');
+  if (h < 11) return tr('period.morning');
+  if (h < 13) return tr('period.midday');
+  if (h < 17) return tr('period.afternoon');
+  if (h < 21) return tr('period.evening');
+  return tr('period.night');
 }
 
 /** "HH:MM:SS" / "HH:MM" / Date → "HH:MM" */
@@ -118,13 +123,14 @@ function timeToMinutes(t: string): number {
 export async function fetchDoseSlots(patientId: string): Promise<DoseSlot[]> {
   const { data } = await supabase
     .from('dose_slots')
-    .select('id, label, time, track_intervals, track_enabled, is_active, sort_order')
+    .select('id, label, legacy_key, time, track_intervals, track_enabled, is_active, sort_order')
     .eq('patient_id', patientId);
   const slots = ((data ?? []) as any[])
     .filter((r) => r.is_active !== false)
     .map((r): DoseSlot => ({
       id: r.id,
       label: r.label ?? '',
+      legacyKey: r.legacy_key ?? null,
       time: normalizeTime(r.time),
       trackIntervals: Array.isArray(r.track_intervals)
         ? r.track_intervals.map((n: any) => Number(n)).filter((n: number) => !Number.isNaN(n))

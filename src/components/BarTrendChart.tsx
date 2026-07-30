@@ -2,9 +2,9 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from 'recharts';
 import { useMemo, useRef, useState, useEffect } from 'react';
+import { tr } from '../i18n';
 import { useRange } from '../context/RangeContext';
 import type { MedChange } from '../lib/queries';
-import { isEnLang } from '../i18n/currentLang';
 
 /** 5색 팔레트 (점수 1~5) */
 export const SCORE_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -15,23 +15,15 @@ export const SCORE_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
   5: '#4CAF50', // 진녹색
 };
 
-const SCORE_LABEL_KO: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: '매우나쁨',
-  2: '나쁨',
-  3: '보통',
-  4: '좋음',
-  5: '매우좋음',
-};
-const SCORE_LABEL_EN: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: 'Very bad',
-  2: 'Not great',
-  3: 'Okay',
-  4: 'Good',
-  5: 'Very good',
+const SCORE_LABEL_KEYS: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: 'score.veryBad', 2: 'score.bad', 3: 'score.normal', 4: 'score.good', 5: 'score.veryGood',
 };
 /** 함수형 getter — lang 변경 시(모듈 상수와 달리) 항상 최신 로케일 값을 반환. */
 export function getScoreLabel(): Record<1 | 2 | 3 | 4 | 5, string> {
-  return isEnLang() ? SCORE_LABEL_EN : SCORE_LABEL_KO;
+  return {
+    1: tr(SCORE_LABEL_KEYS[1]), 2: tr(SCORE_LABEL_KEYS[2]), 3: tr(SCORE_LABEL_KEYS[3]),
+    4: tr(SCORE_LABEL_KEYS[4]), 5: tr(SCORE_LABEL_KEYS[5]),
+  };
 }
 
 type SingleSeries = { key: string; name: string; color: string };
@@ -240,11 +232,11 @@ export default function BarTrendChart(props: Props) {
           />
           {props.mode === 'score5stack' && (
             <>
-              <Bar dataKey="c1" stackId="s" name={isEnLang() ? '1 pt' : '1점'} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-              <Bar dataKey="c2" stackId="s" name={isEnLang() ? '2 pt' : '2점'} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-              <Bar dataKey="c3" stackId="s" name={isEnLang() ? '3 pt' : '3점'} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-              <Bar dataKey="c4" stackId="s" name={isEnLang() ? '4 pt' : '4점'} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
-              <Bar dataKey="c5" stackId="s" name={isEnLang() ? '5 pt' : '5점'} fill="#C8E6C9" barSize={10} radius={radius}      isAnimationActive={false} />
+              <Bar dataKey="c1" stackId="s" name={tr('score.point', { n: 1 })} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="c2" stackId="s" name={tr('score.point', { n: 2 })} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="c3" stackId="s" name={tr('score.point', { n: 3 })} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="c4" stackId="s" name={tr('score.point', { n: 4 })} fill="#C8E6C9" barSize={10} radius={[0, 0, 0, 0]} isAnimationActive={false} />
+              <Bar dataKey="c5" stackId="s" name={tr('score.point', { n: 5 })} fill="#C8E6C9" barSize={10} radius={radius}      isAnimationActive={false} />
             </>
           )}
 
@@ -264,7 +256,7 @@ export default function BarTrendChart(props: Props) {
               <Bar
                 dataKey={props.yesKey}
                 stackId="b"
-                name={props.yesName ?? (isEnLang() ? 'Days with BM' : '변 본 날')}
+                name={props.yesName ?? tr('bowel.yes')}
                 fill={props.yesColor ?? '#4CAF50'}
                 barSize={10}
                 radius={[0, 0, 0, 0]}
@@ -273,7 +265,7 @@ export default function BarTrendChart(props: Props) {
               <Bar
                 dataKey={props.noKey}
                 stackId="b"
-                name={props.noName ?? (isEnLang() ? 'Days without' : '안 본 날')}
+                name={props.noName ?? tr('bowel.no')}
                 fill={props.noColor ?? '#cfd8dc'}
                 barSize={10}
                 radius={radius}
@@ -286,7 +278,7 @@ export default function BarTrendChart(props: Props) {
             <Line
               type="linear"
               dataKey="__trend"
-              name={isEnLang() ? 'Trend' : '추세'}
+              name={tr('chart.trend')}
               stroke="#555"
               strokeDasharray="5 5"
               strokeWidth={1.5}
@@ -327,7 +319,7 @@ export default function BarTrendChart(props: Props) {
             pointerEvents: 'none',
           }}
         >
-          {isEnLang() ? 'No records' : '기록이 없습니다'}
+          {tr('chart.noRecords')}
         </div>
       )}
     </div>
@@ -337,7 +329,7 @@ export default function BarTrendChart(props: Props) {
         background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: 8,
         fontSize: 14, color: '#7c2d12', lineHeight: 1.7,
       }}>
-        <div style={{ fontWeight: 700, marginBottom: 4, color: '#9a3412' }}>{isEnLang() ? 'Medication changes' : '약 변경 기록'}</div>
+        <div style={{ fontWeight: 700, marginBottom: 4, color: '#9a3412' }}>{tr('chart.medChange')}</div>
         {[...(refLines ?? [])].sort((a, b) => a.date.localeCompare(b.date)).map((r, i) => {
           const n = i + 1;
           const badge = n <= 20 ? String.fromCharCode(0x2460 + n - 1) : `(${n})`;

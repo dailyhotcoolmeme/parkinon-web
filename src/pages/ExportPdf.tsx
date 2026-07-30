@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { isEnLang } from '../i18n/currentLang';
 import { useRange } from '../context/RangeContext';
 import { usePatientId } from '../lib/usePatientId';
 import {
@@ -31,7 +30,7 @@ import { ChartCapture, type AnyCaptureSpec } from '../pdf/ChartCapture';
 import type { PdfChartSpec } from '../pdf/PdfPrintChart';
 import { MEASUREMENT_FEATURE_ENABLED } from '../lib/featureFlags';
 import BrandProgressOverlay, { type ProgressStep } from '../components/BrandProgressOverlay';
-import { useT } from '../i18n';
+import { useT, tr } from '../i18n';
 
 // 컨디션 측정 기능 숨김 시(출시 전) PDF 내보내기 체크리스트에서도 측정 항목 제외.
 const SECTION_KEYS = MEASUREMENT_FEATURE_ENABLED
@@ -334,7 +333,7 @@ export default function ExportPdf() {
           },
           {
             key: 'exercise', data: exercise, valueKey: 'minutes',
-            color: '#4CAF50', yDomain: [0, 180], yTicks: [0, 30, 60, 90, 120, 150, 180], yUnit: isEnLang() ? 'min' : '분',
+            color: '#4CAF50', yDomain: [0, 180], yTicks: [0, 30, 60, 90, 120, 150, 180], yUnit: tr('unit.minutes'),
             showTrendline,
           },
         ];
@@ -347,7 +346,7 @@ export default function ExportPdf() {
             data: tapData,
             color: '#F57C00', // 화면 SymptomDetail 의 탭핑 막대 색과 동일
             yDomain: [0, tapDomainMax],
-            yUnit: isEnLang() ? 'taps' : '회',
+            yUnit: tr('unit.times'),
           });
         }
         if (rtHasAny) {

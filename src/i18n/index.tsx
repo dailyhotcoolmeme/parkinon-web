@@ -3,7 +3,7 @@ import ko from './ko.json';
 import en from './en.json';
 import fr from './fr.json';
 import ja from './ja.json';
-import { setCurrentLang } from './currentLang';
+import { setCurrentLang, getCurrentLang } from './currentLang';
 
 export type Lang = 'ko' | 'en' | 'fr' | 'ja';
 
@@ -54,7 +54,7 @@ const LocaleContext = createContext<LocaleCtx | null>(null);
 function applyDocTitle(l: Lang): void {
   try {
     document.title =
-      l === 'ko' ? '파킨온 - 기록 보기'
+      l === 'ko' ? RESOURCES.ko['docTitle']
       : l === 'fr' ? 'ParkinON — Suivi'
       : l === 'ja' ? 'ParkinON — 記録'
       : 'ParkinON — Records';
@@ -93,4 +93,19 @@ export function useT() {
   const ctx = useContext(LocaleContext);
   if (!ctx) throw new Error('useT must be used inside LocaleProvider');
   return ctx;
+}
+
+/**
+ * React 밖(lib/*.ts 등)에서 쓰는 번역 함수. 컴포넌트 안에서는 useT() 를 쓴다.
+ * 앱(parkinon-app)의 i18n.t 전역 사용과 같은 목적 — 순수 함수도 번역이 필요하다.
+ */
+export function tr(key: string, params?: Record<string, string | number>): string {
+  const dict = RESOURCES[getCurrentLang()] ?? RESOURCES[FALLBACK_LANG];
+  let str = dict[key] ?? RESOURCES[FALLBACK_LANG][key] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      str = str.replace(new RegExp(`\\{\\{${k}\\}\\}`, 'g'), String(v));
+    }
+  }
+  return str;
 }

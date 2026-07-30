@@ -1,16 +1,14 @@
 import { Document, Page, View, Text, StyleSheet, Font, Svg, Rect, Image, Text as SvgText } from '@react-pdf/renderer';
+import { tr } from '../i18n';
 import dayjs from 'dayjs';
 import type { ScoreCounts, MedChange } from '../lib/queries';
-import { isEnLang } from '../i18n/currentLang';
 
 /**
  * @react-pdf/renderer는 pdf(<RecordsPdf/>).toBlob()으로 메인 ReactDOM 트리 밖에서
  * 별도 렌더러로 그려지므로 React Context(useT)에 접근할 수 없다. 대신 다른 순수 함수들
  * (lib/queries.ts 등)과 동일하게 currentLang 전역 읽기(isEnLang)로 로케일을 판정한다.
  */
-function pdfT(ko: string, en: string): string {
-  return isEnLang() ? en : ko;
-}
+
 
 /** 동적 간격(track_interval) 1개의 PDF 메타: 차트 캡처 키 + 제목 + 점수 카운트 합산 */
 export type PdfIntervalSpec = { key: string; title: string; counts: ScoreCounts };
@@ -210,22 +208,11 @@ const styles = StyleSheet.create({
   },
 });
 
-const SCORE_LABEL_KO: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: '매우나쁨',
-  2: '나쁨',
-  3: '보통',
-  4: '좋음',
-  5: '매우좋음',
-};
-const SCORE_LABEL_EN: Record<1 | 2 | 3 | 4 | 5, string> = {
-  1: 'Very bad',
-  2: 'Not great',
-  3: 'Okay',
-  4: 'Good',
-  5: 'Very good',
+const SCORE_LABEL_KEYS: Record<1 | 2 | 3 | 4 | 5, string> = {
+  1: 'score.veryBad', 2: 'score.bad', 3: 'score.normal', 4: 'score.good', 5: 'score.veryGood',
 };
 const SCORE_LABEL: Record<1 | 2 | 3 | 4 | 5, string> = new Proxy({} as Record<1 | 2 | 3 | 4 | 5, string>, {
-  get: (_target, key) => (isEnLang() ? SCORE_LABEL_EN : SCORE_LABEL_KO)[Number(key) as 1 | 2 | 3 | 4 | 5],
+  get: (_target, key) => tr(SCORE_LABEL_KEYS[Number(key) as 1 | 2 | 3 | 4 | 5]),
 });
 
 /**
@@ -245,27 +232,18 @@ export const PDF_SECTION_ORDER: PdfSectionKey[] = [
   'medication', 'body', 'mood', 'measurement', 'sleep', 'constipation', 'exercise',
 ];
 
-const PDF_SECTION_LABELS_KO: Record<PdfSectionKey, string> = {
-  medication: '약 복용률 (%)',
-  body: '몸 상태 — 복용 직후 / 30분 후 / 2시간 후 (ON/OFF 요약 포함)',
-  mood: '기분 — 복용 직후 / 30분 후 / 2시간 후 (ON/OFF 요약 포함)',
-  measurement: '컨디션 측정 (손가락·반응속도)',
-  sleep: '취침 상태',
-  constipation: '변비',
-  exercise: '운동',
-};
-const PDF_SECTION_LABELS_EN: Record<PdfSectionKey, string> = {
-  medication: 'Medication Rate (%)',
-  body: 'Body State — right after / 30 min / 2 hr after taking (incl. ON/OFF summary)',
-  mood: 'Mood — right after / 30 min / 2 hr after taking (incl. ON/OFF summary)',
-  measurement: 'Condition Measurement (tapping, reaction speed)',
-  sleep: 'Sleep',
-  constipation: 'Constipation',
-  exercise: 'Exercise',
+const PDF_SECTION_LABEL_KEYS: Record<PdfSectionKey, string> = {
+  medication: 'pdfSection.medication',
+  body: 'pdfSection.body',
+  mood: 'pdfSection.mood',
+  measurement: 'pdfSection.measurement',
+  sleep: 'pdfSection.sleep',
+  constipation: 'pdfSection.constipation',
+  exercise: 'pdfSection.exercise',
 };
 /** ExportPdf.tsx 체크리스트에서 PDF_SECTION_LABELS[k] 형태로 매번 최신 로케일 값을 읽도록 함수로 노출. */
 export const PDF_SECTION_LABELS: Record<PdfSectionKey, string> = new Proxy({} as Record<PdfSectionKey, string>, {
-  get: (_target, key) => (isEnLang() ? PDF_SECTION_LABELS_EN : PDF_SECTION_LABELS_KO)[key as PdfSectionKey],
+  get: (_target, key) => tr(PDF_SECTION_LABEL_KEYS[key as PdfSectionKey]),
 });
 
 /**
@@ -335,7 +313,7 @@ function ScoreLegend() {
 function Footer({ name, range }: { name: string; range: string }) {
   return (
     <View style={styles.footer} fixed>
-      <Text>{`${pdfT('파킨온', 'ParkinON')} · ${name || '-'} · ${range}`}</Text>
+      <Text>{`${tr('pdf.parkinon')} · ${name || '-'} · ${range}`}</Text>
       <Text render={({ pageNumber, totalPages }) => `${pageNumber}/${totalPages}`} />
     </View>
   );
@@ -346,7 +324,7 @@ function ChartImage({ src }: { src?: string }) {
   if (!src) {
     return (
       <View style={{ width: '100%', height: 120, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{pdfT('기록이 없습니다', 'No records')}</Text>
+        <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{tr('pdf.noRecords')}</Text>
       </View>
     );
   }
@@ -428,7 +406,7 @@ function RatioBar({ counts }: { counts: ScoreCounts }) {
 function SlotOnOffSummary({ counts }: { counts: ScoreCounts }) {
   const total = counts.c1 + counts.c2 + counts.c3 + counts.c4 + counts.c5;
   if (total === 0) {
-    return <Text style={{ fontSize: 11, color: '#999999', marginBottom: 8 }}>{pdfT('기록 없음', 'No records')}</Text>;
+    return <Text style={{ fontSize: 11, color: '#999999', marginBottom: 8 }}>{tr('pdf.noRecords2')}</Text>;
   }
   const onPct = Math.round(((counts.c4 + counts.c5) / total) * 100);
   const offPct = Math.round(((counts.c1 + counts.c2) / total) * 100);
@@ -436,14 +414,14 @@ function SlotOnOffSummary({ counts }: { counts: ScoreCounts }) {
     <View style={styles.onoffRow}>
       <View style={styles.onoffCol}>
         <Text style={[styles.onoffBig, { color: SCORE_COLORS[5], backgroundColor: '#E8F5E9', paddingVertical: 2, paddingHorizontal: 6, borderRadius: 4 }]}>{`ON ${onPct}%`}</Text>
-        <Text style={styles.onoffSub}>{pdfT('4점 이상 기록 비율', 'Share of records scored 4+')}</Text>
+        <Text style={styles.onoffSub}>{tr('pdf.shareOfRecordsScored4')}</Text>
       </View>
       <View style={styles.onoffCol}>
         <Text style={[styles.onoffBig, { color: SCORE_COLORS[1], backgroundColor: '#FBEAEC', paddingVertical: 2, paddingHorizontal: 6, borderRadius: 4 }]}>{`OFF ${offPct}%`}</Text>
-        <Text style={styles.onoffSub}>{pdfT('2점 이하 기록 비율', 'Share of records scored 2 or less')}</Text>
+        <Text style={styles.onoffSub}>{tr('pdf.shareOfRecordsScored2OrLess')}</Text>
       </View>
       <View style={styles.onoffCol}>
-        <Text style={[styles.onoffBig, { color: '#888888' }]}>{pdfT(`총 ${total}건`, `${total} total`)}</Text>
+        <Text style={[styles.onoffBig, { color: '#888888' }]}>{tr('pdf.totalCount', { n: total })}</Text>
       </View>
     </View>
   );
@@ -468,19 +446,19 @@ export function RecordsPdf(props: RecordsPdfProps) {
       {/* ===== 표지 ===== */}
       <Page size="A4" orientation="landscape" style={styles.coverPage}>
         <View style={styles.coverBrandBar} />
-        <Text style={styles.coverTitle}>{pdfT('파킨온', 'ParkinON')}</Text>
-        <Text style={styles.coverSubtitle}>{pdfT('기록 리포트 · Records Report', 'Records Report')}</Text>
+        <Text style={styles.coverTitle}>{tr('pdf.parkinon')}</Text>
+        <Text style={styles.coverSubtitle}>{tr('pdf.recordsReport')}</Text>
 
         <View style={styles.coverRow}>
-          <Text style={styles.coverLabel}>{pdfT('이름', 'Name')}</Text>
+          <Text style={styles.coverLabel}>{tr('pdf.name')}</Text>
           <Text style={styles.coverValue}>{name || '-'}</Text>
         </View>
         <View style={styles.coverRow}>
-          <Text style={styles.coverLabel}>{pdfT('기간', 'Period')}</Text>
+          <Text style={styles.coverLabel}>{tr('pdf.period')}</Text>
           <Text style={styles.coverValue}>{rangeStr}</Text>
         </View>
         <View style={styles.coverRow}>
-          <Text style={styles.coverLabel}>{pdfT('생성일', 'Generated')}</Text>
+          <Text style={styles.coverLabel}>{tr('pdf.generated')}</Text>
           <Text style={styles.coverValue}>{generatedAt}</Text>
         </View>
 
@@ -490,8 +468,8 @@ export function RecordsPdf(props: RecordsPdfProps) {
       {/* ===== 요약 (화면 RangePicker "요약" 과 동일 라벨/값) ===== */}
       {averages && averages.length > 0 && (
         <Page size="A4" orientation="landscape" style={styles.page}>
-          <Text style={styles.pageTitle}>{pdfT('요약', 'Summary')}</Text>
-          <Text style={styles.pageSubtitle}>{pdfT(`${rangeStr} 기간 전체 요약`, `Overall summary for ${rangeStr}`)}</Text>
+          <Text style={styles.pageTitle}>{tr('pdf.summary')}</Text>
+          <Text style={styles.pageSubtitle}>{tr('pdf.rangeSummary', { range: rangeStr })}</Text>
           <View style={styles.summaryGrid}>
             {averages.map((a) => (
               <View key={a.label} style={styles.avgPill}>
@@ -507,8 +485,8 @@ export function RecordsPdf(props: RecordsPdfProps) {
       {/* ===== 약 복용률 (전체 + 복용 시점별 동적 슬롯) ===== */}
       {show('medication') && (
         <ChartPage
-          title={pdfT('약 복용률 (%)', 'Medication Rate (%)')}
-          subtitle={pdfT('일별 복용률 · 점선 마커는 약 변경 기록', 'Daily adherence rate · dashed markers show medication changes')}
+          title={tr('pdf.medicationRate')}
+          subtitle={tr('pdf.dailyAdherenceRateDashedMarkersShowMedic')}
           name={name}
           rangeStr={rangeStr}
         >
@@ -518,7 +496,7 @@ export function RecordsPdf(props: RecordsPdfProps) {
       {show('medication') && medSlots.map((s) => (
         <ChartPage
           key={s.key}
-          title={pdfT(`약 복용률: ${s.title} (%)`, `Medication Rate: ${s.title} (%)`)}
+          title={tr('pdf.adherenceForSlot', { slot: s.title })}
           name={name}
           rangeStr={rangeStr}
         >
@@ -564,7 +542,7 @@ export function RecordsPdf(props: RecordsPdfProps) {
 
       {/* ===== 취침 상태 ===== */}
       {show('sleep') && (
-        <ChartPage title={pdfT('취침 상태 (1~5점)', 'Sleep (1-5 pts)')} name={name} rangeStr={rangeStr}>
+        <ChartPage title={tr('pdf.sleep15Pts')} name={name} rangeStr={rangeStr}>
           <ChartImage src={chartImages.sleep} />
         </ChartPage>
       )}
@@ -572,21 +550,21 @@ export function RecordsPdf(props: RecordsPdfProps) {
       {/* ===== 변비 (화면 ConstipationLegend 의 평균 주기 동봉) ===== */}
       {show('constipation') && (
         <Page size="A4" orientation="landscape" style={styles.page}>
-          <Text style={styles.pageTitle}>{pdfT('변비 (변 본 날 / 안 본 날)', 'Constipation (bowel movement / none)')}</Text>
-          <Text style={styles.pageSubtitle}>{pdfT('2 = 변 본 날, 1 = 안 본 날', '2 = bowel movement, 1 = none')}</Text>
+          <Text style={styles.pageTitle}>{tr('pdf.constipationBowelMovementNone')}</Text>
+          <Text style={styles.pageSubtitle}>{tr('pdf.2BowelMovement1None')}</Text>
           <View style={styles.onoffRow}>
             <View style={styles.onoffCol}>
-              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{pdfT('변 본 날', 'Bowel movement')}</Text>
-              <Text style={styles.onoffSub}>{pdfT('막대 2점', 'Bar = 2 pts')}</Text>
+              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{tr('pdf.bowelMovement')}</Text>
+              <Text style={styles.onoffSub}>{tr('pdf.bar2Pts')}</Text>
             </View>
             <View style={styles.onoffCol}>
-              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{pdfT('안 본 날', 'No bowel movement')}</Text>
-              <Text style={styles.onoffSub}>{pdfT('막대 1점', 'Bar = 1 pt')}</Text>
+              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{tr('pdf.noBowelMovement')}</Text>
+              <Text style={styles.onoffSub}>{tr('pdf.bar1Pt')}</Text>
             </View>
             <View style={styles.onoffCol}>
-              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{pdfT('평균 주기', 'Avg. cycle')}</Text>
+              <Text style={[styles.onoffBig, { color: '#4CAF50' }]}>{tr('pdf.avgCycle')}</Text>
               <Text style={styles.onoffSub}>
-                {constipationAvgCycle != null ? pdfT(`${constipationAvgCycle.toFixed(1)}일`, `${constipationAvgCycle.toFixed(1)} days`) : '-'}
+                {constipationAvgCycle != null ? tr('pdf.daysUnit', { n: constipationAvgCycle.toFixed(1) }) : '-'}
               </Text>
             </View>
           </View>
@@ -599,7 +577,7 @@ export function RecordsPdf(props: RecordsPdfProps) {
 
       {/* ===== 운동 ===== */}
       {show('exercise') && (
-        <ChartPage title={pdfT('운동 (분)', 'Exercise (min)')} name={name} rangeStr={rangeStr}>
+        <ChartPage title={tr('pdf.exerciseMin')} name={name} rangeStr={rangeStr}>
           <ChartImage src={chartImages.exercise} />
         </ChartPage>
       )}
@@ -643,8 +621,8 @@ function SlotPage({
   const total = counts.c1 + counts.c2 + counts.c3 + counts.c4 + counts.c5;
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
-      <Text style={styles.pageTitle}>{pdfT(`${title} (1~5점)`, `${title} (1-5 pts)`)}</Text>
-      <Text style={styles.pageSubtitle}>{pdfT('화면과 동일한 약효 ON/OFF 요약 + 일별 점수 그래프', 'Same ON/OFF summary and daily score chart as the app')}</Text>
+      <Text style={styles.pageTitle}>{tr('pdf.scoreTitle', { title })}</Text>
+      <Text style={styles.pageSubtitle}>{tr('pdf.sameOnOffSummaryAndDailyScoreChartAsTheA')}</Text>
       <SlotOnOffSummary counts={counts} />
       {total > 0 && (
         // 좌측 정렬 + 폭은 범례(한 줄) 내용 폭에 맞춰 shrink.
@@ -691,7 +669,7 @@ function meanOfData(rows: { value: number | null }[]): number | null {
 function formatReactionMs(ms: number): string {
   const rounded = Math.round(ms);
   const seconds = (rounded / 1000).toFixed(2);
-  return `${seconds}초 (${rounded}ms)`;
+  return tr('pdf.reactionSeconds', { s: seconds, ms: rounded });
 }
 
 /**
@@ -728,8 +706,8 @@ function MeasurementCard({
   const mean = meanOfData(data);
   if (mean == null) return null; // 안전장치 — 호출부에서 0건 분기하나 한 번 더 가드
   const meanText = isReaction
-    ? `평균 ${formatReactionMs(mean)}`
-    : `평균 ${mean}회`;
+    ? tr('pdf.avgValue', { value: formatReactionMs(mean) })
+    : tr('pdf.avgTimes', { n: mean });
   return (
     <View>
       <Text style={[styles.pageTitle, { marginBottom: 6 }]}>{outerTitle}</Text>
@@ -762,7 +740,7 @@ function MeasurementPage({
     <Page size="A4" orientation="landscape" style={styles.page}>
       {hasTap && (
         <MeasurementCard
-          outerTitle="컨디션 측정: 손가락 두드리기"
+          outerTitle={tr('pdf.tapTitle')}
           data={measurement.tap!.data}
           isReaction={false}
           chartSrc={chartImages[MEASUREMENT_CHART_KEYS.tap]}
@@ -771,7 +749,7 @@ function MeasurementPage({
 
       {hasReaction && (
         <MeasurementCard
-          outerTitle="컨디션 측정: 반응속도"
+          outerTitle={tr('pdf.reactionTitle')}
           data={measurement.reaction!.data}
           isReaction={true}
           chartSrc={chartImages[MEASUREMENT_CHART_KEYS.reaction]}

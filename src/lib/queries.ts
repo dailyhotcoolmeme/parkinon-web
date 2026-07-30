@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
+import { tr } from '../i18n';
 import { supabase } from './supabase';
 import { eachDay } from './dateRange';
-import { isEnLang } from '../i18n/currentLang';
 
 // exercise_logs.exercise_type은 기록 당시 로케일로 "번역된 라벨 문자열"이 그대로 저장된다
 // (앱 constants/exerciseTypes.ts와 동일한 데이터 구조·동일한 이유). 알려진 사전 정의
@@ -18,27 +18,13 @@ const RAW_EXERCISE_TYPE_TO_ID: Record<string, string> = {
   '요가': 'yoga', 'Yoga': 'yoga',
   '조깅': 'jog', 'Jogging': 'jog',
 };
-const EXERCISE_ID_TO_LABEL: Record<string, { ko: string; en: string }> = {
-  walk: { ko: '걷기', en: 'Walking' },
-  strength: { ko: '근력', en: 'Strength' },
-  balance: { ko: '균형', en: 'Balance' },
-  stretch: { ko: '스트레칭', en: 'Stretching' },
-  bike: { ko: '자전거', en: 'Cycling' },
-  swim: { ko: '수영', en: 'Swimming' },
-  dance: { ko: '댄스', en: 'Dancing' },
-  boxing: { ko: '복싱', en: 'Boxing' },
-  yoga: { ko: '요가', en: 'Yoga' },
-  jog: { ko: '조깅', en: 'Jogging' },
-};
-export function translateRawExerciseType(
-  raw: string | null | undefined,
-  fallback: { ko: string; en: string } = { ko: '운동', en: 'Exercise' },
-): string {
+export function translateRawExerciseType(raw: string | null | undefined): string {
   const trimmed = (raw ?? '').trim();
-  if (!trimmed) return isEnLang() ? fallback.en : fallback.ko;
-  const id = RAW_EXERCISE_TYPE_TO_ID[trimmed];
-  if (!id) return trimmed; // 사전 정의 라벨이 아니면 커스텀 입력 — 그대로 표시
-  return isEnLang() ? EXERCISE_ID_TO_LABEL[id].en : EXERCISE_ID_TO_LABEL[id].ko;
+  if (!trimmed) return tr('exercise.generic');
+  // 저장값은 이제 'walk' 같은 키다. 옛 행(한글·영문 라벨)도 표에서 키로 되돌린다.
+  const id = RAW_EXERCISE_TYPE_TO_ID[trimmed] ?? (EXERCISE_TYPE_ORDER.includes(trimmed) ? trimmed : null);
+  if (!id) return trimmed; // 사전 정의가 아니면 사용자가 직접 쓴 운동명 — 그대로 표시
+  return tr(`exercise.${id}`);
 }
 /** 사전 정의 운동 종류 안정 id(회전문 정렬·그룹핑용). 커스텀 입력이면 null. */
 export function exerciseTypeId(raw: string | null | undefined): string | null {
@@ -49,7 +35,7 @@ export function exerciseTypeId(raw: string | null | undefined): string | null {
 export const EXERCISE_TYPE_ORDER: string[] = ['walk', 'strength', 'balance', 'stretch', 'bike', 'swim', 'dance', 'boxing', 'yoga', 'jog'];
 /** id → 현재 로케일 표시 라벨. */
 export function exerciseTypeLabel(id: string): string {
-  return isEnLang() ? EXERCISE_ID_TO_LABEL[id].en : EXERCISE_ID_TO_LABEL[id].ko;
+  return tr(`exercise.${id}`);
 }
 import {
   fetchDoseSlots, fetchTrackIntervals, parseTriggerMinutes, formatIntervalLabel,
@@ -592,7 +578,7 @@ export async function fetchExerciseByType(
   for (const row of (data ?? []) as any[]) {
     const day = dayjs(row.logged_at).format('YYYY-MM-DD');
     if (!days.includes(day)) continue;
-    const type = translateRawExerciseType(row.exercise_type?.toString(), { ko: '기타', en: 'Other' });
+    const type = translateRawExerciseType(row.exercise_type?.toString()) || tr('exercise.other');
     if (!byType[type]) byType[type] = {};
     byType[type][day] = (byType[type][day] ?? 0) + Number(row.duration_minutes ?? 0);
   }
@@ -868,7 +854,8 @@ export async function fetchMedicationAdherenceBySlot(
   };
   const slotKeyForMeal: Record<string, string | undefined> = {};
   for (const s of slots) {
-    const mk = normalizeMeal(s.label);
+    // DB 의 label(한글)은 비어 있다 — 언어 무관 키로 맞춘다.
+    const mk = normalizeMeal(s.legacyKey);
     if (mk && !slotKeyForMeal[mk]) slotKeyForMeal[mk] = s.id;
   }
 
@@ -913,8 +900,8 @@ export async function fetchMedicationAdherenceBySlot(
   }
 
   // 표시 라벨은 "{시간대} {시각}"으로 통일(slotDisplayTitle). 매칭용 raw label 은 위 로직에서만 사용.
-  const slotMeta = slots.map((s) => ({ key: s.id, label: slotDisplayTitle(s.label, s.time), time: s.time }));
-  if (legacyHas) slotMeta.push({ key: '__legacy__', label: isEnLang() ? 'Other (past records)' : '기타(이전 기록)', time: '99:99' });
+  const slotMeta = slots.map((s) => ({ key: s.id, label: slotDisplayTitle(s.legacyKey, s.time), time: s.time }));
+  if (legacyHas) slotMeta.push({ key: '__legacy__', label: tr('slot.legacyOther'), time: '99:99' });
 
   return { slots: slotMeta, bySlot };
 }
@@ -995,10 +982,10 @@ export function intervalKey(field: 'body' | 'mood', minutes: number): string {
   return `${field}|${minutes}`;
 }
 export function intervalLabelFull(field: 'body' | 'mood', minutes: number): string {
-  const prefix = isEnLang()
-    ? (field === 'body' ? 'Body State' : 'Mood')
-    : (field === 'body' ? '몸 상태' : '기분 상태');
-  return `${prefix}: ${formatIntervalLabel(minutes)}`;
+  return tr('field.withInterval', {
+    field: tr(field === 'body' ? 'field.bodyState' : 'field.mood'),
+    interval: formatIntervalLabel(minutes),
+  });
 }
 
 export async function fetchSymptomIntervalsDynamic(
@@ -1109,10 +1096,10 @@ export async function fetchMedicationChanges(patientId: string, from: string, to
   const out: MedChange[] = [];
   for (const m of (data ?? []) as any[]) {
     if (m.created_at && m.created_at >= fromIso && m.created_at <= toIso) {
-      out.push({ date: dayjs(m.created_at).format('YYYY-MM-DD'), label: isEnLang() ? `${m.name} added` : `${m.name} 추가` });
+      out.push({ date: dayjs(m.created_at).format('YYYY-MM-DD'), label: tr('med.added', { name: m.name }) });
     }
     if (m.ended_at && m.ended_at >= fromIso && m.ended_at <= toIso) {
-      out.push({ date: dayjs(m.ended_at).format('YYYY-MM-DD'), label: isEnLang() ? `${m.name} stopped` : `${m.name} 중단` });
+      out.push({ date: dayjs(m.ended_at).format('YYYY-MM-DD'), label: tr('med.stopped', { name: m.name }) });
     }
   }
   return out;

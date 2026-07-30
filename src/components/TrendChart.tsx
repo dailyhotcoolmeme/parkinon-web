@@ -2,8 +2,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Brush, ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import { useMemo, useState } from 'react';
+import { tr } from '../i18n';
 import { useRange } from '../context/RangeContext';
-import { isEnLang } from '../i18n/currentLang';
 import type { MedChange } from '../lib/queries';
 
 export type Series = {
@@ -98,7 +98,7 @@ export default function TrendChart({ data, series, yDomain, yUnit, refLines, hei
                 key={`trend-${s.key}`}
                 type="linear"
                 dataKey={`__trend_${s.key}`}
-                name={isEnLang() ? `${s.name} trend` : `${s.name} 추세`}
+                name={tr('chart.namedTrend', { name: s.name })}
                 stroke={s.color}
                 strokeDasharray="5 5"
                 strokeWidth={1.5}

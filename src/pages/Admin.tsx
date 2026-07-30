@@ -488,6 +488,17 @@ export default function Admin() {
   const [apEditTitle, setApEditTitle] = useState('');
   const [apEditContent, setApEditContent] = useState('');
   const [apEditSaving, setApEditSaving] = useState(false);
+  // 운영자 댓글 — 글마다 입력칸을 따로 두므로 게시글 id 를 키로 잡는다.
+  const [apCommentText, setApCommentText] = useState<Record<string, string>>({});
+  const [apCommentBusy, setApCommentBusy] = useState<string | null>(null);
+  // 운영자 글쓰기(일반 게시글)
+  const [apNewOpen, setApNewOpen] = useState(false);
+  const [apNewTitle, setApNewTitle] = useState('');
+  const [apNewContent, setApNewContent] = useState('');
+  const [apNewType, setApNewType] = useState('info');
+  const [apNewSaving, setApNewSaving] = useState(false);
+  // 운영자 표시 이름 — 실제 계정명(가족용 실명) 대신 이 이름으로 글·댓글이 나간다.
+  const [apOperatorName, setApOperatorName] = useState('파킨온 운영자');
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -700,6 +711,79 @@ export default function Admin() {
       setApLoading(false);
     }
   }, [apQuery, logout]);
+
+  /** 운영자 이름으로 댓글 작성. 실제 계정과 무관한 표시 이름이 붙는다. */
+  async function submitOperatorComment(postId: string, parentId?: string | null) {
+    const text = (apCommentText[postId] || '').trim();
+    if (!text) return;
+    if (!apOperatorName.trim()) {
+      window.alert('운영자 표시 이름을 입력해주세요.');
+      return;
+    }
+    setApCommentBusy(postId);
+    try {
+      const res = await api('/api/admin/comments', {
+        method: 'POST',
+        body: JSON.stringify({
+          post_id: postId,
+          content: text,
+          author_name: apOperatorName.trim(),
+          parent_id: parentId ?? null,
+        }),
+      });
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      // 목록에 바로 반영(재조회 없이) — 서버가 돌려준 행을 그대로 붙인다.
+      setApRows((prev) =>
+        prev.map((r) =>
+          r.id === postId
+            ? { ...r, comments: [...(r.comments || []), body.data], comment_count: (r.comment_count ?? 0) + 1 }
+            : r,
+        ),
+      );
+      setApCommentText((prev) => ({ ...prev, [postId]: '' }));
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApCommentBusy(null);
+    }
+  }
+
+  /** 운영자 이름으로 일반 게시글 작성(공지 아님 — 피드에 사용자 글과 같이 노출). */
+  async function submitOperatorPost() {
+    if (!apNewTitle.trim() || !apNewContent.trim()) {
+      window.alert('제목과 본문을 모두 입력해주세요.');
+      return;
+    }
+    if (!apOperatorName.trim()) {
+      window.alert('운영자 표시 이름을 입력해주세요.');
+      return;
+    }
+    setApNewSaving(true);
+    try {
+      const res = await api('/api/admin/posts', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: apNewTitle.trim(),
+          content: apNewContent.trim(),
+          author_name: apOperatorName.trim(),
+          post_type: apNewType,
+        }),
+      });
+      if (res.status === 401) { logout(); return; }
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error || `오류 ${res.status}`);
+      setApNewTitle('');
+      setApNewContent('');
+      setApNewOpen(false);
+      await loadAllPosts();
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApNewSaving(false);
+    }
+  }
 
   function startEditPost(row: any) {
     setApEditingId(row.id);
@@ -1398,7 +1482,75 @@ export default function Admin() {
                 {apLoading ? '불러오는 중…' : '검색/새로고침'}
               </button>
               <span style={{ color: '#6b7280', fontSize: 13 }}>{apRows.length}건</span>
+              <span style={{ flex: 1 }} />
+              <button onClick={() => setApNewOpen((v) => !v)}>
+                {apNewOpen ? '글쓰기 닫기' : '운영자로 글쓰기'}
+              </button>
             </div>
+
+            {/* 운영자 표시 이름 — 글·댓글에 이 이름으로 나간다(실제 계정명 노출 안 함) */}
+            <div className="adm-card" style={{ padding: 12, marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, fontWeight: 700 }}>운영자 표시 이름</span>
+                <input
+                  className="adm-input"
+                  value={apOperatorName}
+                  onChange={(e) => setApOperatorName(e.target.value)}
+                  placeholder="예: 파킨온 운영자"
+                  style={{ maxWidth: 220 }}
+                />
+                <span style={{ color: '#6b7280', fontSize: 12 }}>
+                  이 이름으로 글·댓글이 등록됩니다. 실제 계정 이름은 노출되지 않습니다.
+                </span>
+              </div>
+            </div>
+
+            {apNewOpen && (
+              <div className="adm-card" style={{ padding: 14, marginBottom: 12 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8 }}>운영자로 새 글 쓰기 (일반 게시글)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select
+                      className="adm-input"
+                      value={apNewType}
+                      onChange={(e) => setApNewType(e.target.value)}
+                      style={{ maxWidth: 160 }}
+                    >
+                      <option value="info">📢 정보공유</option>
+                      <option value="free">💬 자유수다</option>
+                      <option value="question">❓ 질문있어요</option>
+                      <option value="exercise">💪 운동인증</option>
+                      <option value="cheer">🙏 응원해요</option>
+                    </select>
+                    <span style={{ color: '#6b7280', fontSize: 12 }}>
+                      공지로 올리려면 <b>공지 관리</b> 탭을 쓰세요.
+                    </span>
+                  </div>
+                  <input
+                    className="adm-input"
+                    value={apNewTitle}
+                    onChange={(e) => setApNewTitle(e.target.value)}
+                    placeholder="제목"
+                  />
+                  <textarea
+                    className="adm-input"
+                    value={apNewContent}
+                    onChange={(e) => setApNewContent(e.target.value)}
+                    rows={6}
+                    placeholder="본문"
+                    style={{ height: 'auto', paddingTop: 10, paddingBottom: 10, resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={submitOperatorPost} disabled={apNewSaving}>
+                      {apNewSaving ? '등록 중…' : '등록'}
+                    </button>
+                    <button className="adm-ghost" onClick={() => setApNewOpen(false)} disabled={apNewSaving}>
+                      취소
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {apErr && <div className="adm-err" style={{ marginBottom: 12 }}>{apErr}</div>}
 
@@ -1470,6 +1622,60 @@ export default function Admin() {
                           >
                             삭제
                           </button>
+                        </div>
+
+                        {/* 이 글에 달린 댓글 — 글마다 따로 열어보지 않고 여기서 바로 읽는다 */}
+                        <div style={{ marginTop: 12, borderTop: '1px solid #eee', paddingTop: 10 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>
+                            댓글 {(p.comments || []).length}개
+                          </div>
+                          {(p.comments || []).length === 0 ? (
+                            <div style={{ color: '#9ca3af', fontSize: 13 }}>아직 댓글이 없습니다.</div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {[...(p.comments || [])]
+                                .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))
+                                .map((c: any) => (
+                                  <div
+                                    key={c.id}
+                                    style={{
+                                      background: '#f9fafb',
+                                      borderRadius: 8,
+                                      padding: '8px 10px',
+                                      marginLeft: c.parent_id ? 20 : 0,
+                                      opacity: c.hidden ? 0.5 : 1,
+                                    }}
+                                  >
+                                    <div className="adm-meta" style={{ marginBottom: 2 }}>
+                                      {c.parent_id ? '↳ ' : ''}
+                                      <b>{c.author_name_override || c.author?.name || '알 수 없음'}</b>
+                                      {c.author_name_override ? ' · 운영자' : c.author?.role ? ` · ${roleLabel(c.author.role)}` : ''}
+                                      {' · '}{new Date(c.created_at).toLocaleString('ko-KR')}
+                                      {c.hidden ? ' · 숨김' : ''}
+                                    </div>
+                                    <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{c.content}</div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
+
+                          {/* 운영자 댓글 달기 */}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                            <input
+                              className="adm-input"
+                              value={apCommentText[p.id] || ''}
+                              onChange={(e) => setApCommentText((prev) => ({ ...prev, [p.id]: e.target.value }))}
+                              onKeyDown={(e) => { if (e.key === 'Enter') submitOperatorComment(p.id); }}
+                              placeholder={`${apOperatorName || '운영자'} 이름으로 댓글 달기`}
+                              style={{ flex: 1 }}
+                            />
+                            <button
+                              onClick={() => submitOperatorComment(p.id)}
+                              disabled={apCommentBusy === p.id || !(apCommentText[p.id] || '').trim()}
+                            >
+                              {apCommentBusy === p.id ? '등록 중…' : '댓글 등록'}
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}

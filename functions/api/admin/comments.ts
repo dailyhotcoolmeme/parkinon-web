@@ -39,6 +39,22 @@ async function restPost(env: AdminEnv, path: string, body: unknown): Promise<any
   return text ? JSON.parse(text) : null;
 }
 
+async function restPatch(env: AdminEnv, path: string, body: unknown): Promise<any> {
+  const res = await fetch(`${env.SUPABASE_URL}/rest/v1/${path}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`PATCH ${path} ${res.status}: ${text}`);
+  return text ? JSON.parse(text) : null;
+}
+
 // GET: 특정 게시글의 댓글 목록. ?post_id=...
 export const onRequestGet = async ({ request, env }: Ctx): Promise<Response> => {
   const blocked = await guard(env, request);
@@ -86,6 +102,32 @@ export const onRequestPost = async ({ request, env }: Ctx): Promise<Response> =>
       hidden: false,
     });
     return json(200, { ok: true, data: Array.isArray(inserted) ? inserted[0] : inserted });
+  } catch (e) {
+    return json(500, { error: String(e) });
+  }
+};
+
+// PATCH: 댓글 내용 수정. body: { id, content }
+// 사용자 댓글도 고칠 수 있지만, 남의 말을 바꾸는 일이라 운영자 댓글에만 쓰는 것을 전제로 한다
+// (화면에서도 운영자 댓글에만 수정 버튼을 노출한다).
+export const onRequestPatch = async ({ request, env }: Ctx): Promise<Response> => {
+  const blocked = await guard(env, request);
+  if (blocked) return blocked;
+
+  let body: { id?: string; content?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return json(400, { error: 'bad request' });
+  }
+  const content = (body.content || '').trim();
+  if (!body.id || !content) {
+    return json(400, { error: 'id, content 필드가 필요합니다.' });
+  }
+
+  try {
+    const updated = await restPatch(env, `comments?id=eq.${body.id}`, { content });
+    return json(200, { ok: true, data: Array.isArray(updated) ? updated[0] : updated });
   } catch (e) {
     return json(500, { error: String(e) });
   }

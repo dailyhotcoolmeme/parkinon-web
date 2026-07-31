@@ -501,6 +501,10 @@ export default function Admin() {
   const [apOperatorName, setApOperatorName] = useState('운영자');
   // 대댓글 대상 — { 게시글id: 부모 댓글id }. 없으면 일반 댓글로 등록된다.
   const [apReplyTo, setApReplyTo] = useState<Record<string, { id: string; author: string } | null>>({});
+  // 댓글 수정 — 편집 중인 댓글 id 와 입력값
+  const [apCEditId, setApCEditId] = useState<string | null>(null);
+  const [apCEditText, setApCEditText] = useState('');
+  const [apCBusy, setApCBusy] = useState<string | null>(null);
 
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
@@ -754,6 +758,86 @@ export default function Admin() {
       window.alert(String(e instanceof Error ? e.message : e));
     } finally {
       setApCommentBusy(null);
+    }
+  }
+
+  /** 댓글 내용 수정 저장. */
+  async function saveCommentEdit(postId: string) {
+    if (!apCEditId || !apCEditText.trim()) return;
+    setApCBusy(apCEditId);
+    try {
+      const res = await api('/api/admin/comments', {
+        method: 'PATCH',
+        body: JSON.stringify({ id: apCEditId, content: apCEditText.trim() }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) =>
+        prev.map((r) =>
+          r.id === postId
+            ? { ...r, comments: (r.comments || []).map((c: any) => (c.id === apCEditId ? { ...c, content: apCEditText.trim() } : c)) }
+            : r,
+        ),
+      );
+      setApCEditId(null);
+      setApCEditText('');
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApCBusy(null);
+    }
+  }
+
+  /** 댓글 숨김/노출 토글. 기존 콘텐츠 숨김 RPC 를 그대로 쓴다(댓글도 지원). */
+  async function toggleCommentHidden(postId: string, commentId: string, nextHidden: boolean) {
+    setApCBusy(commentId);
+    try {
+      const res = await api('/api/admin/hide', {
+        method: 'POST',
+        body: JSON.stringify({ target_type: 'comment', target_id: commentId, hidden: nextHidden }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) =>
+        prev.map((r) =>
+          r.id === postId
+            ? { ...r, comments: (r.comments || []).map((c: any) => (c.id === commentId ? { ...c, hidden: nextHidden } : c)) }
+            : r,
+        ),
+      );
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApCBusy(null);
+    }
+  }
+
+  /** 댓글 영구 삭제. 되돌릴 수 없어 확인을 받는다. */
+  async function deleteComment(postId: string, commentId: string) {
+    if (!window.confirm('이 댓글을 영구 삭제할까요? 되돌릴 수 없습니다.')) return;
+    setApCBusy(commentId);
+    try {
+      const res = await api('/api/admin/delete', {
+        method: 'POST',
+        body: JSON.stringify({ target_type: 'comment', target_id: commentId }),
+      });
+      if (res.status === 401) { logout(); return; }
+      if (!res.ok) throw new Error((await res.json()).error || `오류 ${res.status}`);
+      setApRows((prev) =>
+        prev.map((r) =>
+          r.id === postId
+            ? {
+                ...r,
+                comments: (r.comments || []).filter((c: any) => c.id !== commentId),
+                comment_count: Math.max(0, (r.comment_count ?? 1) - 1),
+              }
+            : r,
+        ),
+      );
+    } catch (e) {
+      window.alert(String(e instanceof Error ? e.message : e));
+    } finally {
+      setApCBusy(null);
     }
   }
 
@@ -1660,24 +1744,82 @@ export default function Admin() {
                                       {' · '}{new Date(c.created_at).toLocaleString('ko-KR')}
                                       {c.hidden ? ' · 숨김' : ''}
                                     </div>
-                                    <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{c.content}</div>
-                                    <button
-                                      className="adm-ghost"
-                                      style={{ marginTop: 6, padding: '2px 10px', fontSize: 12 }}
-                                      onClick={() =>
-                                        setApReplyTo((prev) => ({
-                                          ...prev,
-                                          // 앱 댓글은 2단(댓글 → 대댓글)이라, 대댓글에 답하면
-                                          // 그 부모 댓글에 달아 같은 묶음으로 보이게 한다.
-                                          [p.id]: {
-                                            id: c.parent_id || c.id,
-                                            author: c.author_name_override || c.author?.name || '알 수 없음',
-                                          },
-                                        }))
-                                      }
-                                    >
-                                      답글
-                                    </button>
+                                    {apCEditId === c.id ? (
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                                        <textarea
+                                          className="adm-input"
+                                          value={apCEditText}
+                                          onChange={(e) => setApCEditText(e.target.value)}
+                                          rows={3}
+                                          style={{ height: 'auto', paddingTop: 8, paddingBottom: 8, resize: 'vertical' }}
+                                        />
+                                        <div style={{ display: 'flex', gap: 6 }}>
+                                          <button
+                                            style={{ padding: '2px 12px', fontSize: 12 }}
+                                            onClick={() => saveCommentEdit(p.id)}
+                                            disabled={apCBusy === c.id || !apCEditText.trim()}
+                                          >
+                                            {apCBusy === c.id ? '저장 중…' : '저장'}
+                                          </button>
+                                          <button
+                                            className="adm-ghost"
+                                            style={{ padding: '2px 12px', fontSize: 12 }}
+                                            onClick={() => { setApCEditId(null); setApCEditText(''); }}
+                                          >
+                                            취소
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <div style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{c.content}</div>
+                                        <div style={{ display: 'flex', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                                          <button
+                                            className="adm-ghost"
+                                            style={{ padding: '2px 10px', fontSize: 12 }}
+                                            onClick={() =>
+                                              setApReplyTo((prev) => ({
+                                                ...prev,
+                                                // 앱 댓글은 2단(댓글 → 대댓글)이라, 대댓글에 답하면
+                                                // 그 부모 댓글에 달아 같은 묶음으로 보이게 한다.
+                                                [p.id]: {
+                                                  id: c.parent_id || c.id,
+                                                  author: c.author_name_override || c.author?.name || '알 수 없음',
+                                                },
+                                              }))
+                                            }
+                                          >
+                                            답글
+                                          </button>
+                                          {/* 수정은 운영자가 쓴 댓글에만 — 사용자 말을 바꾸지 않는다 */}
+                                          {c.author_name_override && (
+                                            <button
+                                              className="adm-ghost"
+                                              style={{ padding: '2px 10px', fontSize: 12 }}
+                                              onClick={() => { setApCEditId(c.id); setApCEditText(c.content || ''); }}
+                                            >
+                                              수정
+                                            </button>
+                                          )}
+                                          <button
+                                            className="adm-ghost"
+                                            style={{ padding: '2px 10px', fontSize: 12 }}
+                                            disabled={apCBusy === c.id}
+                                            onClick={() => toggleCommentHidden(p.id, c.id, !c.hidden)}
+                                          >
+                                            {c.hidden ? '노출하기' : '숨기기'}
+                                          </button>
+                                          <button
+                                            className="adm-danger"
+                                            style={{ padding: '2px 10px', fontSize: 12 }}
+                                            disabled={apCBusy === c.id}
+                                            onClick={() => deleteComment(p.id, c.id)}
+                                          >
+                                            삭제
+                                          </button>
+                                        </div>
+                                      </>
+                                    )}
                                   </div>
                                 ))}
                             </div>
@@ -1707,18 +1849,20 @@ export default function Admin() {
                               </button>
                             </div>
                           )}
-                          <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                            <input
+                          {/* 엔터로 바로 등록되지 않는다 — 엔터는 줄바꿈, 등록은 버튼으로만.
+                              (실수로 미완성 댓글이 게시되는 사고를 막는다) */}
+                          <div style={{ display: 'flex', gap: 8, marginTop: 10, alignItems: 'flex-end' }}>
+                            <textarea
                               className="adm-input"
                               value={apCommentText[p.id] || ''}
                               onChange={(e) => setApCommentText((prev) => ({ ...prev, [p.id]: e.target.value }))}
-                              onKeyDown={(e) => { if (e.key === 'Enter') submitOperatorComment(p.id); }}
+                              rows={2}
                               placeholder={
                                 apReplyTo[p.id]
-                                  ? `${apOperatorName || '운영자'} 이름으로 답글 달기`
-                                  : `${apOperatorName || '운영자'} 이름으로 댓글 달기`
+                                  ? `${apOperatorName || '운영자'} 이름으로 답글 달기 (등록 버튼을 눌러야 게시됩니다)`
+                                  : `${apOperatorName || '운영자'} 이름으로 댓글 달기 (등록 버튼을 눌러야 게시됩니다)`
                               }
-                              style={{ flex: 1 }}
+                              style={{ flex: 1, height: 'auto', paddingTop: 8, paddingBottom: 8, resize: 'vertical' }}
                             />
                             <button
                               onClick={() => submitOperatorComment(p.id)}

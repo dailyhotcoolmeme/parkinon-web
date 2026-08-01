@@ -40,7 +40,7 @@ Font.register({
 // 로케일이든 사용자가 입력한 이름·라벨에 한자가 섞여 있을 때를 대비한 폴백.
 Font.register({
   family: 'NotoSansJP',
-  fonts: [{ src: '/fonts/NotoSansJP-Variable.ttf', fontWeight: 400 }],
+  fonts: [{ src: '/fonts/NotoSansJP-Variable-v1.ttf', fontWeight: 400 }],
 });
 
 const FONT: string[] = ['Pretendard', 'NotoSansJP'];

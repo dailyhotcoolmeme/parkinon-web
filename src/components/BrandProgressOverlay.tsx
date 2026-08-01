@@ -186,10 +186,12 @@ export default function BrandProgressOverlay({
                   position: 'absolute',
                   top: 0,
                   bottom: 0,
+                  left: 0,
                   width: '40%',
                   borderRadius: 999,
                   background: '#4CAF50',
                   animation: 'pn-bar 1.2s cubic-bezier(0.4,0,0.2,1) infinite alternate',
+                  willChange: 'transform',
                 }}
               />
             </div>

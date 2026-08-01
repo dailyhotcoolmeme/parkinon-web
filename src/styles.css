@@ -303,10 +303,13 @@ input[type="checkbox"] { accent-color: #4CAF50; }
   from { transform: scale(1); opacity: .85; }
   to   { transform: scale(1.06); opacity: 1; }
 }
-/* 불확정 바: alternate 와 함께 사용 → 헤드가 좌(-40%)↔우(100%) 왕복(yoyo) */
+/* 불확정 바: alternate 와 함께 사용 → 헤드가 좌↔우 왕복(yoyo).
+   left(레이아웃 속성) 대신 transform 사용 — PDF 생성처럼 메인 스레드가 바쁠 때도
+   컴포지터에서 따로 돌아 끊기지 않는다(2026-08-01, 진행바 스터터 리포트로 수정).
+   220px 트랙 · 40% 헤드(88px) 기준 -88px→220px 이동. */
 @keyframes pn-bar {
-  0%   { left: -40%; }
-  100% { left: 100%; }
+  0%   { transform: translateX(-88px); }
+  100% { transform: translateX(220px); }
 }
 @keyframes pn-pop {
   0%   { transform: scale(.6); opacity: 0; }

@@ -34,7 +34,16 @@ Font.register({
   ],
 });
 
-const FONT = 'Pretendard';
+// 한자(漢字) 폴백 폰트 — Pretendard 는 한글/라틴만 있고 한자가 없어서, 없는 글자가
+// 나오면 react-pdf 가 내장 Helvetica 로 대체하는데 이때 글자 간격이 0이 되어
+// 글자들이 같은 자리에 겹쳐 찍힌다(일본어 PDF 깨짐의 원인). 일본어 로케일과, 어느
+// 로케일이든 사용자가 입력한 이름·라벨에 한자가 섞여 있을 때를 대비한 폴백.
+Font.register({
+  family: 'NotoSansJP',
+  fonts: [{ src: '/fonts/NotoSansJP-Variable.ttf', fontWeight: 400 }],
+});
+
+const FONT: string[] = ['Pretendard', 'NotoSansJP'];
 
 Font.registerHyphenationCallback((word) => [word]);
 

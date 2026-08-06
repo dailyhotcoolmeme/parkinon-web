@@ -35,11 +35,14 @@ const { basisDate, sources = [], contact } = Astro.props;
 </div>
 
 <style>
+  /*
+   * 박스를 씌우지 않는다 — 바로 아래 앱 추천 박스와 똑같은 회색 라운드 박스라 어색하다는
+   * 오너 지적(2026-08-06). 얇은 선 하나로만 본문과 구분한다.
+   */
   .source {
     margin-top: 36px;
-    padding: 18px 20px;
-    background: var(--surface-low);
-    border-radius: 14px;
+    padding-top: 18px;
+    border-top: 1px solid var(--outline);
     font-size: 13px;
     color: var(--text-sub);
     line-height: 1.8;

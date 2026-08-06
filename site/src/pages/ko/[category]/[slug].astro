@@ -298,8 +298,17 @@ const catHref = getRelativeLocaleUrl(locale, category);
     color: var(--text);
     margin-top: 6px;
   }
+  /*
+   * 본문 강조 — 굵게 + 옅은 초록 배경(오너 요청 2026-08-06 "눈에 들어오게").
+   * box-decoration-break: 강조가 줄바꿈으로 잘릴 때 양쪽 끝이 모두 둥글게 유지된다.
+   */
   .article-body :global(strong) {
     font-weight: 800;
+    background: var(--secondary-container);
+    padding: 1px 5px;
+    border-radius: 4px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
   }
 
   /* 표 — 색 박스 콜아웃 대신 표로 정리한다(오너 지적 2026-08-06) */

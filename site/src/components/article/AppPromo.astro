@@ -1,7 +1,13 @@
 ---
-/* 앱 화면 추천 블록.
-   ⚠️ 자리는 **글이 끝난 뒤**(출처 박스 다음)다 — 오너 지시 2026-08-06.
-   "해당 게시글은 끝내고 나서 추천해야 하니까." */
+/* 앱 추천 블록.
+ *
+ * ⚠️ 자리는 **글이 끝난 뒤**(출처 다음)다 — 오너 지시 2026-08-06:
+ *    "해당 게시글은 끝내고 나서 추천해야 하니까."
+ *
+ * 스토어 버튼은 홈(`src/pages/ko/index.astro`)의 `.store-badge` 와 **같은 모양**이다
+ * (오너 지시: "홈화면에 있는것처럼"). 홈 것을 고치면 여기도 같이 맞출 것.
+ * ⬜ 스토어 링크는 아직 `#` 다 — 홈도 마찬가지. 실제 주소가 정해지면 두 곳을 함께 바꾼다.
+ */
 import { Image } from 'astro:assets';
 import appShot from '../../assets/images/appshots/parkinon1.png';
 
@@ -16,24 +22,64 @@ const {
 ---
 
 <aside class="app">
-  <Image src={appShot} alt="파킨온 앱의 오늘 복용 현황 화면" widths={[240, 360]} sizes="240px" />
-  <div>
+  <div class="shot">
+    <Image src={appShot} alt="파킨온 앱의 오늘 복용 현황 화면" widths={[200, 300, 420]} sizes="(max-width: 640px) 132px, 210px" />
+  </div>
+
+  <div class="text">
     <h3>{title}</h3>
     <p>{body}</p>
-    <a class="btn" href="/about">파킨온 앱 보기</a>
+  </div>
+
+  <div class="store-badges">
+    <a class="store-badge" href="#">
+      <svg class="icon" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 5,21 20,12"></polygon></svg>
+      <span class="big">Google Play</span>
+    </a>
+    <a class="store-badge" href="#">
+      <svg class="icon" viewBox="0 0 384 512" fill="#fff"
+        ><path
+          d="M318 268c-1-56 46-83 48-84-26-38-67-43-81-44-34-3-67 20-84 20-18 0-44-20-73-19-37 1-72 22-91 55-39 68-10 168 28 223 19 27 41 57 71 56 28-1 39-18 74-18 34 0 45 18 74 18 31-1 50-27 69-54 22-31 31-61 31-63-1 0-59-23-60-90zM258 63c16-19 27-46 24-73-23 1-51 15-68 34-15 17-28 44-25 70 26 2 53-13 69-31z"
+        ></path></svg
+      >
+      <span class="big">App Store</span>
+    </a>
   </div>
 </aside>
 
 <style>
+  /*
+   * 데스크톱: 사진 왼쪽 · 글과 버튼 오른쪽.
+   * 모바일: 사진을 작게 줄여 글과 나란히 두고, 버튼은 아래 한 줄을 통째로 쓴다.
+   *   → 사진 한 장을 가운데 놓아 좌우가 휑하던 문제를 없앤다(오너 지적 2026-08-06).
+   */
   .app {
     margin-top: 30px;
     display: grid;
     grid-template-columns: 210px 1fr;
-    gap: 26px;
-    align-items: center;
+    grid-template-areas:
+      'shot text'
+      'shot badges';
+    align-content: center;
+    gap: 14px 26px;
     background: var(--surface-low);
     border-radius: 16px;
     padding: 24px;
+  }
+  .shot {
+    grid-area: shot;
+    align-self: center;
+  }
+  .text {
+    grid-area: text;
+    align-self: end;
+  }
+  .store-badges {
+    grid-area: badges;
+    align-self: start;
+    display: flex;
+    gap: 10px;
+    max-width: 420px;
   }
   .app :global(img) {
     width: 100%;
@@ -44,33 +90,65 @@ const {
   h3 {
     font-size: 18px;
     color: var(--text);
+    /* 한국어는 낱말 중간에서 끊지 않는다 — 좁은 폭에서 "앱으/로"처럼 잘리는 것 방지 */
+    word-break: keep-all;
   }
   p {
     margin-top: 8px;
     font-size: 15.5px;
     line-height: 1.75;
     color: var(--text-sub);
+    word-break: keep-all;
   }
-  .btn {
+
+  /* 홈의 스토어 버튼과 같은 모양 */
+  .store-badge {
     display: inline-flex;
     align-items: center;
-    height: 44px;
-    padding: 0 20px;
-    margin-top: 14px;
-    background: var(--primary);
+    justify-content: center;
+    gap: 9px;
+    background: #000;
     color: #fff;
+    padding: 0 16px;
     border-radius: 8px;
-    font-weight: 700;
-    font-size: 15px;
+    height: 44px;
+    flex: 1 1 0;
+    min-width: 0;
   }
+  .store-badge .icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+  }
+  .store-badge .big {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font-head);
+    white-space: nowrap;
+  }
+
   @media (max-width: 640px) {
     .app {
-      grid-template-columns: 1fr;
-      justify-items: center;
-      text-align: center;
+      grid-template-columns: 132px 1fr;
+      grid-template-areas:
+        'shot text'
+        'badges badges';
+      gap: 16px;
+      padding: 18px;
     }
-    .app :global(img) {
-      max-width: 200px;
+    .text {
+      align-self: center;
+    }
+    .store-badges {
+      max-width: none;
+    }
+    h3 {
+      font-size: 17px;
+    }
+    p {
+      margin-top: 6px;
+      font-size: 14.5px;
+      line-height: 1.7;
     }
   }
 </style>

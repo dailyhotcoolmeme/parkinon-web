@@ -22,11 +22,12 @@ interface LinkItem {
 }
 interface Props {
   toc?: TocItem[];
-  links: LinkItem[];
-  linksTitle: string;
+  /* 목록 블록은 없어도 된다(예: 개인정보처리방침 — 목차만 필요) */
+  links?: LinkItem[];
+  linksTitle?: string;
   tocTitle?: string;
 }
-const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props;
+const { toc = [], links = [], linksTitle, tocTitle = '이 글 순서' } = Astro.props;
 ---
 
 <aside class="article-side">
@@ -45,19 +46,21 @@ const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props
     )
   }
 
-  <nav class="side-block" aria-label={linksTitle}>
-    <h2 class="side-title">{linksTitle}</h2>
-    <ul class="link-list">
-      {
-        links.map((row) => (
-          <li>
-            <a href={row.href ?? '#'}>{row.title}</a>
-            <span class="d">{row.date}</span>
-          </li>
-        ))
-      }
-    </ul>
-  </nav>
+  {
+    links.length > 0 && linksTitle && (
+      <nav class="side-block" aria-label={linksTitle}>
+        <h2 class="side-title">{linksTitle}</h2>
+        <ul class="link-list">
+          {links.map((row) => (
+            <li>
+              <a href={row.href ?? '#'}>{row.title}</a>
+              <span class="d">{row.date}</span>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
 </aside>
 
 <style>

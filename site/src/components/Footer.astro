@@ -3,6 +3,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
 
 const locale = Astro.currentLocale ?? 'ko';
+// 푸터 "개인정보처리방침" = 웹사이트용(/ko/privacy). 앱용은 별도 문서라 라벨에 "앱"을 붙여 구분한다.
 // /terms · /privacy 는 앱에서 넘어오는 기존 정적 페이지다(다른 프로젝트가 서빙).
 // 언어 접두사를 붙이면 안 된다 — 앱에도 이 주소가 하드코딩돼 있다.
 ---
@@ -30,8 +31,9 @@ const locale = Astro.currentLocale ?? 'ko';
     </div>
     <div class="footer-col">
       <h4>고객지원</h4>
-      <a href="/terms">이용약관</a>
-      <a href="/privacy">개인정보처리방침</a>
+      <a href={getRelativeLocaleUrl(locale, 'privacy')}>개인정보처리방침</a>
+      <a href="/terms">앱 이용약관</a>
+      <a href="/privacy">앱 개인정보처리방침</a>
       <a href="mailto:admin@ourmine.co.kr">문의하기</a>
     </div>
   </div>

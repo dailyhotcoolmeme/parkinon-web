@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import sitemap from '@astrojs/sitemap';
 
 /*
  * 다국어 URL 구조 (2026-08-06 오너 확정): **모든 언어에 접두사**를 붙인다.
@@ -25,4 +26,10 @@ export default defineConfig({
       prefixDefaultLocale: true,
     },
   },
+  /*
+   * sitemap-index.xml / sitemap-0.xml 을 만든다. robots.txt 가 이 주소를 가리킨다.
+   * ⚠️ sitemap 의 i18n 옵션은 **아직 켜지 않는다.** 켜면 아직 만들지도 않은 /en/·/fr/·/ja/
+   *    주소까지 alternate 로 적어 버린다(hreflang 상호 링크 위반). 번역판을 실제로 만들 때 켤 것.
+   */
+  integrations: [sitemap()],
 });

@@ -50,7 +50,13 @@ const tools = [
 ];
 ---
 
-<Layout title="도구 — 파킨온">
+<Layout
+  title="도구 — 파킨온"
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: '도구', path: '/ko/tools/' },
+  ]}
+>
   <Header />
 
   <div class="layout">

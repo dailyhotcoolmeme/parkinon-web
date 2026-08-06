@@ -111,7 +111,13 @@ const rows: Row[] = [
 const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
 ---
 
-<Layout title="제도·지원 — 파킨온">
+<Layout
+  title="제도·지원 — 파킨온"
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: '제도·지원', path: '/ko/institutions/' },
+  ]}
+>
   <Header active="institutions" />
 
   <div class="layout">

@@ -9,7 +9,14 @@ import AdBox from '../../../components/AdBox.astro';
 const locale = Astro.currentLocale ?? 'ko';
 ---
 
-<Layout title="복약 시간표 만들기 — 파킨온">
+<Layout
+  title="복약 시간표 만들기 — 파킨온"
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: '도구', path: '/ko/tools/' },
+    { name: '복약 시간표 만들기', path: '/ko/tools/medication-schedule/' },
+  ]}
+>
   <Header />
 
   <div class="layout">

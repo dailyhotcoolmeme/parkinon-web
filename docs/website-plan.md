@@ -98,6 +98,36 @@
 `/terms/ja` 로 **접두사가 아니라 접미사** 방식이고 hreflang 도 없다. 정식 오픈 때 콘텐츠 사이트와
 합치면서 이 4개를 어떻게 할지는 **따로 결정해야 한다**(그대로 두기 / 리다이렉트 걸고 이전).
 
+## SEO 메타·구조화 데이터 (2026-08-06 적용)
+
+전부 `Layout.astro` 한 곳에서 만든다. 페이지는 **재료만 넘긴다**(직접 태그를 쓰지 말 것).
+
+| 항목 | 어디서 | 비고 |
+|---|---|---|
+| `<html lang>` · canonical(절대 URL) | Layout 자동 | 경로 기준 자동 생성 |
+| hreflang · x-default | Layout, `translations` prop | **존재하는 언어만**. 지금은 한국어뿐이라 출력 안 됨 |
+| og:type/title/description/url/image/locale, twitter:card | Layout 자동 | `ogType="article"` 은 글 상세만 |
+| JSON-LD | Layout이 조립 | 홈=WebSite+Organization, 허브·상세=BreadcrumbList, 글=Article |
+| sitemap-index.xml / sitemap-0.xml | `@astrojs/sitemap` | 9개 URL. **i18n 옵션은 번역판 생길 때 켤 것**(지금 켜면 없는 /en/ 주소를 alternate 로 적는다) |
+| robots.txt | `src/pages/robots.txt.ts` | 빌드 시 생성. dev 는 `Disallow: /` |
+
+**Article 구조화 데이터에 없는 값을 넣지 않았다.** Google Article 문서는 "필수 속성은 없고
+해당되는 것만 넣으라"고 한다. 그래서 `dateModified`(수정 이력을 추적하지 않음)와 개인 집필자
+이름(의료 콘텐츠라 특히 지어내면 안 됨)은 **빼 놨다**. author·publisher 는 Organization "파킨온".
+`datePublished` 는 화면에 이미 표시된 작성일과 같은 날짜다(시각은 모르니 날짜만).
+
+**⚠️ 공유 카드 이미지(og:image)는 임시다.** 권장 크기는 1200x630 인데 가진 사진 중 가장 큰
+`hero.jpg` 가 1000x667 이라 업스케일 없이는 안 된다. 억지로 늘리지 않고 **1000x524(1.91:1)**
+로 잘라 쓰고 `og:image:width/height` 도 실제 값과 맞춰 놨다(대형 카드 최소 600x315 는 넘는다).
+제대로 된 1200x630 브랜드 카드는 따로 만들어야 한다 — **디자인 승인 필요, 미결**.
+
+**검증 방법(다음에도 이렇게 확인할 것)**
+- `PUBLIC_SITE_URL=https://parkinon.com npx astro build --outDir ./dist-prodcheck` 로
+  프로덕션 모드 빌드 → robots 가 `Allow: /` + Sitemap 줄, noindex 없음, canonical·sitemap 이
+  parkinon.com 인지 확인하고 폴더는 지운다. (실제로 이 방법으로 확인했다.)
+- 배포 직후 Cloudflare 엣지 캐시가 옛 응답을 잠깐 준다. `?cb=1` 처럼 쿼리를 붙여 확인할 것 —
+  실제로 캐시 때문에 "태그가 안 나간다"고 오해할 뻔했다.
+
 **오른쪽 사이드 패널 = `src/components/ArticleSide.astro` (허브 3개 + 상세 3개 공용)**
 
 - 상세는 목차 + "OO 다른 글" 2블록, 허브는 "OO 다른 글" 1블록(`toc` 안 넘기면 자동으로 빠짐).

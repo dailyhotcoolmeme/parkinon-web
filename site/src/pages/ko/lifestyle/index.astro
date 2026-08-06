@@ -118,7 +118,13 @@ const rows: Row[] = [
 const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
 ---
 
-<Layout title="생활 요령 — 파킨온">
+<Layout
+  title="생활 요령 — 파킨온"
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: '생활 요령', path: '/ko/lifestyle/' },
+  ]}
+>
   <Header active="lifestyle" />
 
   <div class="layout">

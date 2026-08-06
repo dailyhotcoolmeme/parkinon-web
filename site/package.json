@@ -10,6 +10,7 @@
     "deploy:dev": "astro check && astro build && wrangler pages deploy dist --project-name=parkinon-site-dev --commit-dirty=true"
   },
   "dependencies": {
+    "@astrojs/sitemap": "^3.7.3",
     "astro": "^7.1.6"
   },
   "devDependencies": {

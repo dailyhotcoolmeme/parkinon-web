@@ -123,6 +123,11 @@ npm run build --prefix site     # astro check + astro build (0 errors 유지할 
   라우팅은 전혀 건드리지 않았다.
 - URL: **https://parkinon-site-dev.pages.dev**
 - 재배포: `npm run deploy:dev --prefix site` (astro check → build → wrangler pages deploy)
+- 관찰(2026-08-06): 이 저장소 `main`에 푸시해도 라이브 `parkinon-web` Pages 프로젝트에
+  새 빌드가 생기지 않았다. 최근 배포는 4일 전 `67a4ab1`이 마지막이고, 그 뒤 커밋
+  (`ae5a693`, `71c1871`)은 배포 목록에 없다. 푸시 직후 `parkinon.com`·`/terms` 모두 200.
+  깃 연동이 꺼진 것인지 단순 스킵인지는 확인하지 않았다 — **정식 오픈(루트 도메인 전환)
+  전에 대시보드에서 이 프로젝트의 깃 연동 상태를 반드시 확인할 것.**
 - 정식 오픈 때 필요한 작업(아직 안 함): 기존 React SPA(`/records` 등 내부 라우트)를 `/app`
   아래로 옮기고, 이 Astro 빌드를 `parkinon-web`(루트 도메인) 프로젝트로 전환. 앱 코드에
   `parkinon.com/terms`, `/admin` 등 하드코딩된 링크가 있어 그 작업은 별도로 신중하게

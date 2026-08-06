@@ -1,0 +1,415 @@
+---
+/*
+ * 글 상세 — 마크다운(MDX) 파일 하나가 이 라우트로 렌더된다.
+ * 폴더 이름이 카테고리, 파일 이름이 slug 다. (src/content/articles/institutions/xxx.mdx → /ko/institutions/xxx)
+ *
+ * 디자인은 2026-08-06 오너 승인 시안 그대로다(/ko/preview/article-design).
+ * 순서: 히어로 → 세 줄 요약 → 본문 → 출처 → **앱 추천(글 끝난 뒤)** → 관련 글.
+ */
+import { getCollection, render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import SourceBox from '../../../components/article/SourceBox.astro';
+import AppPromo from '../../../components/article/AppPromo.astro';
+import { CATEGORY, categoryOf, slugOf, formatDate, sortByDateDesc } from '../../../lib/articles';
+
+export async function getStaticPaths() {
+  const all = await getCollection('articles', ({ data }) => !data.draft);
+  return all.map((entry) => ({
+    params: { category: categoryOf(entry), slug: slugOf(entry) },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+const category = categoryOf(entry);
+const slug = slugOf(entry);
+const cat = CATEGORY[category];
+
+const { Content, headings } = await render(entry);
+const toc = headings.filter((h) => h.depth === 2).map((h) => ({ id: h.slug, label: h.text }));
+
+// 같은 카테고리의 다른 글 — 사이드 목록과 하단 관련 글에 쓴다(지어내지 않고 실제 글만)
+const siblings = sortByDateDesc(
+  await getCollection('articles', ({ data, id }) => !data.draft && id.startsWith(`${category}/`))
+).filter((e) => e.id !== entry.id);
+
+const sideLinks = siblings.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`),
+}));
+const related = siblings.slice(0, 2);
+
+const catHref = getRelativeLocaleUrl(locale, category);
+---
+
+<Layout
+  title={`${entry.data.title} — 파킨온`}
+  description={entry.data.description}
+  ogType="article"
+  article={{
+    headline: entry.data.title,
+    datePublished: entry.data.publishedAt.toISOString().slice(0, 10),
+    description: entry.data.description,
+  }}
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: cat.label, path: `/ko/${category}/` },
+    { name: entry.data.title, path: `/ko/${category}/${slug}/` },
+  ]}
+>
+  <Header active={category} />
+
+  <div class="layout">
+    <aside class="ad-rail left"><AdBox minHeight="600px" /></aside>
+
+    <main class="col">
+      <section class="a-hero" style={`background-image:url(${entry.data.hero.src});`}>
+        <div class="a-hero-inner">
+          <span class="a-tag">{entry.data.tag}</span>
+          <h1>{entry.data.title}</h1>
+          <div class="a-meta">
+            <span>{formatDate(entry.data.publishedAt)} 작성</span>
+            {entry.data.basisDate && <span class="basis">{entry.data.basisDate}</span>}
+          </div>
+        </div>
+      </section>
+
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span>
+          <a href={catHref}>{cat.label}</a><span class="sep">/</span>
+          <span>{entry.data.title}</span>
+        </nav>
+
+        <article>
+          <div class="a-summary">
+            <h2>세 줄 요약</h2>
+            <ul>
+              {entry.data.summary.map((line) => <li set:html={line} />)}
+            </ul>
+          </div>
+
+          <div class="article-body">
+            <Content />
+          </div>
+
+          <SourceBox
+            basisDate={entry.data.basisDate}
+            sources={entry.data.sources}
+            contact={entry.data.contact}
+          />
+
+          <AppPromo />
+
+          {
+            related.length > 0 && (
+              <div class="a-related">
+                <h2>함께 보면 좋은 글</h2>
+                <div class="a-related-grid">
+                  {related.map((e) => (
+                    <a href={getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`)}>
+                      <Image src={e.data.hero} alt="" widths={[240, 360]} sizes="240px" />
+                      <span class="t">{e.data.title}</span>
+                      <span class="d">{formatDate(e.data.publishedAt)}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </article>
+
+        <ArticleSide toc={toc} links={sideLinks} linksTitle={`${cat.label} 다른 글`} />
+      </div>
+    </main>
+
+    <aside class="ad-rail right"><AdBox minHeight="600px" /></aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /* 히어로 — 작업 영역(main.col) 안쪽에서만 edge-to-edge. 화면 전체로 뻗지 않는다 */
+  .a-hero {
+    position: relative;
+    width: auto;
+    margin: 0 calc(-1 * var(--gutter)) 28px;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .a-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.82), rgba(10, 20, 12, 0.15) 65%, rgba(10, 20, 12, 0) 90%);
+  }
+  .a-hero-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--gutter) 28px;
+    max-width: 860px;
+  }
+  .a-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--primary);
+    padding: 5px 12px;
+    border-radius: 4px;
+  }
+  .a-hero-inner h1 {
+    margin-top: 14px;
+    font-size: 34px;
+    line-height: 1.35;
+    color: #fff;
+  }
+  .a-meta {
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .a-meta .basis {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  @media (max-width: 640px) {
+    .a-hero {
+      min-height: 240px;
+    }
+    .a-hero-inner h1 {
+      font-size: 25px;
+    }
+  }
+
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  article {
+    max-width: 760px;
+  }
+
+  /* 세 줄 요약 */
+  .a-summary {
+    background: var(--secondary-container);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .a-summary h2 {
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    letter-spacing: 0.02em;
+  }
+  .a-summary ul {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .a-summary li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .a-summary li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+
+  /*
+   * 본문(MDX)에서 나오는 태그들. MDX 출력물은 이 컴포넌트의 스코프 밖이라 :global 로 잡는다.
+   */
+  .article-body {
+    margin-top: 34px;
+  }
+  .article-body :global(h2) {
+    font-size: 21px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 44px;
+    margin-bottom: 14px;
+    scroll-margin-top: 88px;
+  }
+  .article-body :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .article-body :global(h3) {
+    font-size: 17.5px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 28px;
+  }
+  .article-body :global(p) {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-body :global(a) {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .article-body :global(ul),
+  .article-body :global(ol) {
+    margin-top: 14px;
+    padding-left: 22px;
+  }
+  .article-body :global(li) {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 6px;
+  }
+  .article-body :global(strong) {
+    font-weight: 800;
+  }
+
+  /* 표 — 색 박스 콜아웃 대신 표로 정리한다(오너 지적 2026-08-06) */
+  .article-body :global(table) {
+    width: 100%;
+    margin-top: 18px;
+    border-collapse: collapse;
+    font-size: 15.5px;
+  }
+  .article-body :global(th),
+  .article-body :global(td) {
+    border: 1px solid var(--outline);
+    padding: 12px 14px;
+    text-align: left;
+    line-height: 1.7;
+    vertical-align: top;
+    color: var(--text);
+  }
+  .article-body :global(th) {
+    background: var(--surface-low);
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--text-sub);
+  }
+  /*
+   * 셀 안에 항목이 여러 개일 때는 <ul class="cell-list"> 로 쓴다.
+   * <br> 로 나열하면 모바일에서 한 항목이 접힐 때 항목 간격(7px)과 접힌 줄 간격(7px)이
+   * 같아져서 구분이 안 된다(오너 지적 2026-08-06, 390px 실측).
+   */
+  .article-body :global(.cell-list) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .article-body :global(.cell-list li) {
+    position: relative;
+    margin: 0;
+    padding-left: 13px;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+  .article-body :global(.cell-list li)::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: 9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-sub);
+  }
+
+  /* 본문 중간 사진 */
+  .article-body :global(figure.photo) {
+    margin: 28px 0 0;
+  }
+  .article-body :global(figure.photo img) {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+  }
+  .article-body :global(figure.photo figcaption) {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+
+  /* 관련 글 카드 */
+  .a-related {
+    margin-top: 48px;
+  }
+  .a-related h2 {
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .a-related-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .a-related-grid :global(img) {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  .a-related-grid .t {
+    display: block;
+    margin-top: 10px;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .a-related-grid a:hover .t {
+    color: var(--primary);
+  }
+  .a-related-grid .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  @media (max-width: 640px) {
+    .a-related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

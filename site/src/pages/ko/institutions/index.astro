@@ -1,114 +1,41 @@
 ---
+import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
+import { slugOf, formatDate, sortByDateDesc } from '../../../lib/articles';
 import familyImg from '../../../assets/images/family.jpg';
 
 const locale = Astro.currentLocale ?? 'ko';
 
-interface PostRow {
-  ad?: false;
-  tag: string;
-  title: string;
-  excerpt: string;
-  hashtags: string[];
-  date: string;
-  href?: string;
-}
-interface AdRow {
-  ad: true;
-}
-type Row = PostRow | AdRow;
-
 const tabs = ['전체', '산정특례', '장애등록', '장기요양', '의료비 공제', '보조기기'];
 
-const rows: Row[] = [
-  {
-    tag: '산정특례',
-    title: '파킨슨병 산정특례, 신청 자격과 혜택 총정리',
-    excerpt: '진단서와 함께 신청하면 본인부담률이 크게 낮아집니다. 대상 기준과 신청 시 챙겨야 할 서류를 정리했습니다.',
-    hashtags: ['#산정특례', '#건강보험', '#본인부담률'],
-    date: '2026.07.28',
-    href: getRelativeLocaleUrl(locale, 'institutions/copayment-reduction-guide'),
-  },
-  {
-    tag: '장애등록',
-    title: '장애등록 절차와 준비 서류 한눈에 보기',
-    excerpt: '진단 후 언제부터 등록할 수 있는지, 어느 병원에서 진단서를 받아야 하는지부터 순서대로 안내합니다.',
-    hashtags: ['#장애등록', '#장애인등록', '#서류'],
-    date: '2026.07.25',
-  },
-  {
-    tag: '장기요양',
-    title: '장기요양보험 등급 신청, 어떻게 시작하나요',
-    excerpt: '공단 방문조사부터 등급 판정까지 걸리는 기간과, 등급별로 받을 수 있는 서비스를 비교했습니다.',
-    hashtags: ['#장기요양보험', '#등급신청', '#방문조사'],
-    date: '2026.07.22',
-  },
-  {
-    tag: '의료비 공제',
-    title: '파킨슨병 치료비 세금공제 놓치지 않는 법',
-    excerpt: '연말정산에서 놓치기 쉬운 의료비 세액공제 항목과, 미리 챙겨두면 좋은 영수증 종류를 정리했습니다.',
-    hashtags: ['#의료비공제', '#연말정산', '#세액공제'],
-    date: '2026.07.19',
-  },
-  { ad: true },
-  {
-    tag: '보조기기',
-    title: '보조기기 지원사업, 어떤 걸 받을 수 있나요',
-    excerpt: '보행보조기, 욕실 안전용품 등 지원 품목과 본인부담금, 신청 기관을 정리했습니다.',
-    hashtags: ['#보조기기', '#지원사업', '#낙상예방'],
-    date: '2026.07.16',
-  },
-  {
-    tag: '산정특례',
-    title: '산정특례 갱신 시기와 재신청 방법',
-    excerpt: '적용 기간이 끝나기 전에 챙겨야 할 재등록 절차와, 놓쳤을 때 대처하는 방법을 안내합니다.',
-    hashtags: ['#산정특례', '#갱신', '#재신청'],
-    date: '2026.07.12',
-  },
-  {
-    tag: '장애등록',
-    title: '장애등록증으로 받을 수 있는 교통·통신 혜택',
-    excerpt: '지하철·버스 할인부터 통신요금 감면까지, 등록증 하나로 받을 수 있는 생활 혜택을 모았습니다.',
-    hashtags: ['#장애등록증', '#교통할인', '#통신요금감면'],
-    date: '2026.07.09',
-  },
-  {
-    tag: '장기요양',
-    title: '요양보호사 방문 서비스 신청 가이드',
-    excerpt: '등급 판정 이후 실제로 방문 요양 서비스를 시작하기까지의 절차를 순서대로 정리했습니다.',
-    hashtags: ['#장기요양', '#요양보호사', '#방문요양'],
-    date: '2026.07.05',
-  },
-  { ad: true },
-  {
-    tag: '의료비 공제',
-    title: '본인부담상한제, 환급까지 받는 절차',
-    excerpt: '1년간 낸 의료비가 기준을 넘으면 초과분을 돌려받을 수 있습니다. 신청 시기와 방법을 안내합니다.',
-    hashtags: ['#본인부담상한제', '#환급', '#의료비'],
-    date: '2026.07.02',
-  },
-  {
-    tag: '보조기기',
-    title: '보행보조기·욕실 안전용품 지원 신청',
-    excerpt: '낙상 위험을 줄이는 보조기기 품목별 지원 한도와, 실제 신청 후기를 바탕으로 한 팁을 담았습니다.',
-    hashtags: ['#보행보조기', '#욕실안전', '#낙상예방'],
-    date: '2026.06.28',
-  },
-  {
-    tag: '산정특례',
-    title: '산정특례 대상 질환 코드 확인하는 법',
-    excerpt: '진단서에 적힌 상병코드가 산정특례 대상인지 스스로 확인하는 방법을 정리했습니다.',
-    hashtags: ['#산정특례', '#상병코드'],
-    date: '2026.06.24',
-  },
-];
+/*
+ * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
+ * 예전에는 글을 하나 추가할 때 글 페이지·허브 목록·사이드 패널 세 군데를 고쳐야 했고,
+ * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
+ */
+const posts = sortByDateDesc(
+  await getCollection('articles', ({ data, id }) => !data.draft && id.startsWith('institutions/'))
+);
 
-const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
+// 광고: 글 6개마다 한 줄(광고 상세 확정 사항). 글이 적으면 자연히 안 나온다.
+type Row = { ad: true } | { ad?: false; post: (typeof posts)[number] };
+const rows: Row[] = [];
+posts.forEach((post, i) => {
+  if (i > 0 && i % 6 === 0) rows.push({ ad: true });
+  rows.push({ post });
+});
+
+const sideLinks = posts.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `institutions/${slugOf(e)}`),
+}));
+
 ---
 
 <Layout
@@ -154,14 +81,14 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
                   <AdBox minHeight="90px" />
                 </div>
               ) : (
-                <a class="hub-row" href={row.href ?? '#'}>
-                  <span class="tag">{row.tag}</span>
-                  <h3>{row.title}</h3>
-                  <p>{row.excerpt}</p>
+                <a class="hub-row" href={getRelativeLocaleUrl(locale, `institutions/${slugOf(row.post)}`)}>
+                  <span class="tag">{row.post.data.tag}</span>
+                  <h3>{row.post.data.title}</h3>
+                  <p>{row.post.data.description}</p>
                   <div class="hashtags">
-                    {row.hashtags.map((h) => <span>{h}</span>)}
+                    {row.post.data.hashtags.map((h) => <span>{h}</span>)}
                   </div>
-                  <p class="meta">{row.date}</p>
+                  <p class="meta">{formatDate(row.post.data.publishedAt)}</p>
                 </a>
               )
             )
@@ -171,9 +98,6 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
         <ArticleSide links={sideLinks} linksTitle="제도·지원 다른 글" />
       </div>
 
-      <div class="hub-more">
-        <button class="btn">글 더 보기</button>
-      </div>
     </main>
 
     <aside class="ad-rail right">

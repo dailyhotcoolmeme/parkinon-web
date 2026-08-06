@@ -1,105 +1,39 @@
 ---
+import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
+import { slugOf, formatDate, sortByDateDesc } from '../../../lib/articles';
 import labImg from '../../../assets/images/lab.jpg';
 
 const locale = Astro.currentLocale ?? 'ko';
 
-interface PostRow {
-  ad?: false;
-  tag: string;
-  title: string;
-  excerpt: string;
-  hashtags: string[];
-  date: string;
-  href?: string;
-}
-interface AdRow {
-  ad: true;
-}
-type Row = PostRow | AdRow;
+/*
+ * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
+ * 예전에는 글을 하나 추가할 때 글 페이지·허브 목록·사이드 패널 세 군데를 고쳐야 했고,
+ * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
+ */
+const posts = sortByDateDesc(
+  await getCollection('articles', ({ data, id }) => !data.draft && id.startsWith('news/'))
+);
 
-const rows: Row[] = [
-  {
-    tag: '파킨온 소식 #12',
-    title: '운동이 도파민 신경세포를 보호한다는 새 연구',
-    excerpt: '꾸준한 유산소 운동이 신경세포 손상 속도를 늦출 수 있다는 결과가 국제 학술지에 발표됐습니다.',
-    hashtags: ['#운동', '#도파민', '#신경보호연구'],
-    date: '2026.07.29',
-    href: getRelativeLocaleUrl(locale, 'news/exercise-dopamine-neuron-protection'),
-  },
-  {
-    tag: '파킨온 소식 #11',
-    title: '장내세균과 파킨슨병의 연관성, 어디까지 밝혀졌나',
-    excerpt: '장 건강과 파킨슨병 사이의 관계를 다룬 최근 연구들을 쉽게 정리했습니다.',
-    hashtags: ['#장내세균', '#마이크로바이옴'],
-    date: '2026.07.24',
-  },
-  {
-    tag: '파킨온 소식 #10',
-    title: '조기 진단에 도움 되는 후각 검사 연구 결과',
-    excerpt: '후각 저하가 파킨슨병의 초기 신호가 될 수 있다는 연구 내용을 정리했습니다.',
-    hashtags: ['#조기진단', '#후각검사'],
-    date: '2026.07.20',
-  },
-  {
-    tag: '파킨온 소식 #9',
-    title: '웨어러블 기기로 떨림 증상을 추적하는 기술',
-    excerpt: '손목시계형 기기로 하루 종일 떨림 패턴을 기록하는 새로운 연구를 소개합니다.',
-    hashtags: ['#웨어러블', '#떨림추적'],
-    date: '2026.07.16',
-  },
-  { ad: true },
-  {
-    tag: '파킨온 소식 #8',
-    title: '수면과 파킨슨병 진행 속도의 상관관계',
-    excerpt: '깊은 잠을 자는 시간과 증상 진행 사이의 관계를 다룬 연구를 정리했습니다.',
-    hashtags: ['#수면연구', '#진행속도'],
-    date: '2026.07.11',
-  },
-  {
-    tag: '파킨온 소식 #7',
-    title: '새로운 도파민 보충 치료제 임상시험 소식',
-    excerpt: '기존 약물의 한계를 보완하는 새 치료제의 임상시험 진행 상황을 정리했습니다.',
-    hashtags: ['#임상시험', '#치료제'],
-    date: '2026.07.07',
-  },
-  {
-    tag: '파킨온 소식 #6',
-    title: '지중해식 식단과 파킨슨병 위험도 연구',
-    excerpt: '식습관과 파킨슨병 발병 위험 사이의 관계를 분석한 대규모 추적 연구입니다.',
-    hashtags: ['#지중해식단', '#위험도연구'],
-    date: '2026.07.02',
-  },
-  {
-    tag: '파킨온 소식 #5',
-    title: 'AI로 보행 패턴을 분석해 조기 발견하는 기술',
-    excerpt: '스마트폰 영상만으로 보행 이상을 감지하는 인공지능 연구를 소개합니다.',
-    hashtags: ['#AI진단', '#보행분석'],
-    date: '2026.06.28',
-  },
-  { ad: true },
-  {
-    tag: '파킨온 소식 #4',
-    title: '유전자와 파킨슨병 발병 위험, 최신 연구 정리',
-    excerpt: '가족력이 있는 경우 어느 정도 위험이 높아지는지 최근 발표된 데이터를 정리했습니다.',
-    hashtags: ['#유전자', '#가족력'],
-    date: '2026.06.23',
-  },
-  {
-    tag: '파킨온 소식 #3',
-    title: '명상이 파킨슨병 증상 관리에 미치는 영향',
-    excerpt: '규칙적인 명상이 스트레스와 일부 증상 완화에 도움이 될 수 있다는 연구를 소개합니다.',
-    hashtags: ['#명상', '#증상관리'],
-    date: '2026.06.18',
-  },
-];
+// 광고: 글 6개마다 한 줄(광고 상세 확정 사항). 글이 적으면 자연히 안 나온다.
+type Row = { ad: true } | { ad?: false; post: (typeof posts)[number] };
+const rows: Row[] = [];
+posts.forEach((post, i) => {
+  if (i > 0 && i % 6 === 0) rows.push({ ad: true });
+  rows.push({ post });
+});
 
-const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
+const sideLinks = posts.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `news/${slugOf(e)}`),
+}));
+
 ---
 
 <Layout
@@ -141,14 +75,14 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
                   <AdBox minHeight="90px" />
                 </div>
               ) : (
-                <a class="hub-row" href={row.href ?? '#'}>
-                  <span class="tag">{row.tag}</span>
-                  <h3>{row.title}</h3>
-                  <p>{row.excerpt}</p>
+                <a class="hub-row" href={getRelativeLocaleUrl(locale, `news/${slugOf(row.post)}`)}>
+                  <span class="tag">{row.post.data.tag}</span>
+                  <h3>{row.post.data.title}</h3>
+                  <p>{row.post.data.description}</p>
                   <div class="hashtags">
-                    {row.hashtags.map((h) => <span>{h}</span>)}
+                    {row.post.data.hashtags.map((h) => <span>{h}</span>)}
                   </div>
-                  <p class="meta">{row.date}</p>
+                  <p class="meta">{formatDate(row.post.data.publishedAt)}</p>
                 </a>
               )
             )
@@ -158,9 +92,6 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
         <ArticleSide links={sideLinks} linksTitle="파킨온 소식 다른 글" />
       </div>
 
-      <div class="hub-more">
-        <button class="btn">글 더 보기</button>
-      </div>
     </main>
 
     <aside class="ad-rail right">

@@ -1,0 +1,46 @@
+---
+/* 준비 서류 체크리스트. 실제로 체크할 수 있다(인쇄·확인용).
+   쓰는 법(MDX): <Checklist items={['...', '...']} /> */
+interface Props {
+  items: string[];
+}
+const { items } = Astro.props;
+---
+
+<div class="check">
+  {
+    items.map((t) => (
+      <label>
+        <input type="checkbox" />
+        <span>{t}</span>
+      </label>
+    ))
+  }
+</div>
+
+<style>
+  .check {
+    margin-top: 18px;
+    border: 1px solid var(--outline);
+    border-radius: 14px;
+    padding: 8px 20px;
+  }
+  label {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 0;
+    font-size: 16px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  label + label {
+    border-top: 1px solid var(--outline);
+  }
+  input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+  }
+</style>

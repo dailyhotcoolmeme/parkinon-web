@@ -1,0 +1,784 @@
+---
+/*
+ * 글 디자인 시안 (2026-08-06) — 확정 아님. 오너가 보면서 뺄 것/더할 것을 정하기 위한 페이지.
+ *
+ * 여기 있는 블록들은 아직 컴포넌트가 아니다. 형식이 확정되면 그때 컴포넌트로 뽑고
+ * 마크다운(MDX)에서 쓰게 만든다. 지금은 **눈으로 보고 고르기 위한 것**이다.
+ *
+ * 사진은 지금 가진 것 중 **인물이 없는 것만** 자리 확인용으로 넣었다
+ * (오너 지시: 인물 사진 쓰지 말 것. 특히 환자 사진은 방문자에게 도움이 안 된다).
+ * 실제 글에는 주제에 맞는 사진을 무료 이미지 사이트에서 따로 구해 넣는다.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import AdBox from '../../../components/AdBox.astro';
+import heroImg from '../../../assets/images/path.jpg';
+import bodyImg from '../../../assets/images/lab.jpg';
+import appShot from '../../../assets/images/appshots/parkinon1.png';
+
+const locale = Astro.currentLocale ?? 'ko';
+
+const toc = [
+  { id: 'what-is', label: '산정특례란' },
+  { id: 'target', label: '파킨슨병도 대상인가요' },
+  { id: 'benefits', label: '얼마나 줄어드나요' },
+  { id: 'deadline', label: '언제까지 신청해야 하나요' },
+  { id: 'how-to-apply', label: '어떻게 신청하나요' },
+  { id: 'docs', label: '준비 서류' },
+  { id: 'renew', label: '5년이 끝나면' },
+  { id: 'trouble', label: '이럴 땐 이렇게' },
+  { id: 'plus', label: '함께 챙기면 좋은 것' },
+];
+
+const sideLinks = [
+  { title: '장애등록 절차와 준비 서류 한눈에 보기', date: '2026.07.25' },
+  { title: '장기요양보험 등급 신청, 어떻게 시작하나요', date: '2026.07.22' },
+  { title: '파킨슨병 치료비 세금공제 놓치지 않는 법', date: '2026.07.19' },
+];
+---
+
+<Layout title="[시안] 글 디자인 — 파킨온" description="글 디자인 시안 페이지입니다.">
+  <Header active="institutions" />
+
+  <div class="layout">
+    <aside class="ad-rail left"><AdBox minHeight="600px" /></aside>
+
+    <main class="col">
+      <div class="preview-note">
+        <b>디자인 시안</b> · 확정 아닙니다. 블록별로 <b>뺄 것 / 더할 것</b>을 말씀해 주세요.
+        사진은 지금 가진 것(인물 없는 것)만 자리 확인용으로 넣었습니다.
+      </div>
+
+      <!-- ① 히어로: 사진 위에 제목 오버레이 (허브 히어로와 같은 방식) -->
+      <section class="a-hero" style={`background-image:url(${heroImg.src});`}>
+        <div class="a-hero-inner">
+          <span class="a-tag">산정특례</span>
+          <h1>파킨슨병 산정특례, 신청 자격과 혜택 총정리</h1>
+          <div class="a-meta">
+            <span>2026.07.28 작성</span><span class="dot">·</span><span class="basis">2026년 7월 기준</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span>
+          <a href={getRelativeLocaleUrl(locale, 'institutions')}>제도·지원</a><span class="sep">/</span>
+          <span>파킨슨병 산정특례</span>
+        </nav>
+
+        <article>
+          <!-- ② 세 줄 요약 -->
+          <div class="a-summary">
+            <h2>세 줄 요약</h2>
+            <ul>
+              <li>파킨슨병(상병코드 <b>G20</b>)은 산정특례 대상입니다. 특정기호는 <b>V124</b>.</li>
+              <li>등록하면 <b>5년간</b> 관련 진료의 본인부담률이 <b>10%</b>로 낮아집니다.</li>
+              <li><b>확진일로부터 30일 안에</b> 신청해야 확진일까지 소급됩니다. 늦으면 신청한 날부터입니다.</li>
+            </ul>
+          </div>
+
+          <div class="article-body">
+            <h2 id="what-is">산정특례란</h2>
+            <p>
+              병원비가 많이 드는 중증질환자와 희귀·중증난치질환자의 본인부담을 낮춰주는 건강보험 제도입니다.
+              국민건강보험법 제44조와 같은 법 시행령 제19조, 그리고 보건복지부 고시 「본인일부부담금 산정특례에
+              관한 기준」에 근거합니다.
+            </p>
+            <p>
+              보통 외래 진료를 받으면 진료비의 30~60%를 본인이 냅니다. 산정특례에 등록하면 해당 질환 진료에
+              한해 <b>10%</b>만 내면 됩니다. 파킨슨병처럼 오래 다녀야 하는 병일수록 차이가 크게 벌어집니다.
+            </p>
+
+            <h2 id="target">파킨슨병도 대상인가요</h2>
+            <p>
+              대상입니다. 건강보험심사평가원이 공개한 산정특례 10% 대상 목록에 파킨슨병이 들어 있습니다.
+            </p>
+            <div class="a-table">
+              <table>
+                <thead><tr><th>구분</th><th>내용</th></tr></thead>
+                <tbody>
+                  <tr><td>질환명</td><td>파킨슨병</td></tr>
+                  <tr><td>상병코드</td><td>G20</td></tr>
+                  <tr><td>특정기호</td><td>V124</td></tr>
+                  <tr><td>본인부담률</td><td>요양급여비용총액의 10%</td></tr>
+                  <tr><td>적용 기간</td><td>등록일로부터 5년</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              진단서에 적힌 상병코드가 <b>G20</b>인지 확인해 보세요. 파킨슨증후군 등 다른 코드는 대상이 아닐 수
+              있습니다. 등록 기준을 충족하는지는 진료하신 의사가 판단해 신청서를 발행합니다.
+            </p>
+
+            <h2 id="benefits">얼마나 줄어드나요</h2>
+            <p>등록 전과 후의 본인부담률 차이입니다.</p>
+
+            <figure class="a-chart">
+              <div class="row">
+                <span class="k">등록 전</span>
+                <div class="bar"><span class="fill before" style="width:60%"></span></div>
+                <span class="v">30~60%</span>
+              </div>
+              <div class="row">
+                <span class="k">등록 후</span>
+                <div class="bar"><span class="fill after" style="width:10%"></span></div>
+                <span class="v strong">10%</span>
+              </div>
+              <figcaption>파킨슨병 관련 진료의 본인부담률 (2026년 7월 기준)</figcaption>
+            </figure>
+
+            <p>
+              다만 <b>병원비 전부가 10%가 되는 것은 아닙니다.</b> 건강보험이 일부를 부담하는 항목에만 적용되고,
+              전액 본인부담 항목·선별급여·비급여는 그대로입니다. 어디까지 적용되는지 정리하면 이렇습니다.
+            </p>
+            <div class="a-table">
+              <table>
+                <thead><tr><th>적용됩니다</th><th>적용되지 않습니다</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <ul class="cell-list">
+                        <li>외래 진료</li>
+                        <li>입원 진료</li>
+                        <li>CT·MRI·PET 등 고가 장비 검사</li>
+                        <li>약국 조제</li>
+                      </ul>
+                    </td>
+                    <td>
+                      <ul class="cell-list">
+                        <li>전액 본인부담 항목</li>
+                        <li>선별급여</li>
+                        <li>비급여(보험 적용 안 되는 항목)</li>
+                        <li>파킨슨병과 무관한 진료</li>
+                      </ul>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              감기나 다른 질환으로 병원에 갈 때는 일반 부담률이 그대로 적용됩니다. 산정특례는
+              <b>등록한 질환의 진료</b>에만 붙습니다.
+            </p>
+
+            <div class="article-ad"><AdBox minHeight="120px" /></div>
+
+            <h2 id="deadline">언제까지 신청해야 하나요</h2>
+            <p>
+              이 부분에서 손해를 보는 분이 많습니다. <b>확진일로부터 30일</b>이 기준입니다. 토요일과 공휴일도
+              날짜에 포함됩니다.
+            </p>
+            <div class="a-table">
+              <table>
+                <thead><tr><th>신청 시점</th><th>언제부터 적용되나</th></tr></thead>
+                <tbody>
+                  <tr><td>확진일로부터 <b>30일 이내</b></td><td><b>확진일부터</b> 5년 — 그사이 낸 진료비도 소급됩니다</td></tr>
+                  <tr><td>30일이 지난 뒤</td><td>공단에 <b>신청한 날부터</b> 5년 — 그 전 진료비는 소급되지 않습니다</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              진단을 받으면 다음 진료를 기다리지 말고 그 자리에서 신청서를 받아 두시는 편이 안전합니다.
+            </p>
+
+            <h2 id="how-to-apply">어떻게 신청하나요</h2>
+
+            <ol class="a-steps">
+              <li>
+                <span class="n">1</span>
+                <div>
+                  <h3>병원에서 신청서 받기</h3>
+                  <p>
+                    확진한 의사가 「건강보험 산정특례 등록 신청서」를 발행합니다. 병원에 서식이 비치되어 있습니다.
+                    파킨슨병은 희귀·중증난치·중증치매용 서식을 씁니다.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="n">2</span>
+                <div>
+                  <h3>공단에 등록 신청</h3>
+                  <p>
+                    대부분의 병원이 전산(EDI)으로 대신 접수해 줍니다. 병원에서 접수해 주지 않으면 신청서를 받아
+                    가까운 국민건강보험공단 지사에 직접 제출하시면 됩니다.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="n">3</span>
+                <div>
+                  <h3>등록 완료 · 5년 적용</h3>
+                  <p>
+                    등록이 끝나면 이후 진료부터 자동으로 적용됩니다. 병원에서 따로 말씀하지 않으셔도 됩니다.
+                  </p>
+                </div>
+              </li>
+            </ol>
+
+            <h2 id="docs">준비 서류</h2>
+            <div class="a-check">
+              <label><input type="checkbox" /> <span>건강보험 산정특례 등록 신청서 (의사 발행, 1부)</span></label>
+              <label><input type="checkbox" /> <span>신분증 (공단 지사에 직접 제출하는 경우)</span></label>
+            </div>
+            <p>
+              서류는 두 가지뿐입니다. 진단서를 따로 떼야 하는지 물으시는 분이 많은데, 신청서 자체를 의사가
+              발행하므로 별도 진단서는 원칙적으로 필요하지 않습니다.
+            </p>
+
+            <!-- 본문 사진 -->
+            <figure class="a-photo">
+              <Image src={bodyImg} alt="검사용 시험관이 놓인 검사실 책상" widths={[480, 760]} sizes="(max-width: 760px) 100vw, 760px" />
+              <figcaption>임시 사진(자리 확인용) — 실제 글에는 주제에 맞는 사진을 넣습니다</figcaption>
+            </figure>
+
+            <h2 id="renew">5년이 끝나면 어떻게 하나요</h2>
+            <p>
+              끝나기 전에 재등록을 신청하면 계속 적용됩니다. 파킨슨병 같은 희귀·중증난치질환은
+              <b>종료 예정일 3개월 전부터</b> 신청할 수 있습니다. 질환이 계속 남아 있고 치료를 이어가고 있으며
+              등록 기준을 충족하면 재등록됩니다.
+            </p>
+            <p>
+              재등록 신청일 기준 <b>1년 이내의 검사 기록</b>이 인정됩니다. 만료 시기가 다가오면 진료 예약을 잡을 때
+              미리 말씀해 두시는 것이 좋습니다.
+            </p>
+
+            <h2 id="trouble">이럴 땐 이렇게</h2>
+            <div class="a-table">
+              <table>
+                <thead><tr><th>상황</th><th>어떻게 하나요</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>확진 후 30일이 이미 지났습니다</td>
+                    <td>지금이라도 신청하세요. 소급은 안 되지만 신청한 날부터 5년이 적용됩니다</td>
+                  </tr>
+                  <tr>
+                    <td>병원에서 대신 접수해 주지 않습니다</td>
+                    <td>신청서를 받아 공단 지사에 직접 제출하시면 됩니다</td>
+                  </tr>
+                  <tr>
+                    <td>만료일이 언제인지 모르겠습니다</td>
+                    <td>공단 고객센터 1577-1000 또는 가까운 지사에서 확인하실 수 있습니다</td>
+                  </tr>
+                  <tr>
+                    <td>등록했는데 병원비가 그대로입니다</td>
+                    <td>비급여 항목이거나 파킨슨병과 무관한 진료일 수 있습니다. 영수증의 항목을 확인해 보세요</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h2 id="plus">함께 챙기면 좋은 것</h2>
+            <p>
+              산정특례에 등록하면 <b>희귀질환자 의료비 지원 사업</b>을 신청할 자격이 생깁니다. 산정특례 등록이
+              먼저이고, 그다음 보건소에 신청합니다. 소득·재산 기준을 충족하면 본인부담금 일부를 추가로
+              지원받을 수 있습니다.
+            </p>
+
+            <!-- 출처 -->
+            <div class="a-source">
+              <b>2026년 7월 기준</b><br />
+              출처 · 국민건강보험공단 「본인일부부담금 산정특례 제도」(국민건강보험법 제44조, 시행령 제19조 제1항 별표2) /
+              건강보험심사평가원 「희귀난치성질환자 산정특례 대상」<br />
+              문의 · 국민건강보험공단 1577-1000<br />
+              제도는 바뀔 수 있습니다. 바뀐 내용을 발견하시면 admin@ourmine.co.kr 로 알려주세요.
+            </div>
+
+            <!-- 앱 화면 — 글이 끝난 뒤에 추천 (오너 지시 2026-08-06) -->
+            <div class="a-app">
+              <Image src={appShot} alt="파킨온 앱의 오늘 복용 현황 화면" widths={[240, 360]} sizes="240px" />
+              <div class="a-app-text">
+                <h3>약 복용은 앱으로 관리하세요</h3>
+                <p>
+                  산정특례로 병원비를 줄이셨다면, 그다음은 약을 제때 드시는 것입니다. 파킨온 앱은 복용 시간을
+                  알려주고 기록을 남깁니다.
+                </p>
+                <a class="a-app-btn" href="#">파킨온 앱 보기</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- ⑩ 관련 글 카드(썸네일) -->
+          <div class="a-related">
+            <h2>함께 보면 좋은 제도</h2>
+            <div class="a-related-grid">
+              <a href="#">
+                <Image src={heroImg} alt="" widths={[240, 360]} sizes="240px" />
+                <span class="t">장애등록 절차와 준비 서류 한눈에 보기</span>
+                <span class="d">2026.07.25</span>
+              </a>
+              <a href="#">
+                <Image src={bodyImg} alt="" widths={[240, 360]} sizes="240px" />
+                <span class="t">장기요양보험 등급 신청, 어떻게 시작하나요</span>
+                <span class="d">2026.07.22</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <ArticleSide toc={toc} links={sideLinks} linksTitle="제도·지원 다른 글" />
+      </div>
+    </main>
+
+    <aside class="ad-rail right"><AdBox minHeight="600px" /></aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .preview-note {
+    background: var(--tertiary-container);
+    color: var(--tertiary-dark);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  /* ① 히어로 — 허브 히어로와 같은 방식(작업 영역 안쪽 full-bleed + 오버레이) */
+  .a-hero {
+    position: relative;
+    width: auto;
+    margin: 0 calc(-1 * var(--gutter)) 28px;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .a-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.82), rgba(10, 20, 12, 0.15) 65%, rgba(10, 20, 12, 0) 90%);
+  }
+  .a-hero-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--gutter) 28px;
+    max-width: 860px;
+  }
+  .a-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--primary);
+    padding: 5px 12px;
+    border-radius: 4px;
+  }
+  .a-hero-inner h1 {
+    margin-top: 14px;
+    font-size: 34px;
+    line-height: 1.35;
+    color: #fff;
+  }
+  .a-meta {
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .a-meta .basis {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  @media (max-width: 640px) {
+    .a-hero {
+      min-height: 240px;
+    }
+    .a-hero-inner h1 {
+      font-size: 25px;
+    }
+  }
+
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  article {
+    max-width: 760px;
+  }
+
+  /* ② 세 줄 요약 */
+  .a-summary {
+    border: 2px solid var(--secondary-container);
+    background: var(--secondary-container);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .a-summary h2 {
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    letter-spacing: 0.02em;
+  }
+  .a-summary ul {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .a-summary li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .a-summary li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+
+  .article-body {
+    margin-top: 34px;
+  }
+  .article-body h2 {
+    font-size: 21px;
+    color: var(--text);
+    margin-top: 44px;
+    margin-bottom: 14px;
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-ad {
+    margin: 36px 0;
+  }
+
+  /* ③ 막대 도식 */
+  .a-chart {
+    margin: 20px 0 0;
+    padding: 20px 22px;
+    background: var(--surface-low);
+    border-radius: 14px;
+  }
+  .a-chart .row {
+    display: grid;
+    grid-template-columns: 66px 1fr 74px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .a-chart .k {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .a-chart .bar {
+    height: 22px;
+    background: var(--surface-high);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .a-chart .fill {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+  }
+  .a-chart .fill.before {
+    background: var(--text-sub);
+    opacity: 0.55;
+  }
+  .a-chart .fill.after {
+    background: var(--primary);
+  }
+  .a-chart .v {
+    font-size: 14px;
+    color: var(--text-sub);
+    text-align: right;
+  }
+  .a-chart .v.strong {
+    color: var(--primary);
+    font-weight: 800;
+  }
+  .a-chart figcaption {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+
+  /* ④ 본문 사진 */
+  .a-photo {
+    margin: 28px 0 0;
+  }
+  .a-photo :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+  }
+  .a-photo figcaption {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+
+  /* ⑤ 절차 카드 */
+  .a-steps {
+    list-style: none;
+    margin: 18px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .a-steps li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: var(--surface-low);
+    border-radius: 14px;
+    padding: 18px 20px;
+  }
+  .a-steps .n {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 800;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .a-steps h3 {
+    font-size: 16.5px;
+    color: var(--text);
+  }
+  .a-steps p {
+    margin-top: 5px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-sub);
+  }
+
+  /* ⑥ 체크리스트 */
+  .a-check {
+    margin-top: 18px;
+    border: 1px solid var(--outline);
+    border-radius: 14px;
+    padding: 8px 20px;
+  }
+  .a-check label {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 13px 0;
+    font-size: 16px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .a-check label + label {
+    border-top: 1px solid var(--outline);
+  }
+  .a-check input {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--primary);
+    flex-shrink: 0;
+  }
+
+  /* 표 — 콜아웃(주황 박스) 대신 정보를 표로 정리한다.
+     오너 지적(2026-08-06): 색 박스 + 굵은 라벨 조합은 "딱 봐도 AI가 만든 티"가 난다.
+     공식 사이트들도 이런 박스를 쓰지 않고 표·본문으로 처리한다. */
+  .a-table {
+    margin-top: 18px;
+    overflow-x: auto;
+  }
+  .a-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15.5px;
+  }
+  .a-table th,
+  .a-table td {
+    border: 1px solid var(--outline);
+    padding: 12px 14px;
+    text-align: left;
+    line-height: 1.7;
+    vertical-align: top;
+    color: var(--text);
+  }
+  .a-table th {
+    background: var(--surface-low);
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--text-sub);
+  }
+  /*
+   * 셀 안에 항목이 여러 개일 때 <br> 로 나열하면, 모바일에서 한 항목이 두 줄로 접힐 때
+   * **항목 사이 간격과 접힌 줄 간격이 똑같아져서** 어디까지가 한 항목인지 구분이 안 된다
+   * (오너 지적 2026-08-06, 390px 실측: 둘 다 7px). 그래서 목록으로 만들고
+   * 항목 사이를 더 벌리고, 점 + 행잉 인덴트로 접힌 줄이 그 항목에 붙어 보이게 한다.
+   */
+  .a-table .cell-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .a-table .cell-list li {
+    position: relative;
+    padding-left: 13px;
+    line-height: 1.5;
+  }
+  .a-table .cell-list li::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: 9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-sub);
+  }
+
+  /* ⑧ 앱 화면 */
+  .a-app {
+    margin-top: 34px;
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 26px;
+    align-items: center;
+    background: var(--surface-low);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .a-app :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.35);
+  }
+  .a-app h3 {
+    font-size: 18px;
+    color: var(--text);
+  }
+  .a-app p {
+    margin-top: 8px;
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: var(--text-sub);
+  }
+  .a-app-btn {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px;
+    margin-top: 14px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  @media (max-width: 640px) {
+    .a-app {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+    .a-app :global(img) {
+      max-width: 200px;
+    }
+  }
+
+  /* ⑨ 출처 */
+  .a-source {
+    margin-top: 36px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+  .a-source b {
+    color: var(--text);
+  }
+
+  /* ⑩ 관련 글 카드 */
+  .a-related {
+    margin-top: 48px;
+  }
+  .a-related h2 {
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .a-related-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .a-related-grid a {
+    display: block;
+  }
+  .a-related-grid :global(img) {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  .a-related-grid .t {
+    display: block;
+    margin-top: 10px;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .a-related-grid a:hover .t {
+    color: var(--primary);
+  }
+  .a-related-grid .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  @media (max-width: 640px) {
+    .a-related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,76 @@
+---
+/* 막대 비교 도식 — 사진 대신 정보를 담은 시각 요소(NN/g 근거, site-implementation.md 참고).
+   쓰는 법(MDX): <CompareBar caption="..." rows={[{label:'등록 전', value:'30~60%', percent:60}, {label:'등록 후', value:'10%', percent:10, strong:true}]} /> */
+interface Props {
+  rows: { label: string; value: string; percent: number; strong?: boolean }[];
+  caption?: string;
+}
+const { rows, caption } = Astro.props;
+---
+
+<figure class="chart">
+  {
+    rows.map((r) => (
+      <div class="row">
+        <span class="k">{r.label}</span>
+        <div class="bar">
+          <span class:list={['fill', { strong: r.strong }]} style={`width:${r.percent}%`} />
+        </div>
+        <span class:list={['v', { strong: r.strong }]}>{r.value}</span>
+      </div>
+    ))
+  }
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
+
+<style>
+  .chart {
+    margin: 20px 0 0;
+    padding: 20px 22px;
+    background: var(--surface-low);
+    border-radius: 14px;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 66px 1fr 74px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .k {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .bar {
+    height: 22px;
+    background: var(--surface-high);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .fill {
+    display: block;
+    height: 100%;
+    border-radius: 6px;
+    background: var(--text-sub);
+    opacity: 0.55;
+  }
+  .fill.strong {
+    background: var(--primary);
+    opacity: 1;
+  }
+  .v {
+    font-size: 14px;
+    color: var(--text-sub);
+    text-align: right;
+  }
+  .v.strong {
+    color: var(--primary);
+    font-weight: 800;
+  }
+  figcaption {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+</style>

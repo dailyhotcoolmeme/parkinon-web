@@ -1,0 +1,76 @@
+---
+/* 앱 화면 추천 블록.
+   ⚠️ 자리는 **글이 끝난 뒤**(출처 박스 다음)다 — 오너 지시 2026-08-06.
+   "해당 게시글은 끝내고 나서 추천해야 하니까." */
+import { Image } from 'astro:assets';
+import appShot from '../../assets/images/appshots/parkinon1.png';
+
+interface Props {
+  title?: string;
+  body?: string;
+}
+const {
+  title = '약 복용은 앱으로 관리하세요',
+  body = '파킨온 앱은 복용 시간을 알려주고 기록을 남깁니다. 보호자와도 함께 볼 수 있습니다.',
+} = Astro.props;
+---
+
+<aside class="app">
+  <Image src={appShot} alt="파킨온 앱의 오늘 복용 현황 화면" widths={[240, 360]} sizes="240px" />
+  <div>
+    <h3>{title}</h3>
+    <p>{body}</p>
+    <a class="btn" href="/about">파킨온 앱 보기</a>
+  </div>
+</aside>
+
+<style>
+  .app {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: 210px 1fr;
+    gap: 26px;
+    align-items: center;
+    background: var(--surface-low);
+    border-radius: 16px;
+    padding: 24px;
+  }
+  .app :global(img) {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.35);
+  }
+  h3 {
+    font-size: 18px;
+    color: var(--text);
+  }
+  p {
+    margin-top: 8px;
+    font-size: 15.5px;
+    line-height: 1.75;
+    color: var(--text-sub);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 20px;
+    margin-top: 14px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+  @media (max-width: 640px) {
+    .app {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+    .app :global(img) {
+      max-width: 200px;
+    }
+  }
+</style>

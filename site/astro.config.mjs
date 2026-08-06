@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import mdx from '@astrojs/mdx';
 
 /*
  * 다국어 URL 구조 (2026-08-06 오너 확정): **모든 언어에 접두사**를 붙인다.
@@ -31,5 +32,12 @@ export default defineConfig({
    * ⚠️ sitemap 의 i18n 옵션은 **아직 켜지 않는다.** 켜면 아직 만들지도 않은 /en/·/fr/·/ja/
    *    주소까지 alternate 로 적어 버린다(hreflang 상호 링크 위반). 번역판을 실제로 만들 때 켤 것.
    */
-  integrations: [sitemap()],
+  // 글은 마크다운(MDX)으로 쓴다 — 본문 안에서 블록 컴포넌트(절차 카드·체크리스트 등)를 쓰기 위함
+  integrations: [
+    mdx(),
+    sitemap({
+      // 시안·미리보기 페이지는 사이트맵에서 뺀다
+      filter: (page) => !page.includes('/preview/'),
+    }),
+  ],
 });

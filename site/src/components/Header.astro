@@ -182,8 +182,20 @@ const navLinks = [
       width: 100%;
       box-sizing: border-box;
     }
+    /*
+     * 데스크톱 밑줄(.nav-links a::after, bottom:-6px)을 모바일에서 그대로 쓰면
+     * 초록 줄이 회색 구분선보다 4px 아래(다음 항목 영역)에 뜬다 — 실측 확인, 오너 지적 2026-08-06.
+     * 모바일에서는 행 구분선 자체를 초록으로 바꿔서 위치를 정확히 맞춘다.
+     */
+    .nav-links a::after {
+      display: none;
+    }
     .nav-links a:last-child {
-      border-bottom: none;
+      border-bottom-color: transparent;
+    }
+    .nav-links a.active {
+      border-bottom: 2px solid var(--primary);
+      margin-bottom: -1px; /* 1px → 2px 로 굵어진 만큼 상쇄해 행 높이를 유지 */
     }
     .menu-btn {
       display: flex;

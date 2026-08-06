@@ -261,6 +261,44 @@ Parkinson's Foundation · 마이클 J. 폭스 재단도 재단 소속 의료진�
 - 앱의 DSA hosting 해당 여부 (법률 자문 영역)
 - (광고 단가 조사는 오너가 불필요하다고 함 — 하지 말 것)
 
+## 제도 축을 쓸 수 있는 나라 (2026-08-07 1차 출처로 확인)
+
+기준: ① 공식 출처가 공개돼 있는가 ② **파킨슨병이 명시적으로 들어가 있는가**(추론 금지) ③ 전국 단일인가.
+
+### 1급 — 공식 문서에 파킨슨병이 **이름으로 명시**됨 (가장 쓰기 좋다)
+
+| 나라 | 제도 | 명시 근거 |
+|---|---|---|
+| 🇰🇷 한국 | 산정특례 | 심평원 표 "커. 파킨슨병(G20) → V124" (이미 글 작성함) |
+| 🇫🇷 프랑스 | ALD 30 (본인부담 면제) | [service-public.fr](https://www.service-public.fr/particuliers/vosdroits/F34068) · [ameli.fr](https://www.ameli.fr/assure/droits-demarches/maladie-accident-hospitalisation/affection-longue-duree-ald/affection-longue-duree-maladie-chronique) 목록에 **"Maladie de Parkinson"** |
+| 🇯🇵 일본 | 지정난치병 의료비 조성 | [후생노동성](https://www.mhlw.go.jp/stf/newpage_53881.html) **告示番号 6 パーキンソン病** — 진단기준 PDF 공개 |
+| 🇮🇹 이탈리아 | 티켓 면제(만성질환) | DPCM LEA 별첨8 **코드 038 "MORBO DI PARKINSON"** · [malattierare.gov.it](https://www.malattierare.gov.it/malattie/dettaglio/9948) 038.332 |
+| 🇺🇸 미국 | SSDI/SSI 장애 인정 | [SSA Blue Book **11.06 Parkinsonian syndrome**](https://www.ssa.gov/disability/professionals/bluebook/11.00-Neurological-Adult.htm) · POMS 상병코드 3320 |
+| 🇩🇪 독일 | 장애등급(GdB) | [VersMedV 부속서](https://www.gesetze-im-internet.de/versmedv/BJNR241200008.html)에 **"Parkinson-Syndrom"** 평가 기준 |
+| 🇦🇺 호주 | NDIS | [NDIS "Applying to the NDIS"](https://www.ndis.gov.au/media/7752/download?attachment) **List B 에 Parkinson's disease** 명시 |
+
+### 2급 — 제도는 있으나 **질환명 미명시**(기능 평가 기반). 쓸 수는 있으나 "파킨슨 전용 글"이 안 된다
+
+| 나라 | 제도 | 상태 |
+|---|---|---|
+| 🇨🇦 캐나다 | 장애세액공제(DTC) | [CRA 기준](https://www.canada.ca/en/revenue-agency/services/tax/individuals/segments/tax-credits-deductions-persons-disabilities/disability-tax-credit/eligible-dtc.html)은 보행·정신기능 등 **기능 제한** 기준. 파킨슨 미명시 |
+| 🇪🇸 스페인 | 장애 정도 인정(RD 888/2022) | 전국 기준이나 **판정은 자치주**가 수행. 질환명 미명시 |
+
+### 3급 — 지금은 쓰지 않는다
+- 🇳🇿 뉴질랜드: 제도 축 검색 수요가 사실상 0 (자동완성 실질 0개)
+- 중남미: 이번 조사 대상 아님
+
+### ⚠️ 제도 축은 "그 나라 언어"가 있어야 성립한다
+
+| 나라 | 필요한 언어 | 지금 있나 |
+|---|---|---|
+| 한국·미국·호주·프랑스·일본 | ko / en / en / fr / ja | ✅ **전부 보유** |
+| 독일 | de | ❌ 추가 필요 |
+| 이탈리아 | it | ❌ 추가 필요 |
+
+→ **지금 가진 4개 언어(ko/en/fr/ja)만으로 1급 7개국 중 5개국을 쓸 수 있다.**
+독일·이탈리아는 언어를 추가해야 제도 축이 열린다.
+
 ## 해외판 축 1(제도·지원) 스코프 (확정, 2026-08-01)
 
 **5개국 다 한다. 단, 캐나다는 연방 제도까지만 — 주(州)별 항목은 뺀다.**

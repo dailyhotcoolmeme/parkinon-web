@@ -122,7 +122,7 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
         <a href="/">홈</a><span class="sep">/</span><span>파킨온 소식</span>
       </nav>
 
-      <div class="hub-body">
+      <div class="content-body">
         <div class="hub-list">
           {
             rows.map((row) =>
@@ -218,17 +218,6 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
     }
     .hub-hero-full-inner h1 {
       font-size: 26px;
-    }
-  }
-  .hub-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    column-gap: 44px;
-    align-items: start;
-  }
-  @media (max-width: 1080px) {
-    .hub-body {
-      grid-template-columns: minmax(0, 1fr);
     }
   }
   .hub-list {

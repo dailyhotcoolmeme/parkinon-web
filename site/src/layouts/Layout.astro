@@ -174,16 +174,27 @@ const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루�
     margin: 0 auto;
   }
   /*
-   * 상세 페이지 셸 — 본문(760px) + 오른쪽 사이드 패널(ArticleSide).
-   * 넓은 화면에서 본문 오른쪽이 비지 않게 하는 것이 목적(website-plan.md "확립된 디자인 규칙" 2번).
+   * 콘텐츠 본문 + 오른쪽 사이드 패널 그리드 — 허브·상세가 **같은 정의를 쓴다**.
+   * 예전에는 허브가 전체 폭(1fr+300), 상세가 760+300 가운데 정렬이라 허브→상세로 넘어갈 때
+   * 좌우 폭이 64px씩 달라졌다(오너 지적 2026-08-06). 폭이 갈라지지 않게 여기 한 군데서만 정의한다.
+   * 본문은 760px 까지, 남는 폭은 사이드가 가져간다 → 오른쪽에 빈 공간이 안 남는다.
    * 사이드를 감추는 브레이크포인트는 ArticleSide 컴포넌트가 갖고 있다(1080px).
    */
-  .detail-body {
+  .content-body {
     display: grid;
-    grid-template-columns: minmax(0, 760px) 300px;
-    grid-template-rows: auto 1fr;
+    grid-template-columns: minmax(0, 760px) minmax(300px, 1fr);
     column-gap: 44px;
-    justify-content: center;
+    align-items: start;
+  }
+  @media (max-width: 1080px) {
+    .content-body {
+      grid-template-columns: minmax(0, 760px);
+      justify-content: center;
+    }
+  }
+  /* 상세는 breadcrumb·article 이 왼쪽 칸에 세로로 쌓이고 사이드가 두 줄에 걸친다 */
+  .detail-body {
+    grid-template-rows: auto 1fr;
   }
   .detail-body > .breadcrumb {
     grid-column: 1;
@@ -196,12 +207,6 @@ const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루�
   .detail-body > .article-side {
     grid-column: 2;
     grid-row: 1 / span 2;
-    align-self: start;
-  }
-  @media (max-width: 1080px) {
-    .detail-body {
-      grid-template-columns: minmax(0, 760px);
-    }
   }
   .ad-rail {
     display: none;

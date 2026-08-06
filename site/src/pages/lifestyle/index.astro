@@ -139,7 +139,7 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
         {tabs.map((t, i) => <a class:list={['tab', { active: i === 0 }]} href="#">{t}</a>)}
       </div>
 
-      <div class="hub-body">
+      <div class="content-body">
         <div class="hub-list">
           {
             rows.map((row) =>
@@ -261,17 +261,6 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
   .tab.active {
     color: var(--primary);
     border-color: var(--primary);
-  }
-  .hub-body {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    column-gap: 44px;
-    align-items: start;
-  }
-  @media (max-width: 1080px) {
-    .hub-body {
-      grid-template-columns: minmax(0, 1fr);
-    }
   }
   .hub-list {
     display: flex;

@@ -60,9 +60,15 @@
 - 목차 링크는 본문 `h2`의 `id`를 가리킨다. 페이지 프론트매터 `toc`의 `id`·`label`이 본문 h2와
   **정확히 일치해야** 한다(한쪽만 고치면 링크가 죽는다). sticky 헤더에 제목이 가리지 않도록
   `.article-body h2{ scroll-margin-top: 88px }`. 부드러운 스크롤은 쓰지 않는다(즉시 이동).
-- 폭: 상세는 `.detail-body`(Layout 전역) `minmax(0,760px) 300px` / 허브는 `.hub-body`
-  `minmax(0,1fr) 300px`, 둘 다 `column-gap:44px`. **1080px 이하에서 사이드를 감춘다**
-  (감추는 규칙은 컴포넌트가 갖고 있다).
+- 폭: **허브와 상세가 같은 그리드를 쓴다** — Layout 전역 `.content-body`
+  `grid-template-columns: minmax(0,760px) minmax(300px,1fr)`, `column-gap:44px`.
+  본문은 760px까지, 남는 폭은 사이드가 가져간다(1648px 화면에서 사이드 428px) →
+  오른쪽에 빈 공간이 안 남으면서 두 페이지의 좌우 폭이 정확히 같다.
+  **1080px 이하에서 사이드를 감춘다**(감추는 규칙은 컴포넌트가 갖고 있다).
+  ⚠️ 예전에 허브만 `1fr + 300`, 상세만 `760 + 300` 가운데 정렬이라 허브→상세로 넘어갈 때
+  좌우가 64px씩 어긋났다(오너 지적 2026-08-06). **폭 정의를 페이지별로 다시 쓰지 말 것 —
+  `.content-body` 한 군데만 고친다.** 상세는 `.content-body .detail-body` 두 클래스를
+  같이 쓰고, `.detail-body` 는 행 배치(breadcrumb/article/사이드)만 담당한다.
 - ⚠️ `@media`의 `display:none`은 반드시 `.article-side{display:flex}` **뒤에** 와야 한다.
   앞에 두면 뒤 규칙에 덮여 사이드가 안 사라진다(실제로 1000px에서 사이드가 남아 본문이
   눌렸다 — DOM 실측으로 잡았다).

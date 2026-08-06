@@ -177,10 +177,10 @@ const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props
         targets.forEach((el, i) => {
           if (el.getBoundingClientRect().top <= line) index = i;
         });
-        // 첫 섹션에 닿기 전에는 아무것도 표시하지 않는다
-        const before = targets[0].getBoundingClientRect().top > line;
+        // 글 맨 위(첫 소제목에 닿기 전)에서는 첫 항목을 선택 상태로 둔다 —
+        // 페이지에 들어오자마자 아무것도 선택 안 된 상태로 보이지 않게(오너 지시 2026-08-06).
         links.forEach((a, i) => {
-          if (!before && i === index) a.setAttribute('aria-current', 'true');
+          if (i === index) a.setAttribute('aria-current', 'true');
           else a.removeAttribute('aria-current');
         });
       };

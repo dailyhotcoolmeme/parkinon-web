@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro check && astro build && node scripts/check-built-html.mjs",
     "preview": "astro preview",
-    "deploy:dev": "astro check && astro build && wrangler pages deploy dist --project-name=parkinon-site-dev --commit-dirty=true"
+    "deploy:dev": "astro check && astro build && node scripts/check-built-html.mjs && wrangler pages deploy dist --project-name=parkinon-site-dev --commit-dirty=true"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.5",

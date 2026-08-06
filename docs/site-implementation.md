@@ -39,9 +39,11 @@ npm run build --prefix site     # astro check + astro build (0 errors 유지할 
   자동으로 효력이 생긴다. dev 에서 `/about` `/about/en` `/about/ja` 모두 `/ko/` 로 302 확인.
   - 301 이 아니라 302 인 이유: 브라우저가 301 을 오래 캐시해서 나중에 /about 을 되살려도
     이미 스캔한 사람은 계속 홈으로 간다. QR 은 오프라인 배포라 301 로 얻을 SEO 이득도 없다.
-  - ⚠️ **구글 OAuth 동의 화면의 홈페이지 URL 이 `/about` 으로 등록돼 있을 수 있다**
-    ([[reference_parkinon_google_oauth_project]] 메모: "홈=/about"). 정식 오픈 후 리다이렉트가
-    검증에 문제를 일으키지 않는지 확인하고, 필요하면 콘솔에서 홈페이지 URL 을 바꾼다.
+  - ⬜ **확인 안 된 항목**: 구글 OAuth 동의 화면(브랜딩)에는 앱 홈페이지 URL 을 등록하는 칸이 있고,
+    옛 메모에 "홈=/about" 이라고 적혀 있다. 다만 **실제 등록값은 확인하지 못했다**
+    (콘솔 접속 시 패스키 본인 확인이 필요해 막힘, 2026-08-06). 정식 오픈 전에
+    https://console.cloud.google.com/auth/branding?project=917867748970 에서 값을 직접 보고,
+    `/about` 이면 새 홈 주소로 바꿀지 판단할 것. **확인 전에는 등록돼 있다고 단정하지 말 것.**
   - `/terms` `/privacy` `/delete-account` 는 **리다이렉트 대상이 아니다.** 앱에서 직접 들어오는
     법적 문서라 내용이 그대로 보여야 한다(위 다국어 섹션 참고).
 

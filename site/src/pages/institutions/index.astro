@@ -236,12 +236,23 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
      * min-height 는 앞으로 짧은 문구가 들어와도 2줄 자리를 유지시키는 안전장치.
      */
     max-width: 640px;
-    min-height: 48px;
     line-height: 1.6;
+    /*
+     * 설명 영역 높이를 고정한다 — 메뉴를 옮겨 다닐 때 히어로 높이가 들쭉날쭉하면
+     * 눈에 거슬린다는 오너 지적(2026-08-06). 줄 수는 폭·페이지마다 2~4줄로 갈리므로
+     * 그 구간의 최대값만큼 자리를 미리 잡아 둔다(데스크톱 2줄=48px, 640px 이하 4줄=96px).
+     * 실측 근거: 640px 초과에서는 세 페이지 모두 2줄, 320~430px 구간 최대 4줄.
+     */
+    height: 48px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
   }
   @media (max-width: 640px) {
+    /* 224px = padding 58 + 제목 32 + 여백 10 + 설명 4줄 96 + padding 28 */
     .hub-hero-full {
-      min-height: 200px;
+      min-height: 224px;
     }
     /* 모바일도 같은 이유로 고정. 58px = 기존 3줄 화면의 제목 위치 그대로 */
     .hub-hero-full-inner {
@@ -249,6 +260,10 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
     }
     .hub-hero-full-inner h1 {
       font-size: 26px;
+    }
+    .hub-hero-full-inner p {
+      height: 96px;
+      -webkit-line-clamp: 4;
     }
   }
   .hub-tabs {

@@ -1,10 +1,13 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
-import ArticleSide from '../../components/ArticleSide.astro';
-import labImg from '../../assets/images/lab.jpg';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import labImg from '../../../assets/images/lab.jpg';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 interface PostRow {
   ad?: false;
@@ -27,7 +30,7 @@ const rows: Row[] = [
     excerpt: '꾸준한 유산소 운동이 신경세포 손상 속도를 늦출 수 있다는 결과가 국제 학술지에 발표됐습니다.',
     hashtags: ['#운동', '#도파민', '#신경보호연구'],
     date: '2026.07.29',
-    href: '/news/exercise-dopamine-neuron-protection',
+    href: getRelativeLocaleUrl(locale, 'news/exercise-dopamine-neuron-protection'),
   },
   {
     tag: '파킨온 소식 #11',
@@ -119,7 +122,7 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
       </section>
 
       <nav class="breadcrumb">
-        <a href="/">홈</a><span class="sep">/</span><span>파킨온 소식</span>
+        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>파킨온 소식</span>
       </nav>
 
       <div class="content-body">

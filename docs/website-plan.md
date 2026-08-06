@@ -39,20 +39,64 @@
 
 ## 코드/디자인 현재 상태 (2026-08-06 기준)
 
-**라우트 (9개, 전부 `parkinon-site-dev`에 배포됨)**
+**라우트 (9개, 전부 `parkinon-site-dev`에 배포됨). 2026-08-06 부터 언어 접두사가 붙는다.**
 ```
-/                                              홈
-/institutions                                  제도·지원 허브
-/institutions/copayment-reduction-guide        제도·지원 상세(예시 글 1개)
-/lifestyle                                      생활 요령 허브
-/lifestyle/walking-together-fall-prevention     생활 요령 상세(예시 글 1개)
-/news                                           파킨온 소식 허브
-/news/exercise-dopamine-neuron-protection       파킨온 소식 상세(예시 글 1개)
-/tools                                          도구 허브 — 내비게이션에서 의도적으로 숨김
-/tools/medication-schedule                      복약 시간표 도구(실동작) — 마찬가지로 숨김
+/                                                 → /ko/ 로 302 (public/_redirects)
+/ko/                                              홈
+/ko/institutions                                  제도·지원 허브
+/ko/institutions/copayment-reduction-guide        제도·지원 상세(예시 글 1개)
+/ko/lifestyle                                     생활 요령 허브
+/ko/lifestyle/walking-together-fall-prevention    생활 요령 상세(예시 글 1개)
+/ko/news                                          파킨온 소식 허브
+/ko/news/exercise-dopamine-neuron-protection      파킨온 소식 상세(예시 글 1개)
+/ko/tools                                         도구 허브 — 내비게이션에서 의도적으로 숨김
+/ko/tools/medication-schedule                     복약 시간표 도구(실동작) — 마찬가지로 숨김
 ```
 나머지 허브 목록 항목들(각 허브에 10개 안팎)은 아직 실제 글이 없어 `href="#"`다.
 지어내지 말고, 실제 글이 생기면 그때 slug를 붙여 연결할 것.
+
+## 다국어 URL 구조 (확정, 2026-08-06 — 나중에 바꾸면 순위를 잃는다)
+
+**모든 언어에 접두사를 붙인다(오너 결정).**
+```
+/ko/institutions   /en/institutions   /fr/institutions   /ja/institutions
+```
+루트 `/` 는 `site/public/_redirects` 로 `/ko/` 에 302. 옛 주소(`/institutions` 등)는 301로 새 주소에 보낸다.
+
+**근거(1차 자료)**
+- Google [다지역·다국어 사이트 관리] — 하위 디렉터리(`example.com/de/`)는 "설정 쉽고 유지보수
+  부담 적음". URL 파라미터(`?lang=`)는 **권장하지 않음**. **브라우저 언어로 자동 리다이렉트 금지**
+  (사용자·검색엔진이 다른 언어판에 접근하지 못한다).
+- Google [현지화 버전] — hreflang 은 **상호 링크 필수**("X가 Y를 링크하면 Y도 X를 링크해야
+  한다. 아니면 무시될 수 있다"), **자기 자신도 포함**, `x-default` 권장, 절대 URL 필수.
+- Astro i18n 문서 — `prefixDefaultLocale: true` 로 전 언어 접두사. **hreflang 은 자동 생성되지
+  않는다** → `Layout.astro` 에서 직접 넣는다.
+
+**구현 위치**
+- `site/astro.config.mjs` — `i18n: { locales: ['ko','en','fr','ja'], defaultLocale: 'ko',
+  routing: { prefixDefaultLocale: true } }`, `site:` 는 `PUBLIC_SITE_URL` 환경변수(기본값 dev 도메인)
+- `site/src/layouts/Layout.astro` — `<html lang>`, canonical(절대 URL), hreflang, dev 도메인 noindex
+- 링크는 **손으로 적지 말고** `getRelativeLocaleUrl(locale, 'institutions')` 로 만든다
+  (Header·Footer·각 페이지 모두 적용됨). 그래야 번역판에서 자동으로 같은 언어로 이어진다.
+
+**번역판을 추가할 때 (지금은 한국어만 있다)**
+1. `src/pages/en/...` 에 같은 구조로 페이지를 만든다
+2. 그 페이지들의 `<Layout>` 에 `translations={{ ko: '/ko/...', en: '/en/...' }}` 를 넘긴다
+   → 그때부터 양쪽에 hreflang + x-default 가 나간다
+3. ⚠️ **실제로 존재하는 언어만 넘길 것.** 없는 번역까지 hreflang 을 걸면 상호 링크가 성립하지
+   않아 Google 이 주석 전체를 무시한다. 그래서 지금은 hreflang 이 아예 안 나간다(canonical 만).
+4. 언어 전환 UI(푸터 "한국어" 버튼)도 그때 실제 동작을 붙인다 — 지금은 갈 곳이 없어 비활성.
+
+**⚠️ dev 배포는 `noindex`**
+`Astro.site` 의 호스트가 `parkinon.com` 일 때만 색인을 허용한다. dev 도메인이 검색에 잡히면
+본 사이트와 중복 콘텐츠가 되기 때문. **정식 오픈 때 `PUBLIC_SITE_URL=https://parkinon.com`
+으로 빌드해야 noindex 가 사라진다** — 이걸 빼먹으면 사이트 전체가 색인되지 않는다.
+
+**⚠️ `/terms` `/privacy` `/about` `/delete-account` 는 언어 접두사를 붙이지 않는다.**
+이 4개는 앱에서 눌러 들어오는 기존 정적 페이지이고 **다른 프로젝트(`parkinon-web` 루트)가
+서빙**한다. 앱에 주소가 하드코딩돼 있다. 기존 구조는 `/terms`(한국어)·`/terms/en`·`/terms/fr`·
+`/terms/ja` 로 **접두사가 아니라 접미사** 방식이고 hreflang 도 없다. 정식 오픈 때 콘텐츠 사이트와
+합치면서 이 4개를 어떻게 할지는 **따로 결정해야 한다**(그대로 두기 / 리다이렉트 걸고 이전).
 
 **오른쪽 사이드 패널 = `src/components/ArticleSide.astro` (허브 3개 + 상세 3개 공용)**
 

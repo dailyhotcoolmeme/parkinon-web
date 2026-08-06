@@ -1,5 +1,10 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
+
+const locale = Astro.currentLocale ?? 'ko';
+// /terms · /privacy 는 앱에서 넘어오는 기존 정적 페이지다(다른 프로젝트가 서빙).
+// 언어 접두사를 붙이면 안 된다 — 앱에도 이 주소가 하드코딩돼 있다.
 ---
 
 <footer class="site">
@@ -19,9 +24,9 @@ import logo from '../assets/images/logo.png';
     </div>
     <div class="footer-col">
       <h4>바로가기</h4>
-      <a href="/institutions">제도·지원</a>
-      <a href="/lifestyle">생활 요령</a>
-      <a href="/news">파킨온 소식</a>
+      <a href={getRelativeLocaleUrl(locale, 'institutions')}>제도·지원</a>
+      <a href={getRelativeLocaleUrl(locale, 'lifestyle')}>생활 요령</a>
+      <a href={getRelativeLocaleUrl(locale, 'news')}>파킨온 소식</a>
     </div>
     <div class="footer-col">
       <h4>고객지원</h4>

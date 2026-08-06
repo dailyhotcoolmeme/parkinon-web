@@ -1,4 +1,5 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
 
 interface Props {
@@ -6,16 +7,22 @@ interface Props {
 }
 const { active } = Astro.props;
 
+/*
+ * 모든 URL 에 언어 접두사가 붙는다(/ko/institutions). 링크를 손으로 적지 말고
+ * getRelativeLocaleUrl 로 만들 것 — 번역판이 생겨도 현재 언어를 따라간다.
+ */
+const locale = Astro.currentLocale ?? 'ko';
 const navLinks = [
-  { key: 'institutions', href: '/institutions', label: '제도·지원' },
-  { key: 'lifestyle', href: '/lifestyle', label: '생활 요령' },
-  { key: 'news', href: '/news', label: '파킨온 소식' },
+  { key: 'institutions', href: getRelativeLocaleUrl(locale, 'institutions'), label: '제도·지원' },
+  { key: 'lifestyle', href: getRelativeLocaleUrl(locale, 'lifestyle'), label: '생활 요령' },
+  { key: 'news', href: getRelativeLocaleUrl(locale, 'news'), label: '파킨온 소식' },
 ] as const;
+const homeHref = getRelativeLocaleUrl(locale, '');
 ---
 
 <header class="site">
   <div class="wrap nav">
-    <a class="brand" href="/"><img src={logo.src} alt="" />파킨온</a>
+    <a class="brand" href={homeHref}><img src={logo.src} alt="" />파킨온</a>
     <nav class="nav-links" id="navLinks">
       {
         navLinks.map((link) => (

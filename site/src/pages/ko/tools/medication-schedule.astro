@@ -1,9 +1,12 @@
 ---
 // 도구 메뉴는 내비게이션에서 숨겨져 있다 — tools/index.astro 상단 주석 참고.
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+
+const locale = Astro.currentLocale ?? 'ko';
 ---
 
 <Layout title="복약 시간표 만들기 — 파킨온">
@@ -16,7 +19,7 @@ import AdBox from '../../components/AdBox.astro';
 
     <main class="col">
       <nav class="breadcrumb">
-        <a href="/">홈</a><span class="sep">/</span><a href="/tools">도구</a><span class="sep">/</span>
+        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><a href={getRelativeLocaleUrl(locale, 'tools')}>도구</a><span class="sep">/</span>
         <span>복약 시간표 만들기</span>
       </nav>
 

@@ -1,9 +1,12 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
-import ArticleSide from '../../components/ArticleSide.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 const related = [
   {
@@ -52,7 +55,7 @@ const sideLinks: { title: string; date: string; href?: string }[] = [
     <main class="col">
       <div class="content-body detail-body">
         <nav class="breadcrumb">
-          <a href="/">홈</a><span class="sep">/</span><a href="/lifestyle">생활 요령</a><span class="sep">/</span>
+          <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><a href={getRelativeLocaleUrl(locale, 'lifestyle')}>생활 요령</a><span class="sep">/</span>
           <span>친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다</span>
         </nav>
 

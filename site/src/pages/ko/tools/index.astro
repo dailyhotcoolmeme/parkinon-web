@@ -1,17 +1,20 @@
 ---
 // 도구 메뉴는 내비게이션(톱바·푸터·홈 "둘러보기")에서 의도적으로 숨겨져 있다.
 // 2026-08-04 오너 지시: "도구 메뉴는 그냥 일단 숨겨놔라" — 페이지 자체는 지우지 않는다.
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 const tools = [
   {
     title: '복약 시간표 만들기',
     desc: '드시는 약과 시간을 입력하면 한눈에 보는 시간표를 만들어 인쇄까지 할 수 있습니다.',
     go: '만들기 시작 →',
-    href: '/tools/medication-schedule',
+    href: getRelativeLocaleUrl(locale, 'tools/medication-schedule'),
     icon: '<rect x="3" y="9" width="18" height="6" rx="3"/><line x1="12" y1="9" x2="12" y2="15"/>',
   },
   {
@@ -57,7 +60,7 @@ const tools = [
 
     <main class="col">
       <nav class="breadcrumb">
-        <a href="/">홈</a><span class="sep">/</span><span>도구</span>
+        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>도구</span>
       </nav>
 
       <div class="hub-head">

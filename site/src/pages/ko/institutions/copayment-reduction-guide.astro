@@ -1,9 +1,12 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
-import ArticleSide from '../../components/ArticleSide.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 const related = [
   {
@@ -54,7 +57,7 @@ const sideLinks: { title: string; date: string; href?: string }[] = [
     <main class="col">
       <div class="content-body detail-body">
         <nav class="breadcrumb">
-          <a href="/">홈</a><span class="sep">/</span><a href="/institutions">제도·지원</a><span class="sep">/</span>
+          <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><a href={getRelativeLocaleUrl(locale, 'institutions')}>제도·지원</a><span class="sep">/</span>
           <span>파킨슨병 산정특례, 신청 자격과 혜택 총정리</span>
         </nav>
 

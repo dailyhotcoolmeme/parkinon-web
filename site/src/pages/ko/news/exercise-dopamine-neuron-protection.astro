@@ -1,9 +1,12 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
-import ArticleSide from '../../components/ArticleSide.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 const related = [
   {
@@ -52,7 +55,7 @@ const sideLinks: { title: string; date: string; href?: string }[] = [
     <main class="col">
       <div class="content-body detail-body">
         <nav class="breadcrumb">
-          <a href="/">홈</a><span class="sep">/</span><a href="/news">파킨온 소식</a><span class="sep">/</span>
+          <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><a href={getRelativeLocaleUrl(locale, 'news')}>파킨온 소식</a><span class="sep">/</span>
           <span>운동이 도파민 신경세포를 보호한다는 새 연구</span>
         </nav>
 

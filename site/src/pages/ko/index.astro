@@ -1,27 +1,30 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import { Image } from 'astro:assets';
-import Layout from '../layouts/Layout.astro';
-import Header from '../components/Header.astro';
-import Footer from '../components/Footer.astro';
-import AdBox from '../components/AdBox.astro';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
 
-import heroImg from '../assets/images/hero.jpg';
-import pathImg from '../assets/images/path.jpg';
-import foodImg from '../assets/images/food.jpg';
-import yogaImg from '../assets/images/yoga.jpg';
-import sleepImg from '../assets/images/sleep.jpg';
-import familyImg from '../assets/images/family.jpg';
-import labImg from '../assets/images/lab.jpg';
+import heroImg from '../../assets/images/hero.jpg';
+import pathImg from '../../assets/images/path.jpg';
+import foodImg from '../../assets/images/food.jpg';
+import yogaImg from '../../assets/images/yoga.jpg';
+import sleepImg from '../../assets/images/sleep.jpg';
+import familyImg from '../../assets/images/family.jpg';
+import labImg from '../../assets/images/lab.jpg';
 
-import shot1 from '../assets/images/appshots/parkinon1.png';
-import shot2 from '../assets/images/appshots/parkinon2.png';
-import shot3 from '../assets/images/appshots/parkinon3.png';
-import shot4 from '../assets/images/appshots/parkinon4.png';
-import shot5 from '../assets/images/appshots/parkinon5.png';
-import shot6 from '../assets/images/appshots/parkinon6.png';
-import shot7 from '../assets/images/appshots/parkinon7.png';
-import shot8 from '../assets/images/appshots/parkinon8.png';
-import shotEtc from '../assets/images/appshots/parkinon_etc.png';
+import shot1 from '../../assets/images/appshots/parkinon1.png';
+import shot2 from '../../assets/images/appshots/parkinon2.png';
+import shot3 from '../../assets/images/appshots/parkinon3.png';
+import shot4 from '../../assets/images/appshots/parkinon4.png';
+import shot5 from '../../assets/images/appshots/parkinon5.png';
+import shot6 from '../../assets/images/appshots/parkinon6.png';
+import shot7 from '../../assets/images/appshots/parkinon7.png';
+import shot8 from '../../assets/images/appshots/parkinon8.png';
+import shotEtc from '../../assets/images/appshots/parkinon_etc.png';
+
+const locale = Astro.currentLocale ?? 'ko';
 
 const appShots = [
   { img: shot1, cap: '약 복용 기록', alt: '파킨온 앱 - 약복용 기록 화면' },
@@ -86,7 +89,7 @@ const newsRows = [
       <p>약 복용 시간부터 낙상 예방, 제도 지원까지 — 환자와 가족에게 실제로 도움되는 정보만 정리했습니다.</p>
       <div class="actions">
         <button class="btn btn-primary">오늘의 추천 글 보기</button>
-        <a class="btn btn-ghost-light" href="/lifestyle">생활 요령 둘러보기</a>
+        <a class="btn btn-ghost-light" href={getRelativeLocaleUrl(locale, 'lifestyle')}>생활 요령 둘러보기</a>
       </div>
     </div>
   </section>
@@ -155,7 +158,7 @@ const newsRows = [
           <h2>둘러보기</h2>
         </div>
         <div class="axes-grid">
-          <a class="axis-card" href="/institutions">
+          <a class="axis-card" href={getRelativeLocaleUrl(locale, 'institutions')}>
             <div class="axis-ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
                 ><path d="M3 21h18"></path><path d="M5 21V9l7-5 7 5v12"></path><path d="M9 21v-6h6v6"></path></svg
@@ -170,7 +173,7 @@ const newsRows = [
               <div class="go">자세히 보기 →</div>
             </div>
           </a>
-          <a class="axis-card" href="/lifestyle">
+          <a class="axis-card" href={getRelativeLocaleUrl(locale, 'lifestyle')}>
             <div class="axis-ic">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
                 ><path

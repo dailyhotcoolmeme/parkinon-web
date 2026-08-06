@@ -1,19 +1,49 @@
 ---
+type Locale = 'ko' | 'en' | 'fr' | 'ja';
+
 interface Props {
   title: string;
   description?: string;
+  /*
+   * 이 글의 다른 언어판 경로. 예: { ko: '/ko/institutions', en: '/en/institutions' }
+   * ⚠️ **실제로 존재하는 언어만** 넘길 것. 없는 번역까지 hreflang 을 걸면 상호 링크가
+   * 성립하지 않아 Google 이 주석 전체를 무시할 수 있다(현지화 버전 문서).
+   * 번역이 하나뿐이면(=한국어만) hreflang 을 아예 내보내지 않는다.
+   */
+  translations?: Partial<Record<Locale, string>>;
 }
 
-const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루하루, 조금 더 수월하게' } = Astro.props;
+const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루하루, 조금 더 수월하게', translations } = Astro.props;
+
+const locale = (Astro.currentLocale ?? 'ko') as Locale;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+// hreflang: 자기 자신 포함 전부 나열 + x-default(기본 언어). 절대 URL 이어야 한다.
+const alternates = translations && Object.keys(translations).length > 1 ? Object.entries(translations) : [];
+const xDefault = translations?.ko;
+
+/*
+ * dev 배포(parkinon-site-dev.pages.dev)가 검색에 잡히면 본 사이트와 중복 콘텐츠가 된다.
+ * 정식 도메인으로 빌드할 때만 색인을 허용한다 → PUBLIC_SITE_URL=https://parkinon.com
+ */
+const indexable = Astro.site?.host === 'parkinon.com';
 ---
 
 <!doctype html>
-<html lang="ko">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="theme-color" content="#2E7D32" />
+    <link rel="canonical" href={canonical.href} />
+    {
+      alternates.map(([code, path]) => (
+        <link rel="alternate" hreflang={code} href={new URL(path, Astro.site).href} />
+      ))
+    }
+    {xDefault && alternates.length > 0 && <link rel="alternate" hreflang="x-default" href={new URL(xDefault, Astro.site).href} />}
+    {!indexable && <meta name="robots" content="noindex, nofollow" />}
     <title>{title}</title>
   </head>
   <body>

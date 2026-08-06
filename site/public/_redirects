@@ -1,0 +1,14 @@
+# 루트는 기본 언어(한국어)로 보낸다.
+# 브라우저 언어를 보고 자동으로 언어를 바꾸는 방식은 쓰지 않는다 —
+# Google 이 "사용자·검색엔진이 다른 언어판에 접근하지 못한다"며 권장하지 않는다.
+/    /ko/    302
+
+# 언어 접두사를 붙이기 전(2026-08-06 이전) 주소로 들어오는 경우 — 새 주소로 넘긴다.
+/institutions      /ko/institutions           301
+/institutions/*    /ko/institutions/:splat    301
+/lifestyle         /ko/lifestyle              301
+/lifestyle/*       /ko/lifestyle/:splat       301
+/news              /ko/news                   301
+/news/*            /ko/news/:splat            301
+/tools             /ko/tools                  301
+/tools/*           /ko/tools/:splat           301

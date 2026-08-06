@@ -198,7 +198,13 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
     margin: -28px calc(-1 * var(--gutter)) 24px;
     min-height: 240px;
     display: flex;
-    align-items: flex-end;
+    /*
+     * 위쪽 정렬 + 고정 padding-top 으로 제목 시작 위치를 못박는다(오너 지적 2026-08-06).
+     * 아래쪽 정렬이면 설명이 몇 줄이냐에 따라 제목이 24px 씩 위아래로 움직여서
+     * 허브 3개의 제목 높이가 서로 안 맞는다(제도·지원만 3줄이라 혼자 올라가 있었다).
+     * 114px = 기존 2줄 화면의 제목 위치 그대로. 설명이 길어지면 아래로 늘어난다.
+     */
+    align-items: flex-start;
     background-size: cover;
     background-position: center;
     background-color: var(--surface-low);
@@ -212,7 +218,7 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
   .hub-hero-full-inner {
     position: relative;
     z-index: 1;
-    padding: 0 var(--gutter) 28px;
+    padding: 114px var(--gutter) 28px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -226,12 +232,24 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
     margin-top: 10px;
     font-size: 15px;
     color: rgba(255, 255, 255, 0.92);
-    max-width: 56ch;
+    /*
+     * 폭·최소높이는 허브 3개의 제목 시작 위치를 맞추려고 정한 값이다(오너 지적 2026-08-06).
+     * 히어로는 아래쪽 정렬이라 설명이 3줄이 되면 제목만 24px 위로 올라간다.
+     * 실측: 최대폭 560~719px 구간에서 세 페이지 설명이 모두 2줄 → 가운데값 640px 채택.
+     * (500px 이면 제도·지원만 3줄, 720px 이면 생활 요령만 1줄이 되어 다시 어긋난다.)
+     * min-height 는 앞으로 짧은 문구가 들어와도 2줄 자리를 유지시키는 안전장치.
+     */
+    max-width: 640px;
+    min-height: 48px;
     line-height: 1.6;
   }
   @media (max-width: 640px) {
     .hub-hero-full {
       min-height: 200px;
+    }
+    /* 모바일도 같은 이유로 고정. 58px = 기존 3줄 화면의 제목 위치 그대로 */
+    .hub-hero-full-inner {
+      padding-top: 58px;
     }
     .hub-hero-full-inner h1 {
       font-size: 26px;

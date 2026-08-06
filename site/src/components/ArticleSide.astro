@@ -1,0 +1,185 @@
+---
+/*
+ * 콘텐츠 페이지 오른쪽 사이드 패널 — 허브·상세가 같이 쓴다.
+ *
+ * 디자인 근거(2026-08-06 외부 조사, 추측 아님):
+ * - NN/g "Table of Contents: The Ultimate Design Guide" — 우측 레일 목차에 박스/카드를 두르면
+ *   광고로 보여 무시된다(right-rail blindness). "simple, non-graphical design" 권장.
+ *   레일 배치는 sticky 로 두고 **현재 섹션 하이라이트를 강력 권장**.
+ * - NHS 디자인시스템 Contents list 사용자 조사 — "The active link formatting helped users know
+ *   where they were". 현재 항목은 링크가 아니라 상태 표시 + aria-current.
+ * - 실측: nhs.uk 목차 19px·카드 없음 / MDN 16px·배경 transparent·aria-current / Wikipedia 14px·활성 굵게.
+ *   세 곳 모두 회색 카드를 쓰지 않는다. 그래서 여기서도 카드를 쓰지 않는다(옆의 AdBox 와 구분되게).
+ */
+interface TocItem {
+  id: string;
+  label: string;
+}
+interface LinkItem {
+  title: string;
+  date: string;
+  href?: string;
+}
+interface Props {
+  toc?: TocItem[];
+  links: LinkItem[];
+  linksTitle: string;
+  tocTitle?: string;
+}
+const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props;
+---
+
+<aside class="article-side">
+  {
+    toc.length > 0 && (
+      <nav class="side-block" aria-label={tocTitle} data-toc>
+        <h2 class="side-title">{tocTitle}</h2>
+        <ul class="toc-list">
+          {toc.map((t) => (
+            <li>
+              <a href={`#${t.id}`}>{t.label}</a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )
+  }
+
+  <nav class="side-block" aria-label={linksTitle}>
+    <h2 class="side-title">{linksTitle}</h2>
+    <ul class="link-list">
+      {
+        links.map((row) => (
+          <li>
+            <a href={row.href ?? '#'}>{row.title}</a>
+            <span class="d">{row.date}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</aside>
+
+<style>
+  .article-side {
+    position: sticky;
+    top: 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+  }
+  /* 본문과 사이드를 같이 넣기엔 본문이 눌리는 폭부터는 사이드를 감춘다.
+     이 규칙은 반드시 위 기본 규칙 뒤에 와야 한다(앞에 두면 display:flex 에 덮인다). */
+  @media (max-width: 1080px) {
+    .article-side {
+      display: none;
+    }
+  }
+  .side-block + .side-block {
+    padding-top: 28px;
+    border-top: 1px solid var(--outline);
+  }
+  .side-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-sub);
+    letter-spacing: 0.02em;
+  }
+  .article-side ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  /* 목차 — 카드 없이 왼쪽 세로선 하나로 묶고, 현재 섹션만 초록으로 표시 */
+  .toc-list {
+    margin-top: 14px;
+    border-left: 2px solid var(--outline);
+  }
+  .toc-list a {
+    display: block;
+    margin-left: -2px;
+    padding: 7px 0 7px 14px;
+    border-left: 2px solid transparent;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .toc-list a:hover {
+    color: var(--primary);
+    border-left-color: var(--outline);
+  }
+  .toc-list a[aria-current='true'] {
+    color: var(--primary);
+    font-weight: 700;
+    border-left-color: var(--primary);
+  }
+
+  /* 같은 카테고리 다른 글 */
+  .link-list {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .link-list li + li {
+    padding-top: 16px;
+    border-top: 1px solid var(--outline);
+  }
+  .link-list a {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .link-list a:hover {
+    color: var(--primary);
+  }
+  .link-list .d {
+    display: block;
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+</style>
+
+<script>
+  /*
+   * 현재 읽고 있는 섹션을 목차에 표시한다(NN/g 권장 + NHS 조사 근거).
+   * 스크롤 위치 기준으로 "화면 상단선을 마지막으로 지나간 h2"를 현재 섹션으로 본다.
+   */
+  const nav = document.querySelector<HTMLElement>('[data-toc]');
+  if (nav) {
+    const links = [...nav.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    const targets = links
+      .map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))))
+      .filter((el): el is HTMLElement => !!el);
+
+    if (targets.length) {
+      let queued = false;
+      const sync = () => {
+        queued = false;
+        const line = 120; // sticky 헤더 아래 기준선
+        let index = 0;
+        targets.forEach((el, i) => {
+          if (el.getBoundingClientRect().top <= line) index = i;
+        });
+        // 첫 섹션에 닿기 전에는 아무것도 표시하지 않는다
+        const before = targets[0].getBoundingClientRect().top > line;
+        links.forEach((a, i) => {
+          if (!before && i === index) a.setAttribute('aria-current', 'true');
+          else a.removeAttribute('aria-current');
+        });
+      };
+      const onScroll = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(sync);
+      };
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll, { passive: true });
+      sync();
+    }
+  }
+</script>

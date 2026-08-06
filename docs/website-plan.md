@@ -53,18 +53,36 @@
 나머지 허브 목록 항목들(각 허브에 10개 안팎)은 아직 실제 글이 없어 `href="#"`다.
 지어내지 말고, 실제 글이 생기면 그때 slug를 붙여 연결할 것.
 
-**상세페이지 사이드 패널 (2026-08-06 적용, 3개 글 전부 동일 구조)**
-- 마크업: `main.col > .detail-body`(그리드) 안에 `breadcrumb` / `article` / `aside.hub-side`
-- 사이드는 패널 2개 — 위 "이 글 순서"(본문 h2 목차), 아래 "OO 다른 글"(같은 카테고리 목록,
-  허브 목록에서 현재 글만 뺀 것). 지어낸 인기글 통계는 쓰지 않는다.
-- 목차 링크는 본문 `h2`의 `id`를 가리킨다. 프론트매터 `toc` 배열의 `id`·`label`이 본문 h2와
+**오른쪽 사이드 패널 = `src/components/ArticleSide.astro` (허브 3개 + 상세 3개 공용)**
+
+- 상세는 목차 + "OO 다른 글" 2블록, 허브는 "OO 다른 글" 1블록(`toc` 안 넘기면 자동으로 빠짐).
+- 목록은 각 허브 목록에서 현재 글만 뺀 **실제 글 목록**이다. 지어낸 인기글 통계는 쓰지 않는다.
+- 목차 링크는 본문 `h2`의 `id`를 가리킨다. 페이지 프론트매터 `toc`의 `id`·`label`이 본문 h2와
   **정확히 일치해야** 한다(한쪽만 고치면 링크가 죽는다). sticky 헤더에 제목이 가리지 않도록
   `.article-body h2{ scroll-margin-top: 88px }`. 부드러운 스크롤은 쓰지 않는다(즉시 이동).
-- 폭: `grid-template-columns: minmax(0,760px) 300px`, `column-gap:44px`, `justify-content:center`.
-  **1080px 이하에서는 사이드를 감추고** 본문만 760px로 되돌린다.
-- ⚠️ 이때 `@media`의 `display:none`은 반드시 `.hub-side{display:flex}` **뒤에** 오고
-  `.detail-body > .hub-side`로 써야 한다. 앞에 두면 뒤 규칙에 덮여 사이드가 안 사라진다
-  (실제로 이 순서 때문에 1000px에서 사이드가 남아 본문이 눌렸다 — DOM 실측으로 잡았다).
+- 폭: 상세는 `.detail-body`(Layout 전역) `minmax(0,760px) 300px` / 허브는 `.hub-body`
+  `minmax(0,1fr) 300px`, 둘 다 `column-gap:44px`. **1080px 이하에서 사이드를 감춘다**
+  (감추는 규칙은 컴포넌트가 갖고 있다).
+- ⚠️ `@media`의 `display:none`은 반드시 `.article-side{display:flex}` **뒤에** 와야 한다.
+  앞에 두면 뒤 규칙에 덮여 사이드가 안 사라진다(실제로 1000px에서 사이드가 남아 본문이
+  눌렸다 — DOM 실측으로 잡았다).
+
+**사이드 패널 디자인은 외부 조사 결과다 (2026-08-06). 임의로 되돌리지 말 것.**
+
+| 근거(1차) | 확인한 내용 | 우리 적용 |
+|---|---|---|
+| NN/g "Table of Contents: The Ultimate Design Guide" | 우측 레일 목차에 박스/카드를 두르면 광고로 보여 무시된다(right-rail blindness). "simple, non-graphical design" 권장. 레일 목차는 sticky + **현재 섹션 하이라이트 강력 권장**. 링크 문구는 소제목과 정확히 일치시킬 것 | 회색 카드 제거(투명 배경), sticky 유지, 현재 섹션 표시 추가 |
+| NHS 디자인시스템 Contents list(사용자 조사) | "The active link formatting helped users know where they were", 현재 항목에 `aria-current` | 현재 항목에 `aria-current="true"` + 초록 글자·왼쪽 초록 막대 |
+| nhs.uk 파킨슨병 페이지 실측 | 목차 항목 19px, 카드 없음 | 목차 16px(본문과 동일. 기존 13.5px는 본문보다 작았다) |
+| MDN 실측 | 컨테이너 배경 transparent·border 0, 링크 16px, `aria-current` | 위와 같음 |
+| Wikipedia(2023 Vector) 실측 | 사이드 목차 배경 없음, 활성 항목 굵게 | 활성 항목 굵게(700) |
+
+- **회색 카드를 다시 씌우지 말 것.** 바로 옆 `AdBox`가 회색 라운드 박스라, 카드를 씌우면
+  광고 자리와 똑같이 보인다(위 right-rail blindness와 정확히 같은 실패).
+- 대비 실측(WCAG AA 4.5:1 기준 통과): 라이트 목차 18.9 / 활성 5.13 / 날짜 5.74,
+  다크 목차 16.3 / 활성 7.87 / 날짜 8.79.
+- 현재 섹션 판정은 컴포넌트 안의 스크롤 스크립트가 한다(화면 상단 120px 선을 마지막으로
+  지나간 h2). 첫 섹션에 닿기 전에는 아무것도 표시하지 않는다.
 
 **주요 파일**
 - `site/src/layouts/Layout.astro` — 디자인 토큰(`:root` 변수), 페이지 셸(`.layout`/`.ad-rail`/`main.col`), 자체 호스팅 Pretendard 폰트

@@ -173,6 +173,36 @@ const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루�
     max-width: 1280px;
     margin: 0 auto;
   }
+  /*
+   * 상세 페이지 셸 — 본문(760px) + 오른쪽 사이드 패널(ArticleSide).
+   * 넓은 화면에서 본문 오른쪽이 비지 않게 하는 것이 목적(website-plan.md "확립된 디자인 규칙" 2번).
+   * 사이드를 감추는 브레이크포인트는 ArticleSide 컴포넌트가 갖고 있다(1080px).
+   */
+  .detail-body {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 300px;
+    grid-template-rows: auto 1fr;
+    column-gap: 44px;
+    justify-content: center;
+  }
+  .detail-body > .breadcrumb {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .detail-body > article {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .detail-body > .article-side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+  @media (max-width: 1080px) {
+    .detail-body {
+      grid-template-columns: minmax(0, 760px);
+    }
+  }
   .ad-rail {
     display: none;
     flex-shrink: 0;

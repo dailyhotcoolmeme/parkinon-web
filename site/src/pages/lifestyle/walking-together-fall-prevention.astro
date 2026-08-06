@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import AdBox from '../../components/AdBox.astro';
+import ArticleSide from '../../components/ArticleSide.astro';
 
 const related = [
   {
@@ -132,34 +133,7 @@ const sideLinks: { title: string; date: string; href?: string }[] = [
           </div>
         </article>
 
-        <aside class="hub-side">
-          <div class="hub-side-panel toc-panel">
-            <h3>이 글 순서</h3>
-            <ul>
-              {
-                toc.map((t) => (
-                  <li>
-                    <a href={`#${t.id}`}>{t.label}</a>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-
-          <div class="hub-side-panel">
-            <h3>생활 요령 다른 글</h3>
-            <ul>
-              {
-                sideLinks.map((row) => (
-                  <li>
-                    <a href={row.href ?? '#'}>{row.title}</a>
-                    <span class="d">{row.date}</span>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-        </aside>
+        <ArticleSide toc={toc} links={sideLinks} linksTitle="생활 요령 다른 글" />
       </div>
     </main>
 
@@ -172,96 +146,6 @@ const sideLinks: { title: string; date: string; href?: string }[] = [
 </Layout>
 
 <style>
-  /*
-   * 상세 페이지 셸 — 본문(760px) + 오른쪽 사이드 패널(목차 + 같은 카테고리 다른 글).
-   * 허브의 .hub-body/.hub-side 와 같은 패턴이며, 넓은 화면에서 본문 오른쪽이 비어 있던 것을
-   * 실제 콘텐츠로 채우기 위한 것이다(website-plan.md "확립된 디자인 규칙" 2번).
-   * 본문·사이드가 같이 들어가기엔 본문이 너무 눌리는 1080px 이하에서는 사이드를 감춘다.
-   */
-  .detail-body {
-    display: grid;
-    grid-template-columns: minmax(0, 760px) 300px;
-    grid-template-rows: auto 1fr;
-    column-gap: 44px;
-    justify-content: center;
-  }
-  .detail-body > .breadcrumb {
-    grid-column: 1;
-    grid-row: 1;
-  }
-  .detail-body > article {
-    grid-column: 1;
-    grid-row: 2;
-  }
-  .detail-body > .hub-side {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: start;
-  }
-  .hub-side {
-    position: sticky;
-    top: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  @media (max-width: 1080px) {
-    .detail-body {
-      grid-template-columns: minmax(0, 760px);
-    }
-    .detail-body > .hub-side {
-      display: none;
-    }
-  }
-  .hub-side-panel {
-    background: var(--surface-low);
-    border-radius: 8px;
-    padding: 22px 20px;
-  }
-  .hub-side-panel h3 {
-    font-size: 14px;
-    color: var(--text);
-  }
-  .hub-side-panel ul {
-    margin-top: 14px;
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .hub-side-panel li {
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--outline);
-  }
-  .hub-side-panel li:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  .hub-side-panel a {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.5;
-    display: block;
-  }
-  .hub-side-panel a:hover {
-    color: var(--primary);
-  }
-  .hub-side-panel .d {
-    display: block;
-    margin-top: 5px;
-    font-size: 11.5px;
-    color: var(--text-sub);
-    opacity: 0.75;
-  }
-  .toc-panel ul {
-    gap: 11px;
-  }
-  .toc-panel li {
-    padding-bottom: 0;
-    border-bottom: none;
-  }
   .breadcrumb {
     font-size: 13px;
     color: var(--text-sub);

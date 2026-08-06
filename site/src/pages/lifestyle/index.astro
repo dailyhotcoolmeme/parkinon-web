@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import AdBox from '../../components/AdBox.astro';
+import ArticleSide from '../../components/ArticleSide.astro';
 import pathImg from '../../assets/images/path.jpg';
 
 interface PostRow {
@@ -162,21 +163,7 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
           }
         </div>
 
-        <aside class="hub-side">
-          <div class="hub-side-panel">
-            <h3>생활 요령 다른 글</h3>
-            <ul>
-              {
-                sideLinks.map((row) => (
-                  <li>
-                    <a href={row.href ?? '#'}>{row.title}</a>
-                    <span class="d">{row.date}</span>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
-        </aside>
+        <ArticleSide links={sideLinks} linksTitle="생활 요령 다른 글" />
       </div>
 
       <div class="hub-more">
@@ -277,63 +264,14 @@ const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
   }
   .hub-body {
     display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 40px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    column-gap: 44px;
     align-items: start;
   }
-  @media (max-width: 960px) {
+  @media (max-width: 1080px) {
     .hub-body {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
-    .hub-side {
-      display: none;
-    }
-  }
-  .hub-side {
-    position: sticky;
-    top: 100px;
-  }
-  .hub-side-panel {
-    background: var(--surface-low);
-    border-radius: 8px;
-    padding: 22px 20px;
-  }
-  .hub-side-panel h3 {
-    font-size: 14px;
-    color: var(--text);
-  }
-  .hub-side-panel ul {
-    margin-top: 14px;
-    list-style: none;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .hub-side-panel li {
-    padding-bottom: 14px;
-    border-bottom: 1px solid var(--outline);
-  }
-  .hub-side-panel li:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  .hub-side-panel a {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.5;
-    display: block;
-  }
-  .hub-side-panel a:hover {
-    color: var(--primary);
-  }
-  .hub-side-panel .d {
-    display: block;
-    margin-top: 5px;
-    font-size: 11.5px;
-    color: var(--text-sub);
-    opacity: 0.75;
   }
   .hub-list {
     display: flex;

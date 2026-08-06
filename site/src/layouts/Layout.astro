@@ -1,0 +1,197 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'ParkinON — 파킨슨병과 함께하는 하루하루, 조금 더 수월하게' } = Astro.props;
+---
+
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#2E7D32" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  /* 폰트: CDN 대신 자체 호스팅 (site/public/fonts — public/fonts 에서 복사) */
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Regular.otf') format('opentype');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Bold.otf') format('opentype');
+    font-weight: 700;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Bold.otf') format('opentype');
+    font-weight: 800;
+    font-display: swap;
+  }
+
+  /*
+   * 디자인 토큰 — 앱 실제 브랜드 컬러 재사용 (website-plan.md "디자인" 확정 사항,
+   * 2026-08-03: 웹 전용 색을 새로 짓지 말 것). 스크래치패드 목업(parkinon_home_v4 등)과
+   * 동일한 값 — 페이지를 이식할 때 이 파일의 토큰만 참조하면 목업과 그대로 맞는다.
+   */
+  :root {
+    --primary: #2e7d32;
+    --primary-container: #4caf50;
+    --on-primary-container: #ffffff;
+    --secondary: #4caf50;
+    --secondary-container: #e8f5e9;
+    --on-secondary-container: #2e7d32;
+    --tertiary: #ff9800;
+    --tertiary-dark: #8a4f00;
+    --tertiary-container: #ffe9c7;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-low: #f5f5f5;
+    --surface-high: #eeeeee;
+    --outline: #eeeeee;
+    --text: #111111;
+    --text-sub: #666666;
+    --font-head: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif;
+    --font-body: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif;
+    --max: 1280px;
+    --gutter: 24px;
+  }
+  @media (max-width: 760px) {
+    :root {
+      --gutter: 16px;
+    }
+  }
+  :root[data-theme='dark'] {
+    --bg: #10140e;
+    --surface: #171b13;
+    --surface-low: #1c2117;
+    --surface-high: #242a1e;
+    --outline: #333a2b;
+    --text: #eef1ea;
+    --text-sub: #adb5a4;
+    --primary: #66bb6a;
+    --primary-container: #2e7d32;
+    --on-primary-container: #ffffff;
+    --secondary-container: #1b4332;
+    --on-secondary-container: #c1ecd4;
+    --tertiary-container: #4a2a0f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --bg: #10140e;
+      --surface: #171b13;
+      --surface-low: #1c2117;
+      --surface-high: #242a1e;
+      --outline: #333a2b;
+      --text: #eef1ea;
+      --text-sub: #adb5a4;
+      --primary: #66bb6a;
+      --primary-container: #2e7d32;
+      --on-primary-container: #ffffff;
+      --secondary-container: #1b4332;
+      --on-secondary-container: #c1ecd4;
+      --tertiary-container: #4a2a0f;
+    }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-head);
+    font-weight: 800;
+    margin: 0;
+    text-wrap: balance;
+  }
+  p {
+    margin: 0;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  img {
+    max-width: 100%;
+    display: block;
+  }
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
+  }
+  .wrap {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 0 var(--gutter);
+  }
+  button:disabled,
+  input:disabled {
+    cursor: default;
+  }
+
+  /*
+   * 페이지 셸 — 광고 세로 레일 + 본문. website-plan.md "광고 상세" 확정 사항:
+   * ≥1648px 양쪽 160px 레일, 1280~1647px 우측만 300px 레일, <1280px 레일 없음(풀폭).
+   * 모든 콘텐츠 페이지(허브/상세)가 공유하는 구조라 레이아웃 파일에 둔다.
+   */
+  .layout {
+    display: flex;
+    gap: 24px;
+    max-width: 1648px;
+    margin: 0 auto;
+    padding: 0;
+    align-items: flex-start;
+  }
+  main.col {
+    flex: 1;
+    min-width: 0;
+    padding: 28px var(--gutter) 56px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .ad-rail {
+    display: none;
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px;
+  }
+  @media (min-width: 1648px) {
+    .ad-rail {
+      display: block;
+      width: 160px;
+    }
+    .layout {
+      padding: 0;
+    }
+  }
+  @media (min-width: 1280px) and (max-width: 1647px) {
+    .ad-rail.right {
+      display: block;
+      width: 300px;
+    }
+  }
+</style>

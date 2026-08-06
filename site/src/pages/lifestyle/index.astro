@@ -1,0 +1,417 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
+import pathImg from '../../assets/images/path.jpg';
+
+interface PostRow {
+  ad?: false;
+  tag: string;
+  title: string;
+  excerpt: string;
+  hashtags: string[];
+  date: string;
+  href?: string;
+}
+interface AdRow {
+  ad: true;
+}
+type Row = PostRow | AdRow;
+
+const tabs = ['전체', '낙상 예방', '식사', '수면', '운동', '마음 건강', '보호자'];
+
+const rows: Row[] = [
+  {
+    tag: '낙상 예방',
+    title: '친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다',
+    excerpt: '혼자보다 둘, 셋이 걸을 때 보폭과 균형을 더 잘 챙기게 됩니다. 안전한 동행 산책을 위한 실전 팁을 정리했습니다.',
+    hashtags: ['#낙상예방', '#동행산책', '#보행'],
+    date: '2026.07.30',
+    href: '/lifestyle/walking-together-fall-prevention',
+  },
+  {
+    tag: '식사',
+    title: '파킨슨병 환자를 위한 식단 관리 기본',
+    excerpt: '단백질 섭취 시간과 약 복용 시간을 어떻게 맞추면 좋은지, 놓치기 쉬운 식사 원칙을 정리했습니다.',
+    hashtags: ['#식단관리', '#단백질', '#약복용시간'],
+    date: '2026.07.27',
+  },
+  {
+    tag: '운동',
+    title: '보행 개선을 위한 하루 10분 스트레칭 습관',
+    excerpt: '거창한 운동이 아니어도 됩니다. 매일 10분이면 충분한 보행·자세 개선 스트레칭을 소개합니다.',
+    hashtags: ['#운동', '#스트레칭', '#보행개선'],
+    date: '2026.07.24',
+  },
+  {
+    tag: '수면',
+    title: '숙면을 방해하는 습관, 무엇을 바꿔야 할까요',
+    excerpt: '야간 경직과 뒤척임으로 잠들기 어려운 분들을 위해, 잠자리 환경과 저녁 습관을 점검합니다.',
+    hashtags: ['#수면', '#숙면', '#야간경직'],
+    date: '2026.07.21',
+  },
+  { ad: true },
+  {
+    tag: '보호자',
+    title: '보호자의 번아웃, 혼자 견디지 마세요',
+    excerpt: '매일 돌봄이 이어지면 보호자도 지칩니다. 번아웃 신호를 알아차리고 도움을 요청하는 방법을 안내합니다.',
+    hashtags: ['#보호자번아웃', '#돌봄', '#휴식'],
+    date: '2026.07.18',
+  },
+  {
+    tag: '낙상 예방',
+    title: '집 안에서 자주 넘어지는 장소 3곳과 대처법',
+    excerpt: '욕실, 문턱, 침대 옆 — 실제로 낙상이 가장 많이 일어나는 자리와 간단한 안전 조치를 정리했습니다.',
+    hashtags: ['#낙상예방', '#집안안전', '#욕실'],
+    date: '2026.07.15',
+  },
+  {
+    tag: '마음 건강',
+    title: '파킨슨병과 우울감, 혼자 견디지 마세요',
+    excerpt: '파킨슨병은 우울감을 동반하는 경우가 적지 않습니다. 정상적인 반응과 전문가 상담이 필요한 신호를 구분합니다.',
+    hashtags: ['#마음건강', '#우울감', '#심리상담'],
+    date: '2026.07.12',
+  },
+  {
+    tag: '식사',
+    title: '삼킴이 어려울 때 식사 자세와 음식 형태',
+    excerpt: '사레가 자주 들린다면 식사 자세부터 점검해보세요. 안전하게 삼키는 자세와 음식 준비 요령을 안내합니다.',
+    hashtags: ['#삼킴장애', '#식사자세', '#연하곤란'],
+    date: '2026.07.09',
+  },
+  { ad: true },
+  {
+    tag: '수면',
+    title: '자다가 소리 지르거나 발버둥치는 렘수면행동장애',
+    excerpt: '파킨슨병 환자에게 흔한 수면 증상입니다. 왜 생기는지, 함께 자는 가족은 어떻게 대응해야 하는지 정리했습니다.',
+    hashtags: ['#렘수면행동장애', '#수면장애'],
+    date: '2026.07.06',
+  },
+  {
+    tag: '운동',
+    title: '매일 할 수 있는 손 떨림 완화 스트레칭',
+    excerpt: '앉은 자리에서 바로 따라 할 수 있는 손·손목 스트레칭 동작을 사진과 함께 소개합니다.',
+    hashtags: ['#손떨림', '#스트레칭', '#운동'],
+    date: '2026.07.03',
+  },
+  {
+    tag: '보호자',
+    title: '보호자를 위한 하루 10분 휴식 루틴',
+    excerpt: '짧은 시간이라도 온전히 나를 위해 쓰는 습관이 필요합니다. 부담 없이 시작할 수 있는 루틴을 소개합니다.',
+    hashtags: ['#보호자', '#휴식루틴', '#자기돌봄'],
+    date: '2026.06.30',
+  },
+  {
+    tag: '마음 건강',
+    title: '진단 직후 찾아오는 불안, 이렇게 다스리세요',
+    excerpt: '진단 초기에 많이 겪는 불안과 혼란, 어떻게 받아들이고 다스리면 좋을지 함께 짚어봅니다.',
+    hashtags: ['#마음건강', '#불안', '#진단초기'],
+    date: '2026.06.27',
+  },
+];
+
+const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
+---
+
+<Layout title="생활 요령 — 파킨온">
+  <Header active="lifestyle" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${pathImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>생활 요령</h1>
+          <p>낙상 예방부터 식사, 수면, 운동, 마음 건강, 보호자 번아웃까지 — 매일의 어려움을 조금 덜어줄 실전 정보를 모았습니다.</p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href="/">홈</a><span class="sep">/</span><span>생활 요령</span>
+      </nav>
+
+      <div class="hub-tabs">
+        {tabs.map((t, i) => <a class:list={['tab', { active: i === 0 }]} href="#">{t}</a>)}
+      </div>
+
+      <div class="hub-body">
+        <div class="hub-list">
+          {
+            rows.map((row) =>
+              row.ad ? (
+                <div class="native-ad-row">
+                  <span class="ad-label">광고</span>
+                  <AdBox minHeight="90px" />
+                </div>
+              ) : (
+                <a class="hub-row" href={row.href ?? '#'}>
+                  <span class="tag">{row.tag}</span>
+                  <h3>{row.title}</h3>
+                  <p>{row.excerpt}</p>
+                  <div class="hashtags">
+                    {row.hashtags.map((h) => <span>{h}</span>)}
+                  </div>
+                  <p class="meta">{row.date}</p>
+                </a>
+              )
+            )
+          }
+        </div>
+
+        <aside class="hub-side">
+          <div class="hub-side-panel">
+            <h3>생활 요령 다른 글</h3>
+            <ul>
+              {
+                sideLinks.map((row) => (
+                  <li>
+                    <a href={row.href ?? '#'}>{row.title}</a>
+                    <span class="d">{row.date}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <div class="hub-more">
+        <button class="btn">글 더 보기</button>
+      </div>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .hub-hero-full {
+    position: relative;
+    width: auto;
+    margin: -28px calc(-1 * var(--gutter)) 24px;
+    min-height: 240px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .hub-hero-full::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.75), rgba(10, 20, 12, 0.12) 60%, rgba(10, 20, 12, 0) 85%);
+  }
+  .hub-hero-full-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--gutter) 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .hub-hero-full-inner h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+  }
+  .hub-hero-full-inner p {
+    margin-top: 10px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 56ch;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .hub-hero-full {
+      min-height: 200px;
+    }
+    .hub-hero-full-inner h1 {
+      font-size: 26px;
+    }
+  }
+  .hub-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--outline);
+    margin-bottom: 32px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: 0 0 auto;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-sub);
+    padding: 12px 14px;
+    border-bottom: 2.5px solid transparent;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  .hub-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .hub-body {
+      grid-template-columns: 1fr;
+    }
+    .hub-side {
+      display: none;
+    }
+  }
+  .hub-side {
+    position: sticky;
+    top: 100px;
+  }
+  .hub-side-panel {
+    background: var(--surface-low);
+    border-radius: 8px;
+    padding: 22px 20px;
+  }
+  .hub-side-panel h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hub-side-panel ul {
+    margin-top: 14px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hub-side-panel li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-side-panel li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .hub-side-panel a {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+  }
+  .hub-side-panel a:hover {
+    color: var(--primary);
+  }
+  .hub-side-panel .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.7;
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .native-ad-row {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .native-ad-row .ad-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-sub);
+    background: var(--surface-high);
+    padding: 3px 11px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>

@@ -1,0 +1,238 @@
+---
+import logo from '../assets/images/logo.png';
+---
+
+<footer class="site">
+  <div class="footer-top">
+    <div class="footer-brandrow">
+      <div class="footer-brand"><img src={logo.src} alt="" />파킨온</div>
+      <div class="footer-lang">
+        <button type="button" id="langBtn" aria-haspopup="listbox" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            ><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path
+              d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"></path></svg
+          >
+          한국어
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>바로가기</h4>
+      <a href="/institutions">제도·지원</a>
+      <a href="/lifestyle">생활 요령</a>
+      <a href="/news">파킨온 소식</a>
+    </div>
+    <div class="footer-col">
+      <h4>고객지원</h4>
+      <a href="/terms">이용약관</a>
+      <a href="/privacy">개인정보처리방침</a>
+      <a href="mailto:admin@ourmine.co.kr">문의하기</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-legal">
+      <p>본 사이트의 정보는 의학적 자문을 대체하지 않습니다. 모든 의학적 결정은 반드시 전문의와 상의하시기 바랍니다.</p>
+    </div>
+    <div class="footer-divider"></div>
+    <button type="button" class="biz-toggle" id="bizToggle" aria-expanded="false" aria-controls="bizInfo">
+      <span class="company">주식회사 아워마인</span>
+      <span>사업자 정보</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+    </button>
+    <div class="biz-info" id="bizInfo">
+      <p><span class="k">대표</span> 한민석, 최성철 · <span class="k">사업자등록번호</span> 342-81-04379</p>
+      <p><span class="k">통신판매업신고</span> 제2026-서울강동-1129호</p>
+      <p><span class="k">주소</span> 서울특별시 강동구 양재대로85길 23, E&J빌딩 4층 4590호(성내동)</p>
+      <p><span class="k">고객센터</span> 070-4513-1894 · <span class="k">이메일</span> admin@ourmine.co.kr</p>
+    </div>
+    <p class="footer-copyright">© 2026 OURMINE. All rights reserved.</p>
+  </div>
+</footer>
+
+<style>
+  footer.site {
+    border-top: 1px solid var(--outline);
+    margin-top: 36px;
+    background: var(--surface-low);
+  }
+  .footer-top {
+    padding: 22px var(--gutter) 6px;
+    max-width: var(--max);
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 760px) {
+    .footer-top {
+      grid-template-columns: 1fr;
+      text-align: center;
+      gap: 10px;
+    }
+  }
+  .footer-brandrow {
+    position: relative;
+  }
+  .footer-brand {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 15px;
+    color: var(--primary);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  @media (max-width: 760px) {
+    .footer-brand {
+      justify-content: center;
+      margin-bottom: 0;
+    }
+  }
+  .footer-brand img {
+    width: 22px;
+    height: 22px;
+    display: block;
+  }
+  .footer-lang {
+    margin-top: 8px;
+  }
+  .footer-lang button {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .footer-lang button:hover {
+    color: var(--primary);
+  }
+  .footer-lang svg {
+    width: 13px;
+    height: 13px;
+  }
+  @media (max-width: 760px) {
+    .footer-brandrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 28px;
+    }
+    .footer-lang {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-top: 0;
+    }
+  }
+  .footer-col h4 {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--text);
+    margin: 0 0 8px;
+    letter-spacing: 0.04em;
+  }
+  .footer-col a {
+    display: block;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    margin-bottom: 6px;
+  }
+  .footer-col a:hover {
+    color: var(--primary);
+  }
+  @media (max-width: 760px) {
+    .footer-col {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 4px 16px;
+    }
+    .footer-col h4 {
+      display: none;
+    }
+    .footer-col a {
+      display: inline-block;
+      margin-bottom: 0;
+    }
+  }
+  .footer-bottom {
+    padding: 6px var(--gutter) 14px;
+    max-width: var(--max);
+    margin: 0 auto;
+  }
+  .footer-divider {
+    border-top: 1px solid var(--outline);
+    margin: 10px 0;
+  }
+  @media (max-width: 760px) {
+    .footer-bottom {
+      text-align: center;
+    }
+    .biz-toggle {
+      margin: 0 auto;
+    }
+  }
+  .footer-legal {
+    font-size: 11px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .biz-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+  }
+  .biz-toggle:hover {
+    color: var(--text);
+  }
+  .biz-toggle .company {
+    font-weight: 700;
+  }
+  .biz-toggle svg {
+    width: 13px;
+    height: 13px;
+    transition: transform 0.2s;
+  }
+  .biz-toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+  .biz-info {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+    font-size: 11px;
+    color: var(--text-sub);
+    line-height: 1.6;
+  }
+  .biz-info.open {
+    max-height: 200px;
+  }
+  .biz-info p {
+    margin-top: 4px;
+  }
+  .biz-info .k {
+    opacity: 0.7;
+  }
+  .footer-copyright {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+</style>
+
+<script>
+  const bizToggle = document.getElementById('bizToggle')!;
+  const bizInfo = document.getElementById('bizInfo')!;
+  bizToggle.addEventListener('click', () => {
+    const open = bizInfo.classList.toggle('open');
+    bizToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+</script>

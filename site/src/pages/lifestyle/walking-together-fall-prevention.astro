@@ -1,0 +1,429 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
+
+const related = [
+  {
+    tag: '낙상 예방',
+    title: '집 안에서 자주 넘어지는 장소 3곳과 대처법',
+    excerpt: '욕실, 문턱, 침대 옆 — 실제로 낙상이 가장 많이 일어나는 자리와 간단한 안전 조치를 정리했습니다.',
+    hashtags: ['#낙상예방', '#집안안전', '#욕실'],
+    date: '2026.07.15',
+  },
+  {
+    tag: '운동',
+    title: '보행 개선을 위한 하루 10분 스트레칭 습관',
+    excerpt: '거창한 운동이 아니어도 됩니다. 매일 10분이면 충분한 보행·자세 개선 스트레칭을 소개합니다.',
+    hashtags: ['#운동', '#스트레칭', '#보행개선'],
+    date: '2026.07.24',
+  },
+];
+
+// 사이드 목차 — 본문 h2 의 id·문구와 정확히 일치시킬 것(여기만 고치면 링크가 깨진다).
+const toc = [
+  { id: 'why-together', label: '왜 동행이 도움이 될까요' },
+  { id: 'how-to-walk', label: '안전하게 동행하는 방법' },
+  { id: 'before-walk', label: '산책 전 확인할 것들' },
+];
+
+// 같은 카테고리 다른 글 — /lifestyle 허브 목록에서 이 글만 뺀 것.
+// 실제 글이 없는 항목은 허브와 똑같이 href 없이 둔다(지어내지 말 것).
+const sideLinks: { title: string; date: string; href?: string }[] = [
+  { title: '파킨슨병 환자를 위한 식단 관리 기본', date: '2026.07.27' },
+  { title: '보행 개선을 위한 하루 10분 스트레칭 습관', date: '2026.07.24' },
+  { title: '숙면을 방해하는 습관, 무엇을 바꿔야 할까요', date: '2026.07.21' },
+  { title: '보호자의 번아웃, 혼자 견디지 마세요', date: '2026.07.18' },
+  { title: '집 안에서 자주 넘어지는 장소 3곳과 대처법', date: '2026.07.15' },
+  { title: '파킨슨병과 우울감, 혼자 견디지 마세요', date: '2026.07.12' },
+];
+---
+
+<Layout title="친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다 — 파킨온">
+  <Header active="lifestyle" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <div class="detail-body">
+        <nav class="breadcrumb">
+          <a href="/">홈</a><span class="sep">/</span><a href="/lifestyle">생활 요령</a><span class="sep">/</span>
+          <span>친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다</span>
+        </nav>
+
+        <article>
+          <div class="article-head">
+            <span class="tag">낙상 예방</span>
+            <h1>친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다</h1>
+            <div class="hashtags"><span>#낙상예방</span><span>#동행산책</span><span>#보행</span></div>
+            <div class="meta">
+              <span>2026.07.30 작성</span>
+            </div>
+          </div>
+
+          <div class="article-body">
+            <p>혼자보다 둘, 셋이 걸을 때 보폭과 균형을 더 잘 챙기게 됩니다. 안전한 동행 산책을 위한 실전 팁을 정리했습니다.</p>
+
+            <div class="article-ad">
+              <AdBox minHeight="120px" />
+            </div>
+
+            <h2 id="why-together">왜 동행이 도움이 될까요</h2>
+            <p>
+              파킨슨병 환자는 혼자 걸을 때 보폭이 좁아지고 팔 흔들림이 줄어드는 경향이 있습니다. 반면 동행이 있으면
+              자연스럽게 속도를 맞추고 자세를 의식하게 되어 보행의 질이 개선된다는 보고가 있습니다.
+            </p>
+
+            <h2 id="how-to-walk">안전하게 동행하는 방법</h2>
+            <p>
+              동행 산책 시에는 환자보다 반걸음 뒤, 계단이나 턱이 있는 방향에서 걷는 것이 좋습니다. 갑자기 방향을 트는
+              대신 미리 말로 알려주면 예기치 못한 회전 동작으로 인한 낙상을 줄일 수 있습니다.
+            </p>
+
+            <h2 id="before-walk">산책 전 확인할 것들</h2>
+            <p>
+              산책로는 평탄하고 조명이 밝은 길을 우선으로 고르고, 약효가 안정적인 시간대를 택하는 것이 안전합니다.
+              걷다가 어지러움이나 다리 힘 빠짐이 느껴지면 즉시 앉아서 쉬도록 서로 확인하는 습관을 들이세요.
+            </p>
+          </div>
+
+          <div class="article-ad">
+            <AdBox minHeight="120px" />
+          </div>
+
+          <div class="article-share">
+            <span>공유하기</span>
+            <a class="share-btn" href="#" aria-label="카카오톡 공유">
+              <svg viewBox="0 0 24 24" fill="currentColor"
+                ><path
+                  d="M12 3C6.5 3 2 6.4 2 10.6c0 2.7 1.8 5 4.5 6.4-.2.7-.7 2.6-.8 3-.1.5.2.5.4.4.2-.1 2.6-1.7 3.6-2.4.7.1 1.5.2 2.3.2 5.5 0 10-3.4 10-7.6S17.5 3 12 3z"
+                ></path></svg
+              >
+            </a>
+            <a class="share-btn" href="#" aria-label="링크 복사">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                ><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.5 1.5"></path><path
+                  d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.5-1.5"></path></svg
+              >
+            </a>
+          </div>
+
+          <div class="article-related">
+            <h3>이런 글도 봤어요</h3>
+            <div class="hub-list">
+              {
+                related.map((row) => (
+                  <a class="hub-row" href="#">
+                    <span class="tag">{row.tag}</span>
+                    <h3>{row.title}</h3>
+                    <p>{row.excerpt}</p>
+                    <div class="hashtags">
+                      {row.hashtags.map((h) => <span>{h}</span>)}
+                    </div>
+                    <p class="meta">{row.date}</p>
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+        </article>
+
+        <aside class="hub-side">
+          <div class="hub-side-panel toc-panel">
+            <h3>이 글 순서</h3>
+            <ul>
+              {
+                toc.map((t) => (
+                  <li>
+                    <a href={`#${t.id}`}>{t.label}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div class="hub-side-panel">
+            <h3>생활 요령 다른 글</h3>
+            <ul>
+              {
+                sideLinks.map((row) => (
+                  <li>
+                    <a href={row.href ?? '#'}>{row.title}</a>
+                    <span class="d">{row.date}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /*
+   * 상세 페이지 셸 — 본문(760px) + 오른쪽 사이드 패널(목차 + 같은 카테고리 다른 글).
+   * 허브의 .hub-body/.hub-side 와 같은 패턴이며, 넓은 화면에서 본문 오른쪽이 비어 있던 것을
+   * 실제 콘텐츠로 채우기 위한 것이다(website-plan.md "확립된 디자인 규칙" 2번).
+   * 본문·사이드가 같이 들어가기엔 본문이 너무 눌리는 1080px 이하에서는 사이드를 감춘다.
+   */
+  .detail-body {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 300px;
+    grid-template-rows: auto 1fr;
+    column-gap: 44px;
+    justify-content: center;
+  }
+  .detail-body > .breadcrumb {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .detail-body > article {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .detail-body > .hub-side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+  .hub-side {
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  @media (max-width: 1080px) {
+    .detail-body {
+      grid-template-columns: minmax(0, 760px);
+    }
+    .detail-body > .hub-side {
+      display: none;
+    }
+  }
+  .hub-side-panel {
+    background: var(--surface-low);
+    border-radius: 8px;
+    padding: 22px 20px;
+  }
+  .hub-side-panel h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hub-side-panel ul {
+    margin-top: 14px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hub-side-panel li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-side-panel li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .hub-side-panel a {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+  }
+  .hub-side-panel a:hover {
+    color: var(--primary);
+  }
+  .hub-side-panel .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .toc-panel ul {
+    gap: 11px;
+  }
+  .toc-panel li {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  article {
+    max-width: 760px;
+  }
+  .article-head {
+    max-width: 760px;
+  }
+  .article-head .tag {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--secondary-container);
+    padding: 5px 13px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .article-head h1 {
+    font-size: 30px;
+    line-height: 1.42;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-head .hashtags {
+    margin-top: 10px;
+  }
+  .article-head .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .hashtags {
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.7;
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .article-body {
+    max-width: 760px;
+    margin-top: 32px;
+  }
+  .article-body h2 {
+    font-size: 21px;
+    color: var(--text);
+    margin-top: 40px;
+    margin-bottom: 14px;
+    /* 사이드 목차로 이동했을 때 sticky 헤더에 제목이 가리지 않도록 */
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 16px;
+  }
+  .article-body p:first-of-type {
+    margin-top: 0;
+  }
+  .article-ad {
+    max-width: 760px;
+    margin: 36px 0;
+  }
+  .article-share {
+    max-width: 760px;
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--outline);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .article-share span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: var(--surface-low);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+  }
+  .share-btn:hover {
+    background: var(--surface-high);
+  }
+  .share-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .article-related {
+    max-width: 760px;
+    margin-top: 48px;
+  }
+  .article-related > h3 {
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .hashtags {
+    margin-top: 8px;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+</style>

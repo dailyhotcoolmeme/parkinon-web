@@ -1,0 +1,497 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
+
+const related = [
+  {
+    tag: '산정특례',
+    title: '산정특례 갱신 시기와 재신청 방법',
+    excerpt: '적용 기간이 끝나기 전에 챙겨야 할 재등록 절차와, 놓쳤을 때 대처하는 방법을 안내합니다.',
+    hashtags: ['#산정특례', '#갱신', '#재신청'],
+    date: '2026.07.12',
+  },
+  {
+    tag: '산정특례',
+    title: '산정특례 대상 질환 코드 확인하는 법',
+    excerpt: '진단서에 적힌 상병코드가 산정특례 대상인지 스스로 확인하는 방법을 정리했습니다.',
+    hashtags: ['#산정특례', '#상병코드'],
+    date: '2026.06.24',
+  },
+];
+
+// 사이드 목차 — 본문 h2 의 id·문구와 정확히 일치시킬 것(여기만 고치면 링크가 깨진다).
+const toc = [
+  { id: 'what-is', label: '산정특례란' },
+  { id: 'eligibility', label: '신청 자격' },
+  { id: 'how-to-apply', label: '신청 방법과 준비 서류' },
+  { id: 'benefits', label: '혜택 내용' },
+  { id: 'renewal', label: '갱신 및 주의사항' },
+];
+
+// 같은 카테고리 다른 글 — /institutions 허브 목록에서 이 글만 뺀 것.
+// 실제 글이 없는 항목은 허브와 똑같이 href 없이 둔다(지어내지 말 것).
+const sideLinks: { title: string; date: string; href?: string }[] = [
+  { title: '장애등록 절차와 준비 서류 한눈에 보기', date: '2026.07.25' },
+  { title: '장기요양보험 등급 신청, 어떻게 시작하나요', date: '2026.07.22' },
+  { title: '파킨슨병 치료비 세금공제 놓치지 않는 법', date: '2026.07.19' },
+  { title: '보조기기 지원사업, 어떤 걸 받을 수 있나요', date: '2026.07.16' },
+  { title: '산정특례 갱신 시기와 재신청 방법', date: '2026.07.12' },
+  { title: '장애등록증으로 받을 수 있는 교통·통신 혜택', date: '2026.07.09' },
+];
+---
+
+<Layout title="파킨슨병 산정특례, 신청 자격과 혜택 총정리 — 파킨온">
+  <Header active="institutions" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <div class="detail-body">
+        <nav class="breadcrumb">
+          <a href="/">홈</a><span class="sep">/</span><a href="/institutions">제도·지원</a><span class="sep">/</span>
+          <span>파킨슨병 산정특례, 신청 자격과 혜택 총정리</span>
+        </nav>
+
+        <article>
+          <div class="article-head">
+            <span class="tag">산정특례</span>
+            <h1>파킨슨병 산정특례, 신청 자격과 혜택 총정리</h1>
+            <div class="hashtags"><span>#산정특례</span><span>#건강보험</span><span>#본인부담률</span></div>
+            <div class="meta">
+              <span>2026.07.28 작성</span>
+              <span>·</span>
+              <span>2026년 7월 기준</span>
+            </div>
+          </div>
+
+          <div class="article-body">
+            <p>
+              파킨슨병 진단을 받으면 산정특례 제도를 통해 병원비 부담을 크게 줄일 수 있습니다. 신청 자격부터 준비
+              서류, 실제로 받을 수 있는 혜택까지 정리했습니다.
+            </p>
+
+            <h2 id="what-is">산정특례란</h2>
+            <p>
+              산정특례는 중증질환자의 의료비 부담을 낮추기 위해 국민건강보험공단이 운영하는 제도입니다.
+              파킨슨병(상병코드 G20)은 중증난치질환으로 분류되어 산정특례 대상에 포함됩니다. 등록 후에는 해당
+              질환으로 진료받을 때 본인부담률이 낮아집니다.
+            </p>
+
+            <div class="article-ad">
+              <AdBox minHeight="120px" />
+            </div>
+
+            <h2 id="eligibility">신청 자격</h2>
+            <p>
+              신경과 전문의로부터 파킨슨병으로 확진받은 환자라면 누구나 신청할 수 있습니다. 최근 진단을 받았더라도,
+              진단일로부터 신청까지 별도의 기간 제한은 없습니다.
+            </p>
+            <ul>
+              <li>신경과 전문의의 파킨슨병 확진 소견</li>
+              <li>산정특례 대상 상병코드(G20)가 명시된 진단서</li>
+              <li>건강보험 가입자 또는 피부양자</li>
+            </ul>
+
+            <h2 id="how-to-apply">신청 방법과 준비 서류</h2>
+            <p>
+              진단받은 병원에서 '건강보험 산정특례 등록 신청서'를 작성하면, 대부분의 병원이 공단 접수까지
+              대행해줍니다. 환자가 직접 건강보험공단 지사를 방문해 접수할 수도 있습니다.
+            </p>
+            <ul>
+              <li>건강보험 산정특례 등록 신청서(병원 발급)</li>
+              <li>신분증</li>
+              <li>(직접 접수 시) 진단서 원본</li>
+            </ul>
+
+            <div class="article-ad">
+              <AdBox minHeight="120px" />
+            </div>
+
+            <h2 id="benefits">혜택 내용</h2>
+            <p>
+              등록이 완료되면 등록일로부터 5년간 산정특례가 적용됩니다. 이 기간 동안 파킨슨병 관련 진료를 받을 때
+              외래·입원 구분 없이 본인부담률이 10%로 낮아집니다. 일반 외래 본인부담률(30~60%)에 비해 크게 낮은
+              수준입니다.
+            </p>
+            <p>
+              단, 산정특례는 '파킨슨병과 직접 관련된 진료'에만 적용됩니다. 감기 등 다른 질환으로 병원을 방문할 때는
+              일반 본인부담률이 그대로 적용됩니다.
+            </p>
+
+            <h2 id="renewal">갱신 및 주의사항</h2>
+            <p>
+              산정특례 유효기간은 5년입니다. 기간이 끝나기 전 병원에서 재등록 신청을 하면 계속 혜택을 받을 수
+              있습니다. 유효기간이 지난 뒤 진료를 받으면 특례가 적용되지 않으니, 만료 시기를 미리 확인해두는 것이
+              좋습니다.
+            </p>
+          </div>
+
+          <div class="article-source">
+            <b>출처</b> · 국민건강보험공단 「본인일부부담금 산정특례에 관한 기준」(2026년 7월 기준). 제도 내용은 바뀔
+            수 있으니 최신 정보는 공단 홈페이지에서 다시 확인하시기 바랍니다.
+          </div>
+
+          <div class="article-ad">
+            <AdBox minHeight="120px" />
+          </div>
+
+          <div class="article-share">
+            <span>공유하기</span>
+            <a class="share-btn" href="#" aria-label="카카오톡 공유">
+              <svg viewBox="0 0 24 24" fill="currentColor"
+                ><path
+                  d="M12 3C6.5 3 2 6.4 2 10.6c0 2.7 1.8 5 4.5 6.4-.2.7-.7 2.6-.8 3-.1.5.2.5.4.4.2-.1 2.6-1.7 3.6-2.4.7.1 1.5.2 2.3.2 5.5 0 10-3.4 10-7.6S17.5 3 12 3z"
+                ></path></svg
+              >
+            </a>
+            <a class="share-btn" href="#" aria-label="링크 복사">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                ><path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1.5 1.5"></path><path
+                  d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1.5-1.5"></path></svg
+              >
+            </a>
+          </div>
+
+          <div class="article-related">
+            <h3>이런 글도 봤어요</h3>
+            <div class="hub-list">
+              {
+                related.map((row) => (
+                  <a class="hub-row" href="#">
+                    <span class="tag">{row.tag}</span>
+                    <h3>{row.title}</h3>
+                    <p>{row.excerpt}</p>
+                    <div class="hashtags">
+                      {row.hashtags.map((h) => <span>{h}</span>)}
+                    </div>
+                    <p class="meta">{row.date}</p>
+                  </a>
+                ))
+              }
+            </div>
+          </div>
+        </article>
+
+        <aside class="hub-side">
+          <div class="hub-side-panel toc-panel">
+            <h3>이 글 순서</h3>
+            <ul>
+              {
+                toc.map((t) => (
+                  <li>
+                    <a href={`#${t.id}`}>{t.label}</a>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+
+          <div class="hub-side-panel">
+            <h3>제도·지원 다른 글</h3>
+            <ul>
+              {
+                sideLinks.map((row) => (
+                  <li>
+                    <a href={row.href ?? '#'}>{row.title}</a>
+                    <span class="d">{row.date}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /*
+   * 상세 페이지 셸 — 본문(760px) + 오른쪽 사이드 패널(목차 + 같은 카테고리 다른 글).
+   * 허브의 .hub-body/.hub-side 와 같은 패턴이며, 넓은 화면에서 본문 오른쪽이 비어 있던 것을
+   * 실제 콘텐츠로 채우기 위한 것이다(website-plan.md "확립된 디자인 규칙" 2번).
+   * 본문·사이드가 같이 들어가기엔 본문이 너무 눌리는 1080px 이하에서는 사이드를 감춘다.
+   */
+  .detail-body {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 300px;
+    grid-template-rows: auto 1fr;
+    column-gap: 44px;
+    justify-content: center;
+  }
+  .detail-body > .breadcrumb {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .detail-body > article {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .detail-body > .hub-side {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: start;
+  }
+  .hub-side {
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  @media (max-width: 1080px) {
+    .detail-body {
+      grid-template-columns: minmax(0, 760px);
+    }
+    .detail-body > .hub-side {
+      display: none;
+    }
+  }
+  .hub-side-panel {
+    background: var(--surface-low);
+    border-radius: 8px;
+    padding: 22px 20px;
+  }
+  .hub-side-panel h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hub-side-panel ul {
+    margin-top: 14px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hub-side-panel li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-side-panel li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .hub-side-panel a {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+  }
+  .hub-side-panel a:hover {
+    color: var(--primary);
+  }
+  .hub-side-panel .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .toc-panel ul {
+    gap: 11px;
+  }
+  .toc-panel li {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  article {
+    max-width: 760px;
+  }
+  .article-head {
+    max-width: 760px;
+  }
+  .article-head .tag {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--primary);
+    background: var(--secondary-container);
+    padding: 5px 13px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .article-head h1 {
+    font-size: 30px;
+    line-height: 1.42;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-head .hashtags {
+    margin-top: 10px;
+  }
+  .article-head .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .hashtags {
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.7;
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .article-body {
+    max-width: 760px;
+    margin-top: 32px;
+  }
+  .article-body h2 {
+    font-size: 21px;
+    color: var(--text);
+    margin-top: 40px;
+    margin-bottom: 14px;
+    /* 사이드 목차로 이동했을 때 sticky 헤더에 제목이 가리지 않도록 */
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 16px;
+  }
+  .article-body p:first-of-type {
+    margin-top: 0;
+  }
+  .article-body ul {
+    margin-top: 16px;
+    padding-left: 22px;
+  }
+  .article-body li {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 8px;
+  }
+  .article-ad {
+    max-width: 760px;
+    margin: 36px 0;
+  }
+  .article-source {
+    max-width: 760px;
+    margin-top: 40px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.7;
+  }
+  .article-source b {
+    color: var(--text);
+  }
+  .article-share {
+    max-width: 760px;
+    margin-top: 36px;
+    padding-top: 24px;
+    border-top: 1px solid var(--outline);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .article-share span {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+  }
+  .share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: var(--surface-low);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-sub);
+  }
+  .share-btn:hover {
+    background: var(--surface-high);
+  }
+  .share-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .article-related {
+    max-width: 760px;
+    margin-top: 48px;
+  }
+  .article-related > h3 {
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .hashtags {
+    margin-top: 8px;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+</style>

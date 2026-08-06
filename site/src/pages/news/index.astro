@@ -1,0 +1,375 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
+import labImg from '../../assets/images/lab.jpg';
+
+interface PostRow {
+  ad?: false;
+  tag: string;
+  title: string;
+  excerpt: string;
+  hashtags: string[];
+  date: string;
+  href?: string;
+}
+interface AdRow {
+  ad: true;
+}
+type Row = PostRow | AdRow;
+
+const rows: Row[] = [
+  {
+    tag: '파킨온 소식 #12',
+    title: '운동이 도파민 신경세포를 보호한다는 새 연구',
+    excerpt: '꾸준한 유산소 운동이 신경세포 손상 속도를 늦출 수 있다는 결과가 국제 학술지에 발표됐습니다.',
+    hashtags: ['#운동', '#도파민', '#신경보호연구'],
+    date: '2026.07.29',
+    href: '/news/exercise-dopamine-neuron-protection',
+  },
+  {
+    tag: '파킨온 소식 #11',
+    title: '장내세균과 파킨슨병의 연관성, 어디까지 밝혀졌나',
+    excerpt: '장 건강과 파킨슨병 사이의 관계를 다룬 최근 연구들을 쉽게 정리했습니다.',
+    hashtags: ['#장내세균', '#마이크로바이옴'],
+    date: '2026.07.24',
+  },
+  {
+    tag: '파킨온 소식 #10',
+    title: '조기 진단에 도움 되는 후각 검사 연구 결과',
+    excerpt: '후각 저하가 파킨슨병의 초기 신호가 될 수 있다는 연구 내용을 정리했습니다.',
+    hashtags: ['#조기진단', '#후각검사'],
+    date: '2026.07.20',
+  },
+  {
+    tag: '파킨온 소식 #9',
+    title: '웨어러블 기기로 떨림 증상을 추적하는 기술',
+    excerpt: '손목시계형 기기로 하루 종일 떨림 패턴을 기록하는 새로운 연구를 소개합니다.',
+    hashtags: ['#웨어러블', '#떨림추적'],
+    date: '2026.07.16',
+  },
+  { ad: true },
+  {
+    tag: '파킨온 소식 #8',
+    title: '수면과 파킨슨병 진행 속도의 상관관계',
+    excerpt: '깊은 잠을 자는 시간과 증상 진행 사이의 관계를 다룬 연구를 정리했습니다.',
+    hashtags: ['#수면연구', '#진행속도'],
+    date: '2026.07.11',
+  },
+  {
+    tag: '파킨온 소식 #7',
+    title: '새로운 도파민 보충 치료제 임상시험 소식',
+    excerpt: '기존 약물의 한계를 보완하는 새 치료제의 임상시험 진행 상황을 정리했습니다.',
+    hashtags: ['#임상시험', '#치료제'],
+    date: '2026.07.07',
+  },
+  {
+    tag: '파킨온 소식 #6',
+    title: '지중해식 식단과 파킨슨병 위험도 연구',
+    excerpt: '식습관과 파킨슨병 발병 위험 사이의 관계를 분석한 대규모 추적 연구입니다.',
+    hashtags: ['#지중해식단', '#위험도연구'],
+    date: '2026.07.02',
+  },
+  {
+    tag: '파킨온 소식 #5',
+    title: 'AI로 보행 패턴을 분석해 조기 발견하는 기술',
+    excerpt: '스마트폰 영상만으로 보행 이상을 감지하는 인공지능 연구를 소개합니다.',
+    hashtags: ['#AI진단', '#보행분석'],
+    date: '2026.06.28',
+  },
+  { ad: true },
+  {
+    tag: '파킨온 소식 #4',
+    title: '유전자와 파킨슨병 발병 위험, 최신 연구 정리',
+    excerpt: '가족력이 있는 경우 어느 정도 위험이 높아지는지 최근 발표된 데이터를 정리했습니다.',
+    hashtags: ['#유전자', '#가족력'],
+    date: '2026.06.23',
+  },
+  {
+    tag: '파킨온 소식 #3',
+    title: '명상이 파킨슨병 증상 관리에 미치는 영향',
+    excerpt: '규칙적인 명상이 스트레스와 일부 증상 완화에 도움이 될 수 있다는 연구를 소개합니다.',
+    hashtags: ['#명상', '#증상관리'],
+    date: '2026.06.18',
+  },
+];
+
+const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
+---
+
+<Layout title="파킨온 소식 — 파킨온">
+  <Header active="news" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>파킨온 소식</h1>
+          <p>
+            파킨슨병 관련 최신 연구와 기사를 파킨온이 쉬운 말로 정리해 다시 씁니다. 어려운 논문도, 여기서는
+            환자분과 보호자분이 이해하기 쉽게 풀어드립니다.
+          </p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href="/">홈</a><span class="sep">/</span><span>파킨온 소식</span>
+      </nav>
+
+      <div class="hub-body">
+        <div class="hub-list">
+          {
+            rows.map((row) =>
+              row.ad ? (
+                <div class="native-ad-row">
+                  <span class="ad-label">광고</span>
+                  <AdBox minHeight="90px" />
+                </div>
+              ) : (
+                <a class="hub-row" href={row.href ?? '#'}>
+                  <span class="tag">{row.tag}</span>
+                  <h3>{row.title}</h3>
+                  <p>{row.excerpt}</p>
+                  <div class="hashtags">
+                    {row.hashtags.map((h) => <span>{h}</span>)}
+                  </div>
+                  <p class="meta">{row.date}</p>
+                </a>
+              )
+            )
+          }
+        </div>
+
+        <aside class="hub-side">
+          <div class="hub-side-panel">
+            <h3>파킨온 소식 다른 글</h3>
+            <ul>
+              {
+                sideLinks.map((row) => (
+                  <li>
+                    <a href={row.href ?? '#'}>{row.title}</a>
+                    <span class="d">{row.date}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <div class="hub-more">
+        <button class="btn">글 더 보기</button>
+      </div>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .hub-hero-full {
+    position: relative;
+    width: auto;
+    margin: -28px calc(-1 * var(--gutter)) 24px;
+    min-height: 240px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .hub-hero-full::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.75), rgba(10, 20, 12, 0.12) 60%, rgba(10, 20, 12, 0) 85%);
+  }
+  .hub-hero-full-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--gutter) 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .hub-hero-full-inner h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+  }
+  .hub-hero-full-inner p {
+    margin-top: 10px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 56ch;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .hub-hero-full {
+      min-height: 200px;
+    }
+    .hub-hero-full-inner h1 {
+      font-size: 26px;
+    }
+  }
+  .hub-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .hub-body {
+      grid-template-columns: 1fr;
+    }
+    .hub-side {
+      display: none;
+    }
+  }
+  .hub-side {
+    position: sticky;
+    top: 100px;
+  }
+  .hub-side-panel {
+    background: var(--surface-low);
+    border-radius: 8px;
+    padding: 22px 20px;
+  }
+  .hub-side-panel h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hub-side-panel ul {
+    margin-top: 14px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hub-side-panel li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-side-panel li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .hub-side-panel a {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+  }
+  .hub-side-panel a:hover {
+    color: var(--primary);
+  }
+  .hub-side-panel .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.7;
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .native-ad-row {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .native-ad-row .ad-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-sub);
+    background: var(--surface-high);
+    padding: 3px 11px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>

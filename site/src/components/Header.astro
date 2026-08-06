@@ -1,0 +1,285 @@
+---
+import logo from '../assets/images/logo.png';
+
+interface Props {
+  active?: 'institutions' | 'lifestyle' | 'news';
+}
+const { active } = Astro.props;
+
+const navLinks = [
+  { key: 'institutions', href: '/institutions', label: '제도·지원' },
+  { key: 'lifestyle', href: '/lifestyle', label: '생활 요령' },
+  { key: 'news', href: '/news', label: '파킨온 소식' },
+] as const;
+---
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="/"><img src={logo.src} alt="" />파킨온</a>
+    <nav class="nav-links" id="navLinks">
+      {
+        navLinks.map((link) => (
+          <a href={link.href} class={link.key === active ? 'active' : ''}>
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+    <button class="search-btn" id="searchBtn" aria-label="검색" aria-expanded="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
+      >
+    </button>
+    <button class="menu-btn" id="menuBtn" aria-label="메뉴" aria-expanded="false">
+      <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        ><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line
+          x1="3"
+          y1="18"
+          x2="21"
+          y2="18"></line></svg
+      >
+      <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        ><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg
+      >
+    </button>
+  </div>
+  <div class="search-panel" id="searchPanel">
+    <div class="search-panel-inner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
+      >
+      <input type="text" id="searchInput" placeholder="궁금한 내용을 검색해보세요" />
+    </div>
+  </div>
+</header>
+
+<style>
+  header.site {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+    border-bottom: 1px solid var(--outline);
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  .brand {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--primary);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand img {
+    width: 30px;
+    height: 30px;
+    display: block;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+  .nav-links a {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--text-sub);
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -6px;
+    height: 2px;
+    background: transparent;
+  }
+  .nav-links a.active {
+    color: var(--primary);
+  }
+  .nav-links a.active::after {
+    background: var(--primary);
+  }
+  .search-btn {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+  .search-btn:hover {
+    background: var(--surface-low);
+    color: var(--text);
+  }
+  .search-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+  .menu-btn {
+    display: none;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  .menu-btn:hover {
+    background: var(--surface-low);
+  }
+  .menu-btn svg {
+    width: 26px;
+    height: 26px;
+  }
+  .menu-btn .icon-close {
+    display: none;
+  }
+  .menu-btn[aria-expanded='true'] .icon-menu {
+    display: none;
+  }
+  .menu-btn[aria-expanded='true'] .icon-close {
+    display: block;
+  }
+  @media (max-width: 860px) {
+    .nav {
+      gap: 8px;
+    }
+    .nav-links {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--outline);
+      box-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.15);
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 4px var(--gutter);
+      display: none;
+    }
+    .nav-links.open {
+      display: flex;
+    }
+    .nav-links a {
+      font-size: 19px;
+      padding: 16px 4px;
+      border-bottom: 1px solid var(--outline);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .nav-links a:last-child {
+      border-bottom: none;
+    }
+    .menu-btn {
+      display: flex;
+      margin-left: 8px;
+    }
+  }
+
+  .search-panel {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--outline);
+    box-shadow: 0 12px 24px -16px rgba(0, 0, 0, 0.15);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease;
+  }
+  .search-panel.open {
+    max-height: 120px;
+  }
+  .search-panel-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 16px var(--gutter);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .search-panel-inner svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text-sub);
+    flex-shrink: 0;
+  }
+  .search-panel-inner input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    font-size: 17px;
+    font-family: inherit;
+    color: var(--text);
+    background: none;
+    height: 44px;
+  }
+  .search-panel-inner input::placeholder {
+    color: var(--text-sub);
+  }
+</style>
+
+<script>
+  const menuBtn = document.getElementById('menuBtn')!;
+  const navLinks = document.getElementById('navLinks')!;
+  const searchBtn = document.getElementById('searchBtn')!;
+  const searchPanel = document.getElementById('searchPanel')!;
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+
+  function closeMenu() {
+    navLinks.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+  }
+  function closeSearch() {
+    searchPanel.classList.remove('open');
+    searchBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  menuBtn.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) closeSearch();
+  });
+  navLinks.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).tagName === 'A') closeMenu();
+  });
+
+  searchBtn.addEventListener('click', () => {
+    const open = searchPanel.classList.toggle('open');
+    searchBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      closeMenu();
+      setTimeout(() => searchInput.focus(), 50);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as Node;
+    if (navLinks.classList.contains('open') && !navLinks.contains(target) && !menuBtn.contains(target)) {
+      closeMenu();
+    }
+    if (searchPanel.classList.contains('open') && !searchPanel.contains(target) && !searchBtn.contains(target)) {
+      closeSearch();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchPanel.classList.contains('open')) closeSearch();
+  });
+</script>

@@ -1,0 +1,413 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import AdBox from '../../components/AdBox.astro';
+import familyImg from '../../assets/images/family.jpg';
+
+interface PostRow {
+  ad?: false;
+  tag: string;
+  title: string;
+  excerpt: string;
+  hashtags: string[];
+  date: string;
+  href?: string;
+}
+interface AdRow {
+  ad: true;
+}
+type Row = PostRow | AdRow;
+
+const tabs = ['전체', '산정특례', '장애등록', '장기요양', '의료비 공제', '보조기기'];
+
+const rows: Row[] = [
+  {
+    tag: '산정특례',
+    title: '파킨슨병 산정특례, 신청 자격과 혜택 총정리',
+    excerpt: '진단서와 함께 신청하면 본인부담률이 크게 낮아집니다. 대상 기준과 신청 시 챙겨야 할 서류를 정리했습니다.',
+    hashtags: ['#산정특례', '#건강보험', '#본인부담률'],
+    date: '2026.07.28',
+    href: '/institutions/copayment-reduction-guide',
+  },
+  {
+    tag: '장애등록',
+    title: '장애등록 절차와 준비 서류 한눈에 보기',
+    excerpt: '진단 후 언제부터 등록할 수 있는지, 어느 병원에서 진단서를 받아야 하는지부터 순서대로 안내합니다.',
+    hashtags: ['#장애등록', '#장애인등록', '#서류'],
+    date: '2026.07.25',
+  },
+  {
+    tag: '장기요양',
+    title: '장기요양보험 등급 신청, 어떻게 시작하나요',
+    excerpt: '공단 방문조사부터 등급 판정까지 걸리는 기간과, 등급별로 받을 수 있는 서비스를 비교했습니다.',
+    hashtags: ['#장기요양보험', '#등급신청', '#방문조사'],
+    date: '2026.07.22',
+  },
+  {
+    tag: '의료비 공제',
+    title: '파킨슨병 치료비 세금공제 놓치지 않는 법',
+    excerpt: '연말정산에서 놓치기 쉬운 의료비 세액공제 항목과, 미리 챙겨두면 좋은 영수증 종류를 정리했습니다.',
+    hashtags: ['#의료비공제', '#연말정산', '#세액공제'],
+    date: '2026.07.19',
+  },
+  { ad: true },
+  {
+    tag: '보조기기',
+    title: '보조기기 지원사업, 어떤 걸 받을 수 있나요',
+    excerpt: '보행보조기, 욕실 안전용품 등 지원 품목과 본인부담금, 신청 기관을 정리했습니다.',
+    hashtags: ['#보조기기', '#지원사업', '#낙상예방'],
+    date: '2026.07.16',
+  },
+  {
+    tag: '산정특례',
+    title: '산정특례 갱신 시기와 재신청 방법',
+    excerpt: '적용 기간이 끝나기 전에 챙겨야 할 재등록 절차와, 놓쳤을 때 대처하는 방법을 안내합니다.',
+    hashtags: ['#산정특례', '#갱신', '#재신청'],
+    date: '2026.07.12',
+  },
+  {
+    tag: '장애등록',
+    title: '장애등록증으로 받을 수 있는 교통·통신 혜택',
+    excerpt: '지하철·버스 할인부터 통신요금 감면까지, 등록증 하나로 받을 수 있는 생활 혜택을 모았습니다.',
+    hashtags: ['#장애등록증', '#교통할인', '#통신요금감면'],
+    date: '2026.07.09',
+  },
+  {
+    tag: '장기요양',
+    title: '요양보호사 방문 서비스 신청 가이드',
+    excerpt: '등급 판정 이후 실제로 방문 요양 서비스를 시작하기까지의 절차를 순서대로 정리했습니다.',
+    hashtags: ['#장기요양', '#요양보호사', '#방문요양'],
+    date: '2026.07.05',
+  },
+  { ad: true },
+  {
+    tag: '의료비 공제',
+    title: '본인부담상한제, 환급까지 받는 절차',
+    excerpt: '1년간 낸 의료비가 기준을 넘으면 초과분을 돌려받을 수 있습니다. 신청 시기와 방법을 안내합니다.',
+    hashtags: ['#본인부담상한제', '#환급', '#의료비'],
+    date: '2026.07.02',
+  },
+  {
+    tag: '보조기기',
+    title: '보행보조기·욕실 안전용품 지원 신청',
+    excerpt: '낙상 위험을 줄이는 보조기기 품목별 지원 한도와, 실제 신청 후기를 바탕으로 한 팁을 담았습니다.',
+    hashtags: ['#보행보조기', '#욕실안전', '#낙상예방'],
+    date: '2026.06.28',
+  },
+  {
+    tag: '산정특례',
+    title: '산정특례 대상 질환 코드 확인하는 법',
+    excerpt: '진단서에 적힌 상병코드가 산정특례 대상인지 스스로 확인하는 방법을 정리했습니다.',
+    hashtags: ['#산정특례', '#상병코드'],
+    date: '2026.06.24',
+  },
+];
+
+const sideLinks = rows.filter((r): r is PostRow => !r.ad).slice(0, 6);
+---
+
+<Layout title="제도·지원 — 파킨온">
+  <Header active="institutions" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${familyImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>제도·지원</h1>
+          <p>
+            파킨슨병 환자와 가족이 받을 수 있는 국가 지원 제도를 정리했습니다. 산정특례부터 장애등록, 장기요양등급,
+            의료비 세금공제, 보조기기 지원까지 — 신청 자격과 절차를 확인하세요.
+          </p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href="/">홈</a><span class="sep">/</span><span>제도·지원</span>
+      </nav>
+
+      <div class="hub-tabs">
+        {tabs.map((t, i) => <a class:list={['tab', { active: i === 0 }]} href="#">{t}</a>)}
+      </div>
+
+      <div class="hub-body">
+        <div class="hub-list">
+          {
+            rows.map((row) =>
+              row.ad ? (
+                <div class="native-ad-row">
+                  <span class="ad-label">광고</span>
+                  <AdBox minHeight="90px" />
+                </div>
+              ) : (
+                <a class="hub-row" href={row.href ?? '#'}>
+                  <span class="tag">{row.tag}</span>
+                  <h3>{row.title}</h3>
+                  <p>{row.excerpt}</p>
+                  <div class="hashtags">
+                    {row.hashtags.map((h) => <span>{h}</span>)}
+                  </div>
+                  <p class="meta">{row.date}</p>
+                </a>
+              )
+            )
+          }
+        </div>
+
+        <aside class="hub-side">
+          <div class="hub-side-panel">
+            <h3>제도·지원 다른 글</h3>
+            <ul>
+              {
+                sideLinks.map((row) => (
+                  <li>
+                    <a href={row.href ?? '#'}>{row.title}</a>
+                    <span class="d">{row.date}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </div>
+        </aside>
+      </div>
+
+      <div class="hub-more">
+        <button class="btn">글 더 보기</button>
+      </div>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .hub-hero-full {
+    position: relative;
+    width: auto;
+    margin: -28px calc(-1 * var(--gutter)) 24px;
+    min-height: 240px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .hub-hero-full::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.75), rgba(10, 20, 12, 0.12) 60%, rgba(10, 20, 12, 0) 85%);
+  }
+  .hub-hero-full-inner {
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--gutter) 28px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .hub-hero-full-inner h1 {
+    font-size: 32px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+  }
+  .hub-hero-full-inner p {
+    margin-top: 10px;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 56ch;
+    line-height: 1.6;
+  }
+  @media (max-width: 640px) {
+    .hub-hero-full {
+      min-height: 200px;
+    }
+    .hub-hero-full-inner h1 {
+      font-size: 26px;
+    }
+  }
+  .hub-tabs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--outline);
+    margin-bottom: 32px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: 0 0 auto;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-sub);
+    padding: 12px 14px;
+    border-bottom: 2.5px solid transparent;
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--primary);
+    border-color: var(--primary);
+  }
+  .hub-body {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 960px) {
+    .hub-body {
+      grid-template-columns: 1fr;
+    }
+    .hub-side {
+      display: none;
+    }
+  }
+  .hub-side {
+    position: sticky;
+    top: 100px;
+  }
+  .hub-side-panel {
+    background: var(--surface-low);
+    border-radius: 8px;
+    padding: 22px 20px;
+  }
+  .hub-side-panel h3 {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .hub-side-panel ul {
+    margin-top: 14px;
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .hub-side-panel li {
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-side-panel li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .hub-side-panel a {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+  }
+  .hub-side-panel a:hover {
+    color: var(--primary);
+  }
+  .hub-side-panel .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.7;
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .native-ad-row {
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .native-ad-row .ad-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-sub);
+    background: var(--surface-high);
+    padding: 3px 11px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 10px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>

@@ -24,6 +24,7 @@ import shot7 from '../../assets/images/appshots/parkinon7.png';
 import shot8 from '../../assets/images/appshots/parkinon8.png';
 import shotEtc from '../../assets/images/appshots/parkinon_etc.png';
 
+import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
 const locale = Astro.currentLocale ?? 'ko';
 
 const appShots = [
@@ -202,11 +203,11 @@ const newsRows = [
           <h2>언제 어디서나, 파킨온 앱으로 관리하세요</h2>
           <p>손끝에서 관리하는 하루 기록과 알림 서비스. 큰 글씨와 명확한 디자인으로 시니어도 쉽게 사용할 수 있습니다.</p>
           <div class="store-badges">
-            <a class="store-badge" href="#">
+            <a class="store-badge" href={PLAY_STORE_URL} target="_blank" rel="noopener">
               <svg class="icon" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 5,21 20,12"></polygon></svg>
               <span class="big">Google Play</span>
             </a>
-            <a class="store-badge" href="#">
+            <a class="store-badge" href={appleStoreUrl(locale)} target="_blank" rel="noopener">
               <svg class="icon" viewBox="0 0 384 512" fill="#fff"
                 ><path
                   d="M318 268c-1-56 46-83 48-84-26-38-67-43-81-44-34-3-67 20-84 20-18 0-44-20-73-19-37 1-72 22-91 55-39 68-10 168 28 223 19 27 41 57 71 56 28-1 39-18 74-18 34 0 45 18 74 18 31-1 50-27 69-54 22-31 31-61 31-63-1 0-59-23-60-90zM258 63c16-19 27-46 24-73-23 1-51 15-68 34-15 17-28 44-25 70 26 2 53-13 69-31z"

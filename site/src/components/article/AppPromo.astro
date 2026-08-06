@@ -6,15 +6,17 @@
  *
  * 스토어 버튼은 홈(`src/pages/ko/index.astro`)의 `.store-badge` 와 **같은 모양**이다
  * (오너 지시: "홈화면에 있는것처럼"). 홈 것을 고치면 여기도 같이 맞출 것.
- * ⬜ 스토어 링크는 아직 `#` 다 — 홈도 마찬가지. 실제 주소가 정해지면 두 곳을 함께 바꾼다.
+ * 스토어 주소는 `src/lib/links.ts` 한 곳에서 관리한다(홈과 공용).
  */
 import { Image } from 'astro:assets';
 import appShot from '../../assets/images/appshots/parkinon1.png';
+import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
 
 interface Props {
   title?: string;
   body?: string;
 }
+const locale = Astro.currentLocale ?? 'ko';
 const {
   title = '약 복용은 앱으로 관리하세요',
   body = '파킨온 앱은 복용 시간을 알려주고 기록을 남깁니다. 보호자와도 함께 볼 수 있습니다.',
@@ -32,11 +34,11 @@ const {
   </div>
 
   <div class="store-badges">
-    <a class="store-badge" href="#">
+    <a class="store-badge" href={PLAY_STORE_URL} target="_blank" rel="noopener">
       <svg class="icon" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 5,21 20,12"></polygon></svg>
       <span class="big">Google Play</span>
     </a>
-    <a class="store-badge" href="#">
+    <a class="store-badge" href={appleStoreUrl(locale)} target="_blank" rel="noopener">
       <svg class="icon" viewBox="0 0 384 512" fill="#fff"
         ><path
           d="M318 268c-1-56 46-83 48-84-26-38-67-43-81-44-34-3-67 20-84 20-18 0-44-20-73-19-37 1-72 22-91 55-39 68-10 168 28 223 19 27 41 57 71 56 28-1 39-18 74-18 34 0 45 18 74 18 31-1 50-27 69-54 22-31 31-61 31-63-1 0-59-23-60-90zM258 63c16-19 27-46 24-73-23 1-51 15-68 34-15 17-28 44-25 70 26 2 53-13 69-31z"

@@ -90,10 +90,23 @@ const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props
     padding: 0;
     margin: 0;
   }
+  /* ⚠️ 목록 위 여백은 반드시 .article-side 를 붙여 쓸 것.
+     .toc-list{margin-top:...} 처럼 쓰면 위 리셋(.article-side ul, 0-1-1)에 밀려 죽는다. */
+  .article-side .toc-list {
+    margin-top: 6px;
+  }
+  .article-side .link-list {
+    margin-top: 13px;
+  }
+
+  /*
+   * 제목 ↔ 첫 항목 간격은 두 목록의 "글자 시작 위치" 기준 18px 로 맞춘 값이다(실측).
+   * 박스 여백이 아니라 글자 간격으로 맞춰야 두 패널이 같아 보인다 —
+   * 목차 링크는 padding-top 7px + 행간 여유가 있어 같은 margin 을 주면 더 벌어진다.
+   */
 
   /* 목차 — 카드 없이 왼쪽 세로선 하나로 묶고, 현재 섹션만 초록으로 표시 */
   .toc-list {
-    margin-top: 14px;
     border-left: 2px solid var(--outline);
   }
   .toc-list a {
@@ -117,7 +130,6 @@ const { toc = [], links, linksTitle, tocTitle = '이 글 순서' } = Astro.props
 
   /* 같은 카테고리 다른 글 */
   .link-list {
-    margin-top: 14px;
     display: flex;
     flex-direction: column;
     gap: 16px;

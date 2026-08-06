@@ -33,6 +33,18 @@ npm run build --prefix site     # astro check + astro build (0 errors 유지할 
 
 ### 정식 오픈 때 필요한 작업 (아직 안 함)
 
+- **`/about` 은 홈으로 보낸다(302).** QR 코드로 인쇄·배포된 주소라 **주소 자체가 죽으면 안 된다**
+  (오너 2026-08-06: "about 주소로 QR 만들어서 배포한 게 있다. 홈화면으로만 보내도 문제없다").
+  규칙은 `site/public/_redirects` 에 이미 넣어 뒀고, Astro 사이트가 루트 도메인을 맡는 순간
+  자동으로 효력이 생긴다. dev 에서 `/about` `/about/en` `/about/ja` 모두 `/ko/` 로 302 확인.
+  - 301 이 아니라 302 인 이유: 브라우저가 301 을 오래 캐시해서 나중에 /about 을 되살려도
+    이미 스캔한 사람은 계속 홈으로 간다. QR 은 오프라인 배포라 301 로 얻을 SEO 이득도 없다.
+  - ⚠️ **구글 OAuth 동의 화면의 홈페이지 URL 이 `/about` 으로 등록돼 있을 수 있다**
+    ([[reference_parkinon_google_oauth_project]] 메모: "홈=/about"). 정식 오픈 후 리다이렉트가
+    검증에 문제를 일으키지 않는지 확인하고, 필요하면 콘솔에서 홈페이지 URL 을 바꾼다.
+  - `/terms` `/privacy` `/delete-account` 는 **리다이렉트 대상이 아니다.** 앱에서 직접 들어오는
+    법적 문서라 내용이 그대로 보여야 한다(위 다국어 섹션 참고).
+
 - 기존 React SPA(`/records` 등 내부 라우트)를 `/app` 아래로 옮기고, 이 Astro 빌드를
   `parkinon-web`(루트 도메인) 프로젝트로 전환. 앱 코드에 `parkinon.com/terms`, `/admin` 등
   하드코딩된 링크가 있어 **별도로 신중하게 다시 확인받고 진행할 것.**

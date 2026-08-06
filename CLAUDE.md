@@ -15,7 +15,8 @@
 이미 이 폴더로 열었다면, 아래 두 개를 먼저 읽어라.
 
 1. `/Users/ourmine/dev/parkinon-app/CLAUDE.md` — 프로젝트 전체 규칙
-2. `docs/website-plan.md` — 웹사이트 계획 (맨 위 "새 세션은 여기서부터")
+2. `docs/website-plan.md` — **무엇을 왜 하는가**: 목적·콘텐츠 축·정책·미결 (맨 위 "새 세션은 여기서부터")
+3. `docs/site-implementation.md` — **어떻게 되어 있는가**: 라우트·그리드·i18n·SEO·배포·디자인 규칙
 
 ---
 
@@ -31,8 +32,10 @@ Vite + React 19 SPA 를 Cloudflare Pages 로 배포한다.
 | `/about` `/terms` `/privacy` `/delete-account` | 정적 HTML · 4개 언어(ko·en·fr·ja) |
 | `/api/*` | Cloudflare Pages Functions |
 
-**앞으로 할 일은 이 사이트를 SEO 콘텐츠 사이트로 키우는 것이다.** 계획은
-`docs/website-plan.md` 에 있고, 아직 설계 단계라 코드는 시작하지 않았다.
+**앞으로 할 일은 이 사이트를 SEO 콘텐츠 사이트로 키우는 것이다.**
+콘텐츠 사이트는 `site/` 서브프로젝트(Astro)로 이미 만들어져 dev 배포까지 나가 있다
+(`parkinon-site-dev.pages.dev`). 남은 것은 **실제 글**이다 — 계획과 미결은
+`docs/website-plan.md`, 코드 구조는 `docs/site-implementation.md` 참고.
 
 ⚠️ **앱 기준을 웹에 가져다 붙이지 말 것.**
 - 웹은 회원가입이 없어 **유럽 대리인이 필요 없다.** 앱은 건강정보를 매일 수집해 기준이 다르다.

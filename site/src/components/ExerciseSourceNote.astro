@@ -1,12 +1,8 @@
 ---
 /*
  * 운동 영상 허브 상단의 출처·근거 안내 — 텍스트 세 줄(오너 확정 2026-08-07).
- * 아이콘·배지·숫자 카드를 넣지 않는다. "깔끔하게"는 간격·타이포 정리를 뜻했다.
- *
- * 정리한 부분: 문단(본문)과 각주(출처+상담 문구)를 시각적으로 두 그룹으로 묶었다.
- * 전에는 세 문장이 8px·6px 간격으로 다 따로 떨어져 있어 글자 종류(본문/출처/상담)가
- * 계속 바뀌는 것처럼 산만해 보였다 — 오너 지적: "텍스트 유형이 많아서 그런것만 좀 가다듬으면".
- * 지금은 출처·상담 문구를 같은 스타일 한 덩어리로 묶고, 본문과의 사이만 넉넉히 띄운다.
+ * 연한 배경 둥근 박스로 감싼다(오너 지시 2026-08-07) — 톤은 `--secondary-container`
+ * (라이트 #e8f5e9 연초록 / 다크 #1b4332, 기존 디자인 토큰. 새 색을 만들지 않았다).
  */
 import type { ExerciseSource } from '../lib/exerciseSource';
 
@@ -36,14 +32,15 @@ const { source } = Astro.props;
 
 <style>
   .source-note {
-    padding: 18px 0 22px;
-    border-bottom: 1px solid var(--outline);
+    padding: 20px 22px;
+    background: var(--secondary-container);
+    border-radius: 14px;
     margin-bottom: 4px;
   }
   .intro {
     font-size: 15px;
     line-height: 1.75;
-    color: var(--text);
+    color: var(--on-secondary-container);
   }
   /* 출처 + 상담 문구를 한 덩어리로 묶는다 — 둘 다 같은 크기·색, 줄 간격만 좁게 */
   .meta {
@@ -52,12 +49,19 @@ const { source } = Astro.props;
   .meta p {
     font-size: 12.5px;
     line-height: 1.6;
-    color: var(--text-sub);
+    color: var(--on-secondary-container);
+    opacity: 0.8;
   }
   .meta p + p {
     margin-top: 3px;
   }
+  .meta a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: currentColor;
+    text-underline-offset: 2px;
+  }
   .meta a:hover {
-    color: var(--primary);
+    opacity: 1;
   }
 </style>

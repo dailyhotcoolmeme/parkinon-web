@@ -503,6 +503,34 @@ site/src/content/articles/<카테고리>/<slug>.mdx   →  /ko/<카테고리>/<s
 
 ---
 
+## 임상시험(ClinicalTrials.gov API v2) — 반드시 클라이언트 필터를 거칠 것 (2026-08-08)
+
+⚠️ **API 의 `query.locn`(위치 파라미터)로 국가를 거르지 않는다.** `query.cond`(조건)와
+`query.locn`(위치)을 같이 쓰면 결과가 오염된다. 실측(2026-08-08)으로 원인 둘을 확인했다.
+
+1. **"PD" 약어 충돌** — 암 면역치료 임상시험은 키워드에 "PD-1"·"PD-L1"(Programmed cell
+   Death, 면역관문억제제 표적)이 잔뜩 들어 있다. `query.cond=Parkinson Disease` 가 이걸
+   파킨슨병과 겹쳐 매칭한다. 모집 중 673건 중 **47건(7%)이 이 오염**이었다 — 폐암·자궁내막암·
+   유방암·식도암 임상시험이 파킨슨병 목록에 섞여 나왔다.
+2. **국가명 표기가 데이터와 다르다** — `query.locn` 은 텍스트 매칭이라 실제 저장된 값과
+   똑같이 써야 한다. 한국은 흔히 쓰는 `Korea, Republic of` 가 아니라 **`South Korea`** 로
+   저장돼 있다. 이것도 실제 위치 데이터의 `country` 값을 직접 나열해서 확인했다.
+
+**그래서 구현은 이렇게 한다.**
+
+1. `query.cond=Parkinson Disease` 로만, 페이지네이션(`nextPageToken`)으로 **모집 중 전체를 받는다**
+   (국가 파라미터를 API 에 안 준다).
+2. 받은 각 study 를 **우리 코드에서** 두 번 검사한다.
+   - `protocolSection.conditionsModule.conditions` 배열에 `"parkinson"` (대소문자 무시) 이
+     실제로 포함되는가 — 없으면 버린다.
+   - `protocolSection.contactsLocationsModule.locations[].country` 에 목표 국가가 있는가 —
+     이걸로 나라별 목록을 나눈다.
+3. 국가명 표기는 API 실제 값 기준으로 쓴다 — 짐작하지 말고 그때그때 실제 응답을 확인할 것
+   (미국 `United States`, 한국 `South Korea`, 일본 `Japan`, 독일 `Germany`, 프랑스 `France`).
+
+오염 제거 + 정확한 국가명으로 다시 잰 모집 중 수치는 `website-plan.md` "3. 임상시험" 절에 있다
+(처음 실측치는 전부 틀렸었다 — 미국 244→212, 프랑스 57→42, 독일 48→33, 한국 27→10, 일본 17→6).
+
 ## 주요 파일
 
 - `site/astro.config.mjs` — i18n·sitemap·site URL

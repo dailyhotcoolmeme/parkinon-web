@@ -23,6 +23,7 @@ import yogaImg from '../../../assets/images/yoga.jpg';
 import { VIDEO_DATA, DIFFICULTIES } from '../../../lib/exerciseVideos.ko';
 import { EXERCISE_SOURCE } from '../../../lib/exerciseSource.ko';
 import ExerciseSourceNote from '../../../components/ExerciseSourceNote.astro';
+import Tr from '../../../i18n/Tr.astro';
 
 const locale = Astro.currentLocale ?? 'ko';
 
@@ -49,7 +50,10 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
       <section class="hub-hero-full" style={`background-image:url(${yogaImg.src});`}>
         <div class="hub-hero-full-inner">
           <h1>운동 영상</h1>
-          <p>질병관리청 국립보건연구원과 대한파킨슨병및이상운동질환학회가 함께 만든, 효과가 확인된 운동입니다.</p>
+          {/* 히어로 문구는 어느 나라 페이지든 그대로 쓰는 한 줄이다(오너 확정 2026-08-07).
+              "공식 검증"·기관명 얘기는 여기서 하지 않는다 — 그 얘기는 아래 출처 문단에만 있다.
+              그래서 사전(src/i18n)의 exercise.tagline 하나로 관리하고 나라마다 새로 쓰지 않는다. */}
+          <p><Tr k="exercise.tagline" /></p>
         </div>
       </section>
 

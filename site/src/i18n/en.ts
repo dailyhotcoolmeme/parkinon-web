@@ -19,6 +19,7 @@ const en = {
   'nav.lifestyle': 'Daily living',
   'nav.clinical': 'Clinical trials',
   'nav.exercise': 'Exercise videos',
+  'exercise.tagline': 'A little movement each day can make you feel lighter — follow along at your own pace.',
   'nav.institutions': 'Benefits & support',
   'nav.tools': 'Tools',
 

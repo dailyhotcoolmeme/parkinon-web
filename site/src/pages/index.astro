@@ -1,0 +1,200 @@
+---
+/*
+ * 대문 — 언어를 고르는 첫 화면. 언어 접두사가 없는 유일한 페이지다(오너 승인 2026-08-07, 시안 A).
+ *
+ * ⚠️ 언어가 하나뿐이면 이 화면은 **보이지 않는다.** `_redirects` 의 `/ → /ko/` 규칙이
+ *   앞서 걸리기 때문이다. 그 규칙은 `scripts/root-gate.mjs` 가 빌드마다 자동으로 넣고 뺀다 —
+ *   두 번째 언어가 생기는 순간 규칙이 사라지고 대문이 드러난다.
+ *
+ * 설계 의도
+ * - 문구를 한 언어로 쓰지 않는다. **각 언어 줄에 그 언어로 된 한 줄**을 붙였다.
+ *   대문에서 "환영합니다"를 한국어로만 쓰면 외국인에겐 여전히 남의 집 문이다.
+ * - 사진은 홈과 같은 공원 벤치(인물 없음). 새 이미지를 만들지 않고 사이트 정체성을 그대로 쓴다.
+ */
+import { Image } from 'astro:assets';
+import Layout from '../layouts/Layout.astro';
+import hero from '../assets/images/hero.jpg';
+import logoMark from '../assets/images/logo-mark-white.png';
+import logoText from '../assets/images/logo-text-white.png';
+import { GATE_LANGUAGES } from '../lib/gate';
+
+/*
+ * 언어가 다섯 개를 넘으면 한 줄 설명을 뺀다 (오너 결정 2026-08-07).
+ *
+ * 근거는 실측이다. 계획된 8개 언어를 다 넣고 아이폰 크기(390x844)에서 재보니
+ * 설명이 있으면 문서 높이가 945px 로 **스크롤이 생겼다**. 대문에서 스크롤이 생기면
+ * 아래쪽 언어는 보이지도 않는다 — 자기 언어를 못 찾은 사람은 그냥 나간다.
+ * 설명을 빼면 844px 로 딱 들어간다.
+ *
+ * 설명을 빼도 되는 이유: **언어 이름 자체가 그 언어로 적혀 있다.**
+ * 日本語 · Français · Português 를 자기 언어로 못 알아볼 사람은 없다.
+ */
+const compact = GATE_LANGUAGES.length >= 5;
+---
+
+<Layout title="파킨온">
+  <main class="gate">
+    <Image class="bg" src={hero} alt="" widths={[900, 1400, 2000]} sizes="100vw" loading="eager" />
+    <div class="scrim"></div>
+
+    <div class="inner">
+      <div class="brand">
+        {/* 가로형 로고 — 심볼 옆에 영문 워드마크. 대문은 언어를 고르기 전 화면이라
+            한글 '파킨온' 을 쓰지 않는다(오너 지시 2026-08-07).
+            앱 저장소의 흰색 원본을 그대로 가져왔다: parkinon-symbol-en.png / parkinon-text-en.png */}
+        <img class="mark" src={logoMark.src} alt="" />
+        <img class="wordmark" src={logoText.src} alt="ParkinON" />
+      </div>
+
+      <ul class:list={['langs', { compact }]}>
+        {
+          GATE_LANGUAGES.map((l) => (
+            <li>
+              <a href={l.href} lang={l.code} hreflang={l.code}>
+                <b>{l.name}</b>
+                {!compact && <span>{l.tagline}</span>}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </main>
+
+</Layout>
+
+<style>
+  .gate {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    overflow: hidden;
+  }
+  .gate :global(.bg) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 42%;
+  }
+  /* 사진 위 글자를 읽히게 하는 어둠. 색을 씌우지 않고 검정 농도만 쓴다 —
+     보라·파랑 그라디언트를 얹는 순간 흔한 템플릿처럼 보인다. */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        ellipse 58% 32% at 50% 47%,
+        rgba(0, 0, 0, 0.62) 0%,
+        rgba(0, 0, 0, 0.3) 58%,
+        rgba(0, 0, 0, 0) 100%
+      ),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.2));
+  }
+  .inner {
+    position: relative;
+    width: 100%;
+    max-width: var(--max);
+    margin: 0 auto;
+    padding: 40px var(--gutter);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    /* 흰 로고가 밝은 사진 위에서 묻히지 않게 */
+    filter: drop-shadow(0 1px 10px rgba(0, 0, 0, 0.5));
+  }
+  .brand .mark {
+    width: 54px;
+    height: 54px;
+    display: block;
+  }
+  .brand .wordmark {
+    height: 30px;
+    width: auto;
+    display: block;
+  }
+
+  .langs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    max-width: 720px;
+  }
+  /* 설명을 뺀 형태 — 항목이 짧아지므로 한 줄에 여러 개를 넣는다 */
+  .langs.compact {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .langs.compact a {
+    padding: 15px 14px;
+  }
+  .langs li {
+    flex: 1 1 300px;
+    min-width: 0;
+  }
+  .langs a {
+    display: block;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(3px);
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+    transition:
+      background 0.15s,
+      border-color 0.15s;
+  }
+  .langs a:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.75);
+  }
+  .langs b {
+    display: block;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 17px;
+  }
+  .langs span {
+    display: block;
+    margin-top: 5px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.82);
+    word-break: keep-all;
+  }
+
+  @media (max-width: 700px) {
+    .inner {
+      padding-top: 28px;
+      padding-bottom: 32px;
+    }
+    .langs {
+      gap: 10px;
+    }
+    .langs li {
+      flex: 1 1 100%;
+    }
+    /* 좁은 화면에서는 두 칸. 항목이 다섯 개를 넘어가면 한 칸씩 쌓기엔 세로가 모자란다. */
+    .langs.compact {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+</style>

@@ -27,9 +27,15 @@ import koTitles from '../../../data/clinicalTrialTitles.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
 
-/* 임상 단계 물음표 팝오버의 "자세히 알아보기" 링크. 생활 요령 하위 용어 설명 글
-   (`src/content/articles/ko/lifestyle/clinical-trial-phases.mdx`)로 보낸다. */
-const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/clinical-trial-phases');
+/*
+ * 임상 단계 물음표 팝오버의 "자세히 알아보기" 링크.
+ * 항목마다 페이지를 따로 파지 않는다는 정책(website-plan.md "용어 설명" 절)에 따라
+ * 독립 페이지가 아니라 생활 요령의 **모아보는 글 한 편**
+ * (`src/content/articles/ko/lifestyle/glossary.mdx`)안의 그 항목으로 anchor 링크한다.
+ * ⚠️ 앵커 id는 Astro가 그 글의 h2 텍스트로 자동 생성한 것이다 — 그 글의 해당 제목을
+ * 바꾸면 이 문자열도 같이 고쳐야 한다.
+ */
+const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#임상시험-1상2상3상-무슨-뜻인가요';
 
 /*
  * 임상시험 제목 번역 — 시범 1건(2026-08-08, 오너 확인 요청: "너가 또 이상하게 보여줄게
@@ -453,6 +459,14 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       panels.forEach((panel) => {
         panel.hidden = panel.dataset.country !== country;
       });
+    });
+  });
+
+  /* 임상 단계 물음표 팝오버(<details>) — 바깥을 눌러도 안 닫히던 것을 고친다.
+     네이티브 <details> 는 summary 를 다시 눌러야만 닫힌다. */
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll<HTMLDetailsElement>('.phase-help[open]').forEach((d) => {
+      if (!d.contains(e.target as Node)) d.removeAttribute('open');
     });
   });
 </script>

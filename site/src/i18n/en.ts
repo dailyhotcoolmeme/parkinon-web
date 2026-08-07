@@ -33,8 +33,39 @@ const en = {
      "이 문장에 기관명·수치·나라별 사실이 있는가?" 먼저 확인할 것
      (memory feedback_universal_hero_tagline, 2026-08-07 사고). */
   'exercise.tagline': 'A little movement each day can make you feel lighter — follow along at your own pace.',
+
   'nav.institutions': 'Benefits & support',
   'nav.tools': 'Tools',
+
+  // 임상시험 — 나라 이름·상(phase) 이름. clinicalTrials.ts(공용 로직)가 이 라벨을 쓴다.
+  // ⚠️ 이 값들도 exercise.tagline 과 같은 이유로 사전에 있다 — 그대로 번역만 될 값이다.
+  'country.kr': 'South Korea',
+  'country.us': 'United States',
+  'country.jp': 'Japan',
+  'country.fr': 'France',
+  'country.de': 'Germany',
+  'country.it': 'Italy',
+  'country.au': 'Australia',
+  'phase.EARLY_PHASE1': 'Early Phase 1',
+  'phase.PHASE1': 'Phase 1',
+  'phase.PHASE2': 'Phase 2',
+  'phase.PHASE3': 'Phase 3',
+  'phase.PHASE4': 'Phase 4',
+  'phase.NA': 'Not applicable',
+
+  // 임상시험 페이지 UI 문구 — 전부 전 언어 공통(사전에만 있음, 나라별 데이터 아님)
+  'clinical.tagline': 'See Parkinson\u2019s clinical trials that are currently recruiting, by country.',
+  'clinical.phase': 'Phase',
+  'clinical.location': 'Location',
+  'clinical.moreLocations': '+{n} more locations',
+  'clinical.recruiting': 'Recruiting',
+  'clinical.sponsor': 'Sponsor',
+  'clinical.contact': 'Contact',
+  'clinical.viewOriginal': 'View on ClinicalTrials.gov',
+  'clinical.noTrials': 'No recruiting trials found for this country right now.',
+  'clinical.overflowNote': 'Showing the {shown} most recently updated of {total} trials.',
+  'clinical.seeAll': 'See all on ClinicalTrials.gov',
+  'clinical.disclaimer': 'This list is for information only. If you are interested in joining a trial, talk to your doctor first and contact the study team directly.',
 
   // 카테고리 라벨 — 빵부스러기와 사이드 패널 제목에 쓴다.
   // 메뉴 라벨과 일부러 분리해 뒀다: 메뉴는 짧게, 카테고리는 설명적으로 갈 수 있다.

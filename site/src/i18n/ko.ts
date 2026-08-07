@@ -14,8 +14,36 @@ const ko: Dict = {
   'nav.exercise': '운동 영상',
   // ⚠️ 이 값 수정 시 en.ts 의 exercise.tagline 위 경고를 먼저 읽을 것 — 기관명·나라별 사실 금지
   'exercise.tagline': '몸을 움직이면 마음도 한결 가벼워집니다 — 할 수 있는 만큼만 따라 해보세요.',
+
   'nav.institutions': '제도·지원',
   'nav.tools': '도구',
+
+  'country.kr': '한국',
+  'country.us': '미국',
+  'country.jp': '일본',
+  'country.fr': '프랑스',
+  'country.de': '독일',
+  'country.it': '이탈리아',
+  'country.au': '호주',
+  'phase.EARLY_PHASE1': '1상 전(초기)',
+  'phase.PHASE1': '1상',
+  'phase.PHASE2': '2상',
+  'phase.PHASE3': '3상',
+  'phase.PHASE4': '4상',
+  'phase.NA': '해당 없음',
+
+  'clinical.tagline': '지금 모집 중인 파킨슨병 임상시험을 나라별로 찾아볼 수 있습니다.',
+  'clinical.phase': '임상 단계',
+  'clinical.location': '위치',
+  'clinical.moreLocations': '외 {n}곳 더',
+  'clinical.recruiting': '모집 중',
+  'clinical.sponsor': '주관',
+  'clinical.contact': '문의',
+  'clinical.viewOriginal': 'ClinicalTrials.gov에서 원문 보기',
+  'clinical.noTrials': '지금은 이 나라에서 모집 중인 시험이 없습니다.',
+  'clinical.overflowNote': '전체 {total}건 중 최근 갱신된 {shown}건을 보여줍니다.',
+  'clinical.seeAll': 'ClinicalTrials.gov에서 전체 보기',
+  'clinical.disclaimer': '이 목록은 정보 제공용입니다. 참여를 원하시면 먼저 담당 의사와 상의하고 연구팀에 직접 문의하세요.',
 
   // 메뉴는 '소식' 이지만 카테고리 라벨은 아직 '파킨온 소식' 이다.
   // 허브 페이지 문구가 옛 정의(파킨온이 정리하는 연구 요약)로 쓰여 있어서,

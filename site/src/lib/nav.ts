@@ -34,10 +34,10 @@ const PATH: Record<NavKey, string> = {
  * "페이지를 만든다 → 이 줄에 키를 추가한다" 순서로 간다.
  */
 const AVAILABLE: Record<string, readonly NavKey[]> = {
-  // clinical : 페이지 제작 예정(할 일 0-6). 만들어지면 여기에 추가한다.
   // tools    : 페이지는 있으나 개방 여부가 미정이라 일부러 뺐다(오너 2026-08-07).
   // exercise : 0-5 완료(2026-08-07) — 운동 영상 허브
-  ko: ['news', 'lifestyle', 'exercise', 'institutions'],
+  // clinical : 0-6 완료(2026-08-08) — 임상시험 허브
+  ko: ['news', 'lifestyle', 'clinical', 'exercise', 'institutions'],
 };
 
 export interface NavItem {

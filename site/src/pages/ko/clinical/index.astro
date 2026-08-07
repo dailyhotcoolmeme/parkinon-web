@@ -1,0 +1,336 @@
+---
+/*
+ * 임상시험 허브 (할 일 0-6, 2026-08-08).
+ *
+ * 데이터는 ClinicalTrials.gov API v2 — **빌드 타임에 한 번만** 받는다(런타임 호출 없음,
+ * 정적 페이지). 로직은 `src/lib/clinicalTrials.ts` — 그 파일 상단 주석에 오염 원인과
+ * 이유가 있다. 여기서는 그 결과만 화면에 그린다.
+ *
+ * 기본은 이 언어판의 나라(한국어판=한국)를 보여주고, 국가 버튼으로 다른 나라도 볼 수
+ * 있게 한다(오너 확정 2026-08-08: "기본은 한국 임상시험 나오는데 해외꺼도 볼 수 있게
+ * 하라고"). 국가 목록은 제도 1급 7개국과 같다.
+ *
+ * ⚠️ 사실 항목만 정형화하고 해석하지 않는다(계획서 "신설 축도 의학 정보는 다루지 않는다
+ * 안에 있다"). 제목·상·주관·위치·연락처·원문 링크만 보여준다. "이 시험이 좋다/맞다"는
+ * 말은 하지 않는다.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import AdBox from '../../../components/AdBox.astro';
+import labImg from '../../../assets/images/lab.jpg';
+import Tr from '../../../i18n/Tr.astro';
+import { t, tv, type DictKey } from '../../../i18n';
+import { fetchAllRecruitingTrials, trialsForCountry, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
+
+const locale = Astro.currentLocale ?? 'ko';
+
+/* 한국어판의 기본 국가 = 한국. 언어판을 늘릴 때 이 매핑에 그 언어의 기본 나라를 추가한다. */
+const DEFAULT_COUNTRY: Record<string, string> = { ko: 'kr' };
+const defaultCountry = DEFAULT_COUNTRY[locale] ?? 'kr';
+
+const allTrials = await fetchAllRecruitingTrials();
+const byCountry = TRIAL_COUNTRIES.map((c) => ({
+  ...c,
+  label: t(locale, `country.${c.code}` as DictKey),
+  data: trialsForCountry(allTrials, c.apiName),
+}));
+
+const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
+---
+
+<Layout
+  title="임상시험 — 파킨온"
+  breadcrumbs={[
+    { name: '홈', path: '/ko/' },
+    { name: '임상시험', path: '/ko/clinical/' },
+  ]}
+>
+  <Header active="clinical" />
+
+  <div class="layout">
+    <aside class="ad-rail left">
+      <AdBox minHeight="600px" />
+    </aside>
+
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>임상시험</h1>
+          <p><Tr k="clinical.tagline" /></p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>임상시험</span>
+      </nav>
+
+      <div class="hub-tabs" id="countryTabs">
+        {
+          byCountry.map((c) => (
+            <button class:list={['tab', { active: c.code === defaultCountry }]} data-country={c.code}>
+              {c.label}
+              <span class="count">{c.data.total}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div id="countryPanels">
+        {
+          byCountry.map((c) => (
+            <div class="country-panel" data-country={c.code} hidden={c.code !== defaultCountry}>
+              {c.data.shown.length === 0 ? (
+                <p class="empty"><Tr k="clinical.noTrials" /></p>
+              ) : (
+                <div class="trial-list">
+                  {c.data.shown.map((trial) => (
+                    <a class="trial-card" href={trial.url} target="_blank" rel="noopener">
+                      <span class="badge"><Tr k="clinical.recruiting" /></span>
+                      <h3>{trial.title}</h3>
+                      <dl>
+                        {phaseLabel(trial.phaseKey) && (
+                          <>
+                            <dt><Tr k="clinical.phase" /></dt>
+                            <dd>{phaseLabel(trial.phaseKey)}</dd>
+                          </>
+                        )}
+                        {trial.sponsor && (
+                          <>
+                            <dt><Tr k="clinical.sponsor" /></dt>
+                            <dd>{trial.sponsor}</dd>
+                          </>
+                        )}
+                        <dt><Tr k="clinical.location" /></dt>
+                        <dd>
+                          <ul class="cell-list">
+                            {trial.locations.slice(0, 5).map((l) => (
+                              <li>
+                                {l.facility}
+                                {l.city && ` (${l.city})`}
+                              </li>
+                            ))}
+                          </ul>
+                          {trial.locations.length > 5 && (
+                            <p class="more">{tv(locale, 'clinical.moreLocations', { n: String(trial.locations.length - 5) })}</p>
+                          )}
+                        </dd>
+                        {trial.contacts.length > 0 && (
+                          <>
+                            <dt><Tr k="clinical.contact" /></dt>
+                            <dd>
+                              <ul class="cell-list">
+                                {trial.contacts.map((c) => (
+                                  <li>{[c.name, c.phone, c.email].filter(Boolean).join(' · ')}</li>
+                                ))}
+                              </ul>
+                            </dd>
+                          </>
+                        )}
+                      </dl>
+                      <span class="view-link"><Tr k="clinical.viewOriginal" /> ({trial.nctId})</span>
+                    </a>
+                  ))}
+                </div>
+              )}
+              {c.data.overflowUrl && (
+                <p class="overflow">
+                  {tv(locale, 'clinical.overflowNote', { shown: String(c.data.shown.length), total: String(c.data.total) })}
+                  {' · '}
+                  <a href={c.data.overflowUrl} target="_blank" rel="noopener"><Tr k="clinical.seeAll" /></a>
+                </p>
+              )}
+            </div>
+          ))
+        }
+      </div>
+
+      <p class="disclaimer"><Tr k="clinical.disclaimer" /></p>
+    </main>
+
+    <aside class="ad-rail right">
+      <AdBox minHeight="600px" />
+    </aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+
+  /* 국가 선택 = 필터칩 표준(운동 영상 난이도 탭과 같은 스타일) */
+  .hub-tabs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin: 22px 0 28px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .hub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-sub);
+    background: var(--bg);
+    border: 1.5px solid var(--outline);
+    border-radius: 20px;
+    padding: 8px 16px;
+    white-space: nowrap;
+  }
+  .tab .count {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    background: var(--surface-low);
+    border-radius: 10px;
+    padding: 1px 7px;
+  }
+  .tab.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+  }
+  .tab.active .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+  }
+
+  .trial-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .trial-card {
+    display: block;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--outline);
+    color: var(--text);
+  }
+  .trial-card:first-child {
+    padding-top: 0;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .trial-card h3 {
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .trial-card dl {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 6px 12px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .trial-card dt {
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .trial-card dd {
+    margin: 0;
+    color: var(--text);
+    word-break: break-word;
+  }
+  /* 위치·문의는 항목이 여러 개일 수 있다 — 한 줄로 이어붙이지 않고 목록으로 나눈다 */
+  .trial-card .cell-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .trial-card .more {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    opacity: 0.8;
+  }
+  .view-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .trial-card:hover .view-link {
+    color: var(--primary);
+  }
+
+  .empty {
+    font-size: 15px;
+    color: var(--text-sub);
+    padding: 32px 0;
+    text-align: center;
+  }
+  .overflow {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .overflow a:hover {
+    color: var(--primary);
+  }
+
+  .disclaimer {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid var(--outline);
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+
+  @media (max-width: 480px) {
+    .trial-card dl {
+      grid-template-columns: 1fr;
+      gap: 2px 0;
+    }
+    .trial-card dt {
+      margin-top: 8px;
+    }
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .tab');
+  const panels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      const country = tab.dataset.country;
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.country !== country;
+      });
+    });
+  });
+</script>

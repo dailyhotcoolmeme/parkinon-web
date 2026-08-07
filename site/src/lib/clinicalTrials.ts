@@ -28,12 +28,20 @@ const FIELDS = [
   'CentralContactPhone',
   'CentralContactEMail',
   'LastUpdatePostDate',
+  'StartDate',
+  'StartDateType',
+  'CompletionDate',
+  'CompletionDateType',
 ].join(',');
 
 interface RawStudy {
   protocolSection: {
     identificationModule: { nctId: string; briefTitle: string };
-    statusModule?: { lastUpdatePostDateStruct?: { date?: string } };
+    statusModule?: {
+      lastUpdatePostDateStruct?: { date?: string };
+      startDateStruct?: { date?: string; type?: string };
+      completionDateStruct?: { date?: string; type?: string };
+    };
     sponsorCollaboratorsModule?: { leadSponsor?: { name: string } };
     conditionsModule?: { conditions?: string[] };
     designModule?: { phases?: string[] };
@@ -55,6 +63,12 @@ export interface Trial {
   allLocations: { facility: string; city: string; country: string }[];
   /** ISO 날짜 문자열. 최근 갱신 순으로 정렬하고, 목록이 길 때 자를 기준으로 쓴다. */
   lastUpdate: string;
+  /** 시작일. 없는 시험도 있다(null). */
+  startDate: string | null;
+  /** true 면 확정이 아니라 예정(ESTIMATED) 날짜다. */
+  startDateEstimated: boolean;
+  completionDate: string | null;
+  completionDateEstimated: boolean;
   url: string;
 }
 
@@ -86,6 +100,10 @@ function toTrial(raw: RawStudy): Trial | null {
     })),
     allLocations,
     lastUpdate: p.statusModule?.lastUpdatePostDateStruct?.date ?? '',
+    startDate: p.statusModule?.startDateStruct?.date ?? null,
+    startDateEstimated: p.statusModule?.startDateStruct?.type === 'ESTIMATED',
+    completionDate: p.statusModule?.completionDateStruct?.date ?? null,
+    completionDateEstimated: p.statusModule?.completionDateStruct?.type === 'ESTIMATED',
     url: `https://clinicaltrials.gov/study/${p.identificationModule.nctId}`,
   };
 }

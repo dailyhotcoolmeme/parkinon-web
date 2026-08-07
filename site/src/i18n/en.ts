@@ -55,10 +55,22 @@ const en = {
 
   // 임상시험 페이지 UI 문구 — 전부 전 언어 공통(사전에만 있음, 나라별 데이터 아님)
   'clinical.tagline': 'See Parkinson\u2019s clinical trials that are currently recruiting, by country.',
-  'clinical.englishNotice': 'Trial titles and contact details are shown exactly as registered with ClinicalTrials.gov, in English, so nothing gets mistranslated.',
+  'clinical.englishNotice': 'These are Parkinson\u2019s clinical trials currently underway, for your reference. If one looks relevant, talk to your doctor or nurse about it.',
   'clinical.phase': 'Phase',
   'clinical.location': 'Location',
   'clinical.moreLocations': '+{n} more locations',
+
+  // 임상 단계 물음표 툴팁 — ClinicalTrials.gov 공식 용어집 정의 그대로(2026-08-08).
+  // 나라마다 다를 이유가 없는 보편적 정의라 사전에 둔다.
+  'phaseDesc.EARLY_PHASE1': 'An exploratory step before the standard Phase 1, checking how a drug behaves in the body with very few participants. It has no treatment or diagnostic goal.',
+  'phaseDesc.PHASE1': "Focuses on a drug's safety. Usually done with healthy volunteers, in a small number of participants.",
+  'phaseDesc.PHASE2': "Gathers early evidence on whether a drug works, while safety is still monitored.",
+  'phaseDesc.PHASE3': 'Gathers more evidence on safety and effectiveness across different groups and doses, with more participants.',
+  'phaseDesc.PHASE4': 'Happens after a drug is approved, to gather further information on safety, effectiveness, or best use.',
+  'phaseDesc.NA': 'A trial without a drug-development phase (for example, a device or behavioral study).',
+  'clinical.phaseHelp': 'What does this phase mean?',
+  'clinical.duration': 'Duration',
+  'clinical.estimated': 'estimated',
   'clinical.recruiting': 'Recruiting',
   'clinical.sponsor': 'Sponsor',
   'clinical.contact': 'Contact',

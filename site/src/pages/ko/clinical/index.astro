@@ -23,8 +23,18 @@ import labImg from '../../../assets/images/lab.jpg';
 import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
+import koTitles from '../../../data/clinicalTrialTitles.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
+
+/*
+ * 임상시험 제목 번역 — 시범 1건(2026-08-08, 오너 확인 요청: "너가 또 이상하게 보여줄게
+ * 뻔해서 미리 체크해둬야겠다"). NCT 번호로 찾아서 있으면 번역, 없으면 원문(영어) 그대로.
+ * 앞으로 언어를 늘리면 `clinicalTrialTitles.<언어>.json` 을 그 언어 파일로 추가하고
+ * 아래 TRANSLATED_TITLES 에 한 줄만 더한다 — exerciseVideos.<언어>.ts 와 같은 패턴.
+ */
+const TRANSLATED_TITLES: Record<string, Record<string, string>> = { ko: koTitles };
+const titleFor = (nctId: string, original: string) => TRANSLATED_TITLES[locale]?.[nctId] ?? original;
 
 /* 한국어판의 기본 국가 = 한국. 언어판을 늘릴 때 이 매핑에 그 언어의 기본 나라를 추가한다. */
 const DEFAULT_COUNTRY: Record<string, string> = { ko: 'kr' };
@@ -38,6 +48,16 @@ const byCountry = TRIAL_COUNTRIES.map((c) => ({
 }));
 
 const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
+const phaseDesc = (phaseKey: string | null) => (phaseKey ? t(locale, `phaseDesc.${phaseKey}` as DictKey) : null);
+
+/* 시작일·종료일 중 있는 것만 이어붙인다. 둘 다 없으면 이 줄 자체를 안 그린다(astro 쪽에서 처리). */
+function durationText(trial: { startDate: string | null; startDateEstimated: boolean; completionDate: string | null; completionDateEstimated: boolean }) {
+  const estimated = t(locale, 'clinical.estimated' as DictKey);
+  const start = trial.startDate ? trial.startDate + (trial.startDateEstimated ? ` (${estimated})` : '') : null;
+  const end = trial.completionDate ? trial.completionDate + (trial.completionDateEstimated ? ` (${estimated})` : '') : null;
+  if (start && end) return `${start} ~ ${end}`;
+  return start ?? end;
+}
 ---
 
 <Layout
@@ -84,12 +104,14 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
 
       {/*
         제목·문의처는 ClinicalTrials.gov 원문 그대로라 항상 영어다. 한국어판만의 문제가
-        아니다 — 프랑스어·독일어·일본어판도 똑같이 겪는다(오너 지적 2026-08-08:
-        "이건 우리나라 뿐만아니라 비영어권 모든 나라에 공통적인 부분이다"). 그래서
-        문구를 자동번역하지 않고(의료 용어 오역 위험), **왜 영어로 나오는지 안내만
-        붙인다.** 이 안내 자체는 사전(src/i18n)에 한 번만 넣어 모든 언어가 공유한다.
-        영어판(locale === 'en')에는 안 띄운다 — 그 페이지는 원문과 언어가 같아서
-        안내할 것이 없다.
+        아니다 — 프랑스어·독일어·일본어판도 똑같이 겪는다.
+        ⚠️ 처음엔 "왜 영어로 나오는지"를 설명하는 문구를 달았는데, 오너가 바로 잡았다:
+        "이걸 주 사용자인 고령자가 봐서 뭐하게?" — 왜 영어인지 알아도 고령자는 여전히
+        못 읽는다. 우리 번역 원칙을 설명하는 건 우리 편의고, 독자에게는 쓸모가 없다.
+        그래서 **설명이 아니라 행동 지침**으로 바꿨다 — "이 화면을 그대로 담당 의사·
+        간호사에게 보여주고 상담하라"는 것. 영어를 못 읽어도 할 수 있는 행동이다.
+        사전(src/i18n)에 한 번만 넣어 모든 언어가 공유한다. 영어판(locale === 'en')
+        에는 안 띄운다 — 그 페이지는 원문과 언어가 같아서 이 문제 자체가 없다.
       */}
       {locale !== 'en' && <p class="lang-notice"><Tr k="clinical.englishNotice" /></p>}
 
@@ -102,14 +124,29 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
               ) : (
                 <div class="trial-list">
                   {c.data.shown.map((trial) => (
-                    <a class="trial-card" href={trial.url} target="_blank" rel="noopener">
+                    <div class="trial-card">
                       <span class="badge"><Tr k="clinical.recruiting" /></span>
-                      <h3>{trial.title}</h3>
+                      <h3>{titleFor(trial.nctId, trial.title)}</h3>
+                      <a class="view-link" href={trial.url} target="_blank" rel="noopener">
+                        <Tr k="clinical.viewOriginal" /> ({trial.nctId})
+                      </a>
                       <dl>
                         {phaseLabel(trial.phaseKey) && (
                           <>
                             <dt><Tr k="clinical.phase" /></dt>
-                            <dd>{phaseLabel(trial.phaseKey)}</dd>
+                            <dd>
+                              {phaseLabel(trial.phaseKey)}
+                              <details class="phase-help">
+                                <summary aria-label={t(locale, 'clinical.phaseHelp' as DictKey)}>?</summary>
+                                <p>{phaseDesc(trial.phaseKey)}</p>
+                              </details>
+                            </dd>
+                          </>
+                        )}
+                        {durationText(trial) && (
+                          <>
+                            <dt><Tr k="clinical.duration" /></dt>
+                            <dd>{durationText(trial)}</dd>
                           </>
                         )}
                         {trial.sponsor && (
@@ -145,8 +182,7 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
                           </>
                         )}
                       </dl>
-                      <span class="view-link"><Tr k="clinical.viewOriginal" /> ({trial.nctId})</span>
-                    </a>
+                    </div>
                   ))}
                 </div>
               )}
@@ -307,8 +343,55 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
     font-size: 12.5px;
     color: var(--text-sub);
   }
-  .trial-card:hover .view-link {
+  .view-link:hover {
     color: var(--primary);
+  }
+
+  /* 임상 단계 물음표 — 눌러서 여는 팝오버. dt 안에 넣어도 <dl> 레이아웃이 깨지지 않게
+     display:inline-block, position:relative로 그 안에서만 절대 배치한다. */
+  .phase-help {
+    display: inline-block;
+    position: relative;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .phase-help summary {
+    list-style: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface-high);
+    color: var(--text-sub);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .phase-help summary::-webkit-details-marker {
+    display: none;
+  }
+  .phase-help[open] summary {
+    color: var(--on-primary-container);
+    background: var(--primary);
+  }
+  .phase-help p {
+    position: absolute;
+    top: 22px;
+    left: 0;
+    z-index: 5;
+    width: 230px;
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: normal;
   }
 
   .empty {

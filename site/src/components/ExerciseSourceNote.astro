@@ -36,13 +36,17 @@ const { source } = Astro.props;
     margin-bottom: 4px;
   }
   /*
-   * 줄바꿈이 일어났을 때 실제 줄 간격(px)을 통일한다. line-height 를 1.75로 똑같이
-   * 줘도 글자 크기가 다르면(본문 15px·출처 12.5px) 실제 간격은 26.25px vs 21.875px로
-   * 서로 달라진다(오너 지적 2026-08-07). 그래서 비율이 아니라 **고정 px 값**을 준다.
+   * 줄바꿈이 일어났을 때 실제 줄 간격(px)을 통일한다. 글자 크기가 달라도(본문 15px·
+   * 출처 12.5px) 실제 간격이 같도록 **고정 px 값**을 준다(오너 지적 2026-08-07).
+   *
+   * 값은 26px→24px 로 조정했다(2026-08-07 재지적: "이렇게 넓다는게 말이 안돼").
+   * 실측 근거 — NHS.uk 1.47 · 파킨슨재단(미국) 1.56 · 위키백과 1.63 · MDN 1.50,
+   * 전부 줄간격/글자크기 비율 1.47~1.63 안에 있다. 26px(비율 1.73)는 그 위였다.
+   * 24px 는 15px 기준 비율 1.6 으로 위 실측 범위 안에 들어온다.
    */
   .body {
     font-size: 15px;
-    line-height: 26px;
+    line-height: 24px;
     color: var(--text);
   }
   .body + .body {
@@ -51,7 +55,7 @@ const { source } = Astro.props;
   .cite {
     margin-top: 14px;
     font-size: 12.5px;
-    line-height: 26px;
+    line-height: 24px;
     color: var(--text-sub);
   }
   .cite a:hover {

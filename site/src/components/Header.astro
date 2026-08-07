@@ -1,9 +1,10 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
+import { navItemsFor, type NavKey } from '../lib/nav';
 
 interface Props {
-  active?: 'institutions' | 'lifestyle' | 'news';
+  active?: NavKey;
 }
 const { active } = Astro.props;
 
@@ -13,14 +14,10 @@ const { active } = Astro.props;
  */
 const locale = Astro.currentLocale ?? 'ko';
 /*
- * 메뉴 순서 = 소식 → 생활 요령 → 제도·지원 (오너 지시 2026-08-07).
- * 제도 축은 대상 국가가 일부(미국·일본·프랑스·독일·이탈리아·호주·한국)뿐이라 뒤로 뺐다.
+ * 메뉴 항목·순서·노출 범위는 `src/lib/nav.ts` 가 정본이다(푸터와 공용).
+ * 언어판마다 개수가 달라서 여기에 배열을 적지 않는다 — 이유는 nav.ts 주석 참고.
  */
-const navLinks = [
-  { key: 'news', href: getRelativeLocaleUrl(locale, 'news'), label: '파킨온 소식' },
-  { key: 'lifestyle', href: getRelativeLocaleUrl(locale, 'lifestyle'), label: '생활 요령' },
-  { key: 'institutions', href: getRelativeLocaleUrl(locale, 'institutions'), label: '제도·지원' },
-] as const;
+const navLinks = navItemsFor(locale);
 const homeHref = getRelativeLocaleUrl(locale, '');
 ---
 

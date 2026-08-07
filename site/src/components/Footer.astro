@@ -1,8 +1,11 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
+import { navItemsFor } from '../lib/nav';
 
 const locale = Astro.currentLocale ?? 'ko';
+// "바로가기"는 헤더 메뉴와 **같은 목록·같은 순서**여야 한다 → src/lib/nav.ts 를 공용으로 쓴다.
+const navLinks = navItemsFor(locale);
 // 푸터 "개인정보처리방침" = 웹사이트용(/ko/privacy). 앱용은 별도 문서라 라벨에 "앱"을 붙여 구분한다.
 // /terms · /privacy 는 앱에서 넘어오는 기존 정적 페이지다(다른 프로젝트가 서빙).
 // 언어 접두사를 붙이면 안 된다 — 앱에도 이 주소가 하드코딩돼 있다.
@@ -25,9 +28,7 @@ const locale = Astro.currentLocale ?? 'ko';
     </div>
     <div class="footer-col">
       <h4>바로가기</h4>
-      <a href={getRelativeLocaleUrl(locale, 'news')}>파킨온 소식</a>
-      <a href={getRelativeLocaleUrl(locale, 'lifestyle')}>생활 요령</a>
-      <a href={getRelativeLocaleUrl(locale, 'institutions')}>제도·지원</a>
+      {navLinks.map((link) => <a href={link.href}>{link.label}</a>)}
     </div>
     <div class="footer-col">
       <h4>고객지원</h4>

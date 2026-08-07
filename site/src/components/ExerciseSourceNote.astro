@@ -1,9 +1,8 @@
 ---
 /*
- * 운동 영상 허브 상단의 출처·근거 안내 — 텍스트 세 문단(오너 확정 2026-08-07).
- * 문단 전체에 박스를 씌우지 않는다. **문단 안의 핵심 수치에만** 연한 배경 칩을 준다
- * (오너 지시: "중요한 부분만 배경색 박스 넣으라고!!" → 수치(22%·31%)만 선택함).
- * 색은 기존 토큰 `--secondary-container`(라이트 연초록/다크 짝 포함) 그대로 쓴다.
+ * 운동 영상 허브 상단의 출처·근거 안내 — 텍스트 세 문단.
+ * 배경 박스를 시도했다가(문단 전체 → 수치만) 오너가 최종적으로 "그냥 빼라"고 했다
+ * (2026-08-07). 순수 텍스트로 둔다. 새로 박스·칩을 넣지 말 것.
  */
 import type { ExerciseSource } from '../lib/exerciseSource';
 
@@ -14,9 +13,7 @@ const { source } = Astro.props;
 ---
 
 <div class="source-note">
-  <p class="intro">
-    {source.intro.map((run) => (run.highlight ? <span class="num">{run.text}</span> : run.bold ? <b>{run.text}</b> : run.text))}
-  </p>
+  <p class="intro">{source.intro.map((run) => (run.bold ? <b>{run.text}</b> : run.text))}</p>
   <div class="meta">
     <p>
       {source.citation}
@@ -41,16 +38,8 @@ const { source } = Astro.props;
   }
   .intro {
     font-size: 15px;
-    line-height: 1.85;
+    line-height: 1.75;
     color: var(--text);
-  }
-  .num {
-    display: inline-block;
-    background: var(--secondary-container);
-    color: var(--on-secondary-container);
-    font-weight: 800;
-    padding: 1px 6px;
-    border-radius: 6px;
   }
   /* 출처 + 상담 문구를 한 덩어리로 묶는다 — 둘 다 같은 크기·색, 줄 간격만 좁게 */
   .meta {

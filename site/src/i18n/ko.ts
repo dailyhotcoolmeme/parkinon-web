@@ -12,6 +12,7 @@ const ko: Dict = {
   'nav.lifestyle': '생활 요령',
   'nav.clinical': '임상시험',
   'nav.exercise': '운동 영상',
+  // ⚠️ 이 값 수정 시 en.ts 의 exercise.tagline 위 경고를 먼저 읽을 것 — 기관명·나라별 사실 금지
   'exercise.tagline': '몸을 움직이면 마음도 한결 가벼워집니다 — 할 수 있는 만큼만 따라 해보세요.',
   'nav.institutions': '제도·지원',
   'nav.tools': '도구',

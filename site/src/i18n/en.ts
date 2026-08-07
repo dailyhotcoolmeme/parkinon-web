@@ -9,6 +9,14 @@
  *
  * 새 문구를 추가할 때는 반드시 여기부터 추가한다. 그러면 나머지 언어 사전이 전부
  * 빨간 줄이 뜨므로 어디를 채워야 하는지 저절로 드러난다.
+ *
+ * ⚠️ 이 파일의 모든 값은 그대로 **번역만** 되어 전 언어판에 실린다. 그래서
+ * **기관명·통계·나라별 사실을 담은 문장은 여기 넣으면 안 된다** — 한국 기관명이
+ * 하나라도 들어가면 그게 그대로 영어·일본어판에 번역돼 나간다(exercise.tagline
+ * 사고, 2026-08-07, memory feedback_universal_hero_tagline). 그런 문장(제도 안내,
+ * 출처 인용, 영상 목록 등)은 사전이 아니라 언어별 데이터 파일(`exerciseSource.<언어>.ts`
+ * 같은)이나 언어별 페이지에 쓴다. 새 히어로·안내 문구를 추가하기 전에 스스로 물을 것 —
+ * "이 문장에 나라마다 달라질 사실이 들어 있는가?"
  */
 const en = {
   'brand.name': 'Parkinon',
@@ -19,6 +27,11 @@ const en = {
   'nav.lifestyle': 'Daily living',
   'nav.clinical': 'Clinical trials',
   'nav.exercise': 'Exercise videos',
+  /* ⚠️ 허브 히어로 보조문구 — 절대 기관명·통계·나라별 사실을 넣지 말 것.
+     이 값은 그대로 '번역'만 되어 모든 언어판에 실린다(다시 쓰지 않는다).
+     한국 기관명 하나라도 들어가면 그게 그대로 영어·일본어판에 번역돼 실린다.
+     "이 문장에 기관명·수치·나라별 사실이 있는가?" 먼저 확인할 것
+     (memory feedback_universal_hero_tagline, 2026-08-07 사고). */
   'exercise.tagline': 'A little movement each day can make you feel lighter — follow along at your own pace.',
   'nav.institutions': 'Benefits & support',
   'nav.tools': 'Tools',

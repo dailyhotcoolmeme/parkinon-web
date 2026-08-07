@@ -82,6 +82,17 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
         }
       </nav>
 
+      {/*
+        제목·문의처는 ClinicalTrials.gov 원문 그대로라 항상 영어다. 한국어판만의 문제가
+        아니다 — 프랑스어·독일어·일본어판도 똑같이 겪는다(오너 지적 2026-08-08:
+        "이건 우리나라 뿐만아니라 비영어권 모든 나라에 공통적인 부분이다"). 그래서
+        문구를 자동번역하지 않고(의료 용어 오역 위험), **왜 영어로 나오는지 안내만
+        붙인다.** 이 안내 자체는 사전(src/i18n)에 한 번만 넣어 모든 언어가 공유한다.
+        영어판(locale === 'en')에는 안 띄운다 — 그 페이지는 원문과 언어가 같아서
+        안내할 것이 없다.
+      */}
+      {locale !== 'en' && <p class="lang-notice"><Tr k="clinical.englishNotice" /></p>}
+
       <div id="countryPanels">
         {
           byCountry.map((c) => (
@@ -221,6 +232,13 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
     bottom: -17px;
     height: 2px;
     background: var(--primary);
+  }
+
+  .lang-notice {
+    margin: -8px 0 24px;
+    font-size: 13px;
+    color: var(--text-sub);
+    opacity: 0.85;
   }
 
   .trial-list {

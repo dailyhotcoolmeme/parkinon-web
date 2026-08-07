@@ -33,6 +33,7 @@ const ko: Dict = {
   'phase.NA': '해당 없음',
 
   'clinical.tagline': '지금 모집 중인 파킨슨병 임상시험을 나라별로 찾아볼 수 있습니다.',
+  'clinical.englishNotice': '제목·문의처는 오역을 막기 위해 등록 원문(ClinicalTrials.gov) 그대로 영어로 보여드립니다.',
   'clinical.phase': '임상 단계',
   'clinical.location': '위치',
   'clinical.moreLocations': '외 {n}곳 더',

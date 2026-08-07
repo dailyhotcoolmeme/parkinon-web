@@ -55,6 +55,7 @@ const en = {
 
   // 임상시험 페이지 UI 문구 — 전부 전 언어 공통(사전에만 있음, 나라별 데이터 아님)
   'clinical.tagline': 'See Parkinson\u2019s clinical trials that are currently recruiting, by country.',
+  'clinical.englishNotice': 'Trial titles and contact details are shown exactly as registered with ClinicalTrials.gov, in English, so nothing gets mistranslated.',
   'clinical.phase': 'Phase',
   'clinical.location': 'Location',
   'clinical.moreLocations': '+{n} more locations',

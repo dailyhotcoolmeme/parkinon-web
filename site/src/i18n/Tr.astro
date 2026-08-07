@@ -1,0 +1,20 @@
+---
+/*
+ * 본문에 문구를 찍는 컴포넌트.
+ *
+ * 하는 일은 하나다 — **영어로 폴백됐을 때 그 조각에 `lang="en"` 을 붙인다.**
+ * 페이지는 lang="fr" 인데 안의 한 덩어리만 영어인 상태를 그대로 두면
+ * 검색엔진과 화면낭독기가 프랑스어로 읽으려 든다.
+ *
+ * 속성값(placeholder·aria-label)에는 못 쓴다 → 그쪽은 `t()` 를 쓸 것.
+ */
+import { tf, type DictKey } from './index';
+
+interface Props {
+  k: DictKey;
+}
+const { k } = Astro.props;
+const { text, lang } = tf(Astro.currentLocale ?? 'ko', k);
+---
+
+{lang ? <span lang={lang}>{text}</span> : text}

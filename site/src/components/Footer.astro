@@ -2,6 +2,8 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
 import { navItemsFor } from '../lib/nav';
+import { t } from '../i18n';
+import Tr from '../i18n/Tr.astro';
 
 const locale = Astro.currentLocale ?? 'ko';
 // "바로가기"는 헤더 메뉴와 **같은 목록·같은 순서**여야 한다 → src/lib/nav.ts 를 공용으로 쓴다.
@@ -14,46 +16,49 @@ const navLinks = navItemsFor(locale);
 <footer class="site">
   <div class="footer-top">
     <div class="footer-brandrow">
-      <div class="footer-brand"><img src={logo.src} alt="" />파킨온</div>
+      <div class="footer-brand"><img src={logo.src} alt="" /><Tr k="brand.name" /></div>
       <div class="footer-lang">
         <button type="button" id="langBtn" aria-haspopup="listbox" aria-expanded="false">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             ><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path
               d="M12 2a15 15 0 0 1 0 20a15 15 0 0 1 0-20"></path></svg
           >
-          한국어
+          <Tr k="lang.self" />
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
         </button>
       </div>
     </div>
     <div class="footer-col">
-      <h4>바로가기</h4>
+      <h4><Tr k="footer.quickLinks" /></h4>
       {navLinks.map((link) => <a href={link.href}>{link.label}</a>)}
     </div>
     <div class="footer-col">
-      <h4>고객지원</h4>
-      <a href={getRelativeLocaleUrl(locale, 'privacy')}>개인정보처리방침</a>
-      <a href="/terms">앱 이용약관</a>
-      <a href="/privacy">앱 개인정보처리방침</a>
-      <a href="mailto:admin@ourmine.co.kr">문의하기</a>
+      <h4><Tr k="footer.support" /></h4>
+      <a href={getRelativeLocaleUrl(locale, 'privacy')}><Tr k="footer.privacyWeb" /></a>
+      <a href="/terms"><Tr k="footer.termsApp" /></a>
+      <a href="/privacy"><Tr k="footer.privacyApp" /></a>
+      <a href="mailto:admin@ourmine.co.kr"><Tr k="footer.contact" /></a>
     </div>
   </div>
   <div class="footer-bottom">
     <div class="footer-legal">
-      <p>본 사이트의 정보는 의학적 자문을 대체하지 않습니다. 모든 의학적 결정은 반드시 전문의와 상의하시기 바랍니다.</p>
+      <p><Tr k="footer.disclaimer" /></p>
     </div>
     <div class="footer-divider"></div>
     <button type="button" class="biz-toggle" id="bizToggle" aria-expanded="false" aria-controls="bizInfo">
-      <span class="company">주식회사 아워마인</span>
-      <span>사업자 정보</span>
+      <span class="company"><Tr k="footer.company" /></span>
+      <span><Tr k="footer.bizInfo" /></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
     </button>
+    {/* i18n-exempt:start — 아래 '값'들은 법인 등록 정보(대표자명·신고번호·주소)다. 번역 대상이 아니다.
+        라벨은 사전을 거친다. 해외판에서 로마자 표기로 바꿀지는 오너 결정 사항이라 계획서 미결에 적어 뒀다. */}
     <div class="biz-info" id="bizInfo">
-      <p><span class="k">대표</span> 한민석, 최성철 · <span class="k">사업자등록번호</span> 342-81-04379</p>
-      <p><span class="k">통신판매업신고</span> 제2026-서울강동-1129호</p>
-      <p><span class="k">주소</span> 서울특별시 강동구 양재대로85길 23, E&J빌딩 4층 4590호(성내동)</p>
-      <p><span class="k">고객센터</span> 070-4513-1894 · <span class="k">이메일</span> admin@ourmine.co.kr</p>
+      <p><span class="k">{t(locale, 'footer.bizCeo')}</span> 한민석, 최성철 · <span class="k">{t(locale, 'footer.bizNumber')}</span> 342-81-04379</p>
+      <p><span class="k">{t(locale, 'footer.bizMailOrder')}</span> 제2026-서울강동-1129호</p>
+      <p><span class="k">{t(locale, 'footer.bizAddress')}</span> 서울특별시 강동구 양재대로85길 23, E&J빌딩 4층 4590호(성내동)</p>
+      <p><span class="k">{t(locale, 'footer.bizPhone')}</span> 070-4513-1894 · <span class="k">{t(locale, 'footer.bizEmail')}</span> admin@ourmine.co.kr</p>
     </div>
+    {/* i18n-exempt:end */}
     <p class="footer-copyright">© 2026 OURMINE. All rights reserved.</p>
   </div>
 </footer>

@@ -2,6 +2,8 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import logo from '../assets/images/logo.png';
 import { navItemsFor, type NavKey } from '../lib/nav';
+import { t } from '../i18n';
+import Tr from '../i18n/Tr.astro';
 
 interface Props {
   active?: NavKey;
@@ -23,7 +25,7 @@ const homeHref = getRelativeLocaleUrl(locale, '');
 
 <header class="site">
   <div class="wrap nav">
-    <a class="brand" href={homeHref}><img src={logo.src} alt="" />파킨온</a>
+    <a class="brand" href={homeHref}><img src={logo.src} alt="" /><Tr k="brand.name" /></a>
     <nav class="nav-links" id="navLinks">
       {
         navLinks.map((link) => (
@@ -33,12 +35,12 @@ const homeHref = getRelativeLocaleUrl(locale, '');
         ))
       }
     </nav>
-    <button class="search-btn" id="searchBtn" aria-label="검색" aria-expanded="false">
+    <button class="search-btn" id="searchBtn" aria-label={t(locale, 'header.search')} aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
       >
     </button>
-    <button class="menu-btn" id="menuBtn" aria-label="메뉴" aria-expanded="false">
+    <button class="menu-btn" id="menuBtn" aria-label={t(locale, 'header.menu')} aria-expanded="false">
       <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         ><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line
           x1="3"
@@ -56,10 +58,56 @@ const homeHref = getRelativeLocaleUrl(locale, '');
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
         ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
       >
-      <input type="text" id="searchInput" placeholder="궁금한 내용을 검색해보세요" />
+      <input type="text" id="searchInput" placeholder={t(locale, 'header.searchPlaceholder')} />
     </div>
   </div>
 </header>
+
+<script is:inline>
+  /*
+   * 메뉴가 한 줄에 안 들어가면 햄버거로 접는다.
+   *
+   * 고정 중단점 대신 **실제로 재서** 판단한다 — 라벨 길이가 언어마다 달라서
+   * (한국어 449px · 영어 648px · 독일어 749px · 프랑스어 762px, 2026-08-07 실측)
+   * 하나의 px 값으로는 어느 언어든 손해를 본다.
+   *
+   * 번들 스크립트는 defer 라 한 프레임 늦게 적용돼 메뉴가 깜빡인다 → is:inline 으로 둔다.
+   */
+  (function () {
+    var header = document.querySelector('header.site');
+    if (!header) return;
+    var nav = header.querySelector('.nav');
+    var links = header.querySelector('.nav-links');
+    var brand = header.querySelector('.brand');
+    var search = header.querySelector('.search-btn');
+    var menuBtn = header.querySelector('.menu-btn');
+    var pending = 0;
+
+    function update() {
+      pending = 0;
+      // 가로 배치 상태에서 재야 진짜 필요 폭이 나온다.
+      header.classList.remove('compact');
+      var cs = getComputedStyle(nav);
+      var gap = parseFloat(cs.columnGap || cs.gap) || 0;
+      var need = brand.offsetWidth + gap + links.scrollWidth + gap + search.offsetWidth + 8;
+      // 860px 이하는 폭이 남더라도 무조건 햄버거로 둔다 — 손가락으로 누르는 화면이라
+      // 가로 메뉴가 들어간다고 해서 쓰기 좋은 건 아니다(기존 동작 유지).
+      if (window.innerWidth <= 860 || need > nav.clientWidth) {
+        header.classList.add('compact');
+        links.classList.remove('open');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    }
+    function schedule() {
+      if (!pending) pending = requestAnimationFrame(update);
+    }
+
+    update();
+    window.addEventListener('resize', schedule);
+    // 웹폰트가 뒤늦게 적용되면 글자 폭이 달라진다 → 다시 잰다.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+  })();
+</script>
 
 <style>
   header.site {
@@ -101,6 +149,12 @@ const homeHref = getRelativeLocaleUrl(locale, '');
     font-size: 18px;
     color: var(--text-sub);
     position: relative;
+    /*
+     * 메뉴는 절대 줄바꿈되지 않는다.
+     * 한국어 라벨이 짧아서 안 드러났을 뿐, 실측하면 영어는 861px, 프랑스어·독일어는
+     * 1024px 에서 두 줄로 접혔다(2026-08-07 CDP 측정). 줄바꿈 대신 햄버거로 넘긴다.
+     */
+    white-space: nowrap;
   }
   .nav-links a::after {
     content: '';
@@ -162,11 +216,19 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   .menu-btn[aria-expanded='true'] .icon-close {
     display: block;
   }
-  @media (max-width: 860px) {
-    .nav {
+  /*
+   * 좁아지면 햄버거로 접는다.
+   *
+   * 예전에는 `@media (max-width: 860px)` 하나로 판단했다. 그러면 라벨이 긴 언어
+   * (독일어·프랑스어)는 데스크톱 폭에서도 메뉴가 두 줄로 접힌다.
+   * 지금은 **폭이 실제로 모자랄 때** 스크립트가 .compact 를 붙인다 —
+   * 전환 지점이 언어마다 알아서 달라진다.
+   */
+  .site.compact {
+    & .nav {
       gap: 8px;
     }
-    .nav-links {
+    & .nav-links {
       position: absolute;
       top: 100%;
       left: 0;
@@ -180,10 +242,10 @@ const homeHref = getRelativeLocaleUrl(locale, '');
       padding: 4px var(--gutter);
       display: none;
     }
-    .nav-links.open {
+    & .nav-links.open {
       display: flex;
     }
-    .nav-links a {
+    & .nav-links a {
       font-size: 19px;
       padding: 16px 4px;
       border-bottom: 1px solid var(--outline);
@@ -195,17 +257,17 @@ const homeHref = getRelativeLocaleUrl(locale, '');
      * 초록 줄이 회색 구분선보다 4px 아래(다음 항목 영역)에 뜬다 — 실측 확인, 오너 지적 2026-08-06.
      * 모바일에서는 행 구분선 자체를 초록으로 바꿔서 위치를 정확히 맞춘다.
      */
-    .nav-links a::after {
+    & .nav-links a::after {
       display: none;
     }
-    .nav-links a:last-child {
+    & .nav-links a:last-child {
       border-bottom-color: transparent;
     }
-    .nav-links a.active {
+    & .nav-links a.active {
       border-bottom: 2px solid var(--primary);
       margin-bottom: -1px; /* 1px → 2px 로 굵어진 만큼 상쇄해 행 높이를 유지 */
     }
-    .menu-btn {
+    & .menu-btn {
       display: flex;
       margin-left: 8px;
     }

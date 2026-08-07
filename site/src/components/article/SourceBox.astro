@@ -1,12 +1,15 @@
 ---
 /* 출처·기준일·문의 박스. 제도 글은 이게 없으면 안 된다(콘텐츠 원칙).
    글 상세 라우트가 frontmatter 값으로 자동 렌더하므로 MDX 본문에서 직접 쓸 일은 없다. */
+import { t } from '../../i18n';
+
 interface Props {
   basisDate?: string;
   sources?: { name: string; url?: string }[];
   contact?: string;
 }
 const { basisDate, sources = [], contact } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
 ---
 
 <div class="source">
@@ -14,7 +17,7 @@ const { basisDate, sources = [], contact } = Astro.props;
   {
     sources.length > 0 && (
       <p>
-        출처 ·{' '}
+        {t(locale, 'source.title')} ·{' '}
         {sources.map((s, i) => (
           <>
             {i > 0 && ' / '}
@@ -30,8 +33,8 @@ const { basisDate, sources = [], contact } = Astro.props;
       </p>
     )
   }
-  {contact && <p>문의 · {contact}</p>}
-  <p class="report">내용이 바뀐 것을 발견하시면 admin@ourmine.co.kr 로 알려주세요.</p>
+  {contact && <p>{t(locale, 'source.contact')} · {contact}</p>}
+  <p class="report">{t(locale, 'source.notice')}</p>
 </div>
 
 <style>

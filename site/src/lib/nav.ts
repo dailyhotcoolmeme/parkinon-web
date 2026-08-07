@@ -1,4 +1,5 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type DictKey } from '../i18n';
 
 /*
  * 헤더·푸터 메뉴를 여기 한 곳에서만 정의한다.
@@ -27,17 +28,6 @@ const PATH: Record<NavKey, string> = {
   tools: 'tools',
 };
 
-const LABEL: Record<string, Record<NavKey, string>> = {
-  ko: {
-    news: '소식',
-    lifestyle: '생활 요령',
-    clinical: '임상시험',
-    exercise: '운동 영상',
-    institutions: '제도·지원',
-    tools: '도구',
-  },
-};
-
 /*
  * 언어판별로 **실제로 여는** 메뉴.
  * 여기 없는 키는 헤더·푸터에 나오지 않는다. 페이지가 없는 메뉴를 걸면 404 로 이어지므로
@@ -55,12 +45,18 @@ export interface NavItem {
   label: string;
 }
 
+/*
+ * 라벨은 사전(`src/i18n`)에서 가져온다. 번역이 없으면 **영어**로 대체되고 빌드 로그에 남는다 —
+ * 예전처럼 한국어가 그대로 나오는 일은 없다.
+ *
+ * AVAILABLE 에 없는 언어는 한국어 목록을 쓴다. 이건 번역 폴백이 아니라
+ * "그 나라에 어떤 메뉴를 여느냐"는 별개 결정이라, 언어를 추가할 때 반드시 손봐야 한다.
+ */
 export function navItemsFor(locale: string): NavItem[] {
   const keys = AVAILABLE[locale] ?? AVAILABLE.ko;
-  const labels = LABEL[locale] ?? LABEL.ko;
   return ORDER.filter((k) => keys.includes(k)).map((k) => ({
     key: k,
     href: getRelativeLocaleUrl(locale, PATH[k]),
-    label: labels[k],
+    label: t(locale, `nav.${k}` as DictKey),
   }));
 }

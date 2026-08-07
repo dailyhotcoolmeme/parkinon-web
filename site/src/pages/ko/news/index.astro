@@ -6,7 +6,7 @@ import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
-import { slugOf, formatDate, sortByDateDesc } from '../../../lib/articles';
+import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
 import labImg from '../../../assets/images/lab.jpg';
 
 const locale = Astro.currentLocale ?? 'ko';
@@ -17,7 +17,7 @@ const locale = Astro.currentLocale ?? 'ko';
  * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
  */
 const posts = sortByDateDesc(
-  await getCollection('articles', ({ data, id }) => !data.draft && id.startsWith('news/'))
+  await getCollection('articles', inCategory(locale, 'news'))
 );
 
 // 광고: 글 6개마다 한 줄(광고 상세 확정 사항). 글이 적으면 자연히 안 나온다.

@@ -1,9 +1,13 @@
 ---
+import { t } from '../i18n';
+
 interface Props {
   minHeight: string;
   label?: string;
 }
-const { minHeight, label = 'Advertisement · 광고' } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+// 광고 자리 표시. 'Advertisement' 는 어느 언어판에서나 그대로 두고 뒤에 그 나라 말을 덧붙인다.
+const { minHeight, label = `Advertisement · ${t(locale, 'ad.label')}` } = Astro.props;
 ---
 
 <div class="ad-box" style={`min-height:${minHeight}`}>

@@ -11,6 +11,8 @@
  * - 실측: nhs.uk 목차 19px·카드 없음 / MDN 16px·배경 transparent·aria-current / Wikipedia 14px·활성 굵게.
  *   세 곳 모두 회색 카드를 쓰지 않는다. 그래서 여기서도 카드를 쓰지 않는다(옆의 AdBox 와 구분되게).
  */
+import { t } from '../i18n';
+
 interface TocItem {
   id: string;
   label: string;
@@ -27,7 +29,8 @@ interface Props {
   linksTitle?: string;
   tocTitle?: string;
 }
-const { toc = [], links = [], linksTitle, tocTitle = '이 글 순서' } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+const { toc = [], links = [], linksTitle, tocTitle = t(locale, 'side.tocTitle') } = Astro.props;
 ---
 
 <aside class="article-side">

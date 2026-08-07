@@ -16,10 +16,12 @@ import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import SourceBox from '../../../components/article/SourceBox.astro';
 import AppPromo from '../../../components/article/AppPromo.astro';
-import { CATEGORY, categoryOf, slugOf, formatDate, sortByDateDesc } from '../../../lib/articles';
+import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale } from '../../../lib/articles';
+import { tv } from '../../../i18n';
 
 export async function getStaticPaths() {
-  const all = await getCollection('articles', ({ data }) => !data.draft);
+  // 이 라우트는 /ko/ 아래다 → 한국어 글만 만든다. 다른 언어는 각자 라우트가 맡는다.
+  const all = await getCollection('articles', inLocale('ko'));
   return all.map((entry) => ({
     params: { category: categoryOf(entry), slug: slugOf(entry) },
     props: { entry },
@@ -30,14 +32,14 @@ const { entry } = Astro.props;
 const locale = Astro.currentLocale ?? 'ko';
 const category = categoryOf(entry);
 const slug = slugOf(entry);
-const cat = CATEGORY[category];
+const catLabel = categoryLabel(locale, category);
 
 const { Content, headings } = await render(entry);
 const toc = headings.filter((h) => h.depth === 2).map((h) => ({ id: h.slug, label: h.text }));
 
 // 같은 카테고리의 다른 글 — 사이드 목록과 하단 관련 글에 쓴다(지어내지 않고 실제 글만)
 const siblings = sortByDateDesc(
-  await getCollection('articles', ({ data, id }) => !data.draft && id.startsWith(`${category}/`))
+  await getCollection('articles', inCategory(locale, category))
 ).filter((e) => e.id !== entry.id);
 
 const sideLinks = siblings.slice(0, 6).map((e) => ({
@@ -61,7 +63,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
   }}
   breadcrumbs={[
     { name: '홈', path: '/ko/' },
-    { name: cat.label, path: `/ko/${category}/` },
+    { name: catLabel, path: `/ko/${category}/` },
     { name: entry.data.title, path: `/ko/${category}/${slug}/` },
   ]}
 >
@@ -85,7 +87,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
       <div class="content-body detail-body">
         <nav class="breadcrumb">
           <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span>
-          <a href={catHref}>{cat.label}</a><span class="sep">/</span>
+          <a href={catHref}>{catLabel}</a><span class="sep">/</span>
           <span>{entry.data.title}</span>
         </nav>
 
@@ -127,7 +129,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
           }
         </article>
 
-        <ArticleSide toc={toc} links={sideLinks} linksTitle={`${cat.label} 다른 글`} />
+        <ArticleSide toc={toc} links={sideLinks} linksTitle={tv(locale, 'side.moreIn', { category: catLabel })} />
       </div>
     </main>
 

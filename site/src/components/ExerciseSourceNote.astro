@@ -2,8 +2,8 @@
 /*
  * 운동 영상 허브 상단의 출처·근거 안내.
  * 왼쪽 얇은 녹색 세로 바 + 옆에 텍스트(오너 지시 2026-08-07, 정확한 사양 그대로 구현).
- * 본문·상담 문구는 같은 글씨(크기·굵기·색 전부 동일), 출처만 보조 글씨(작게·연하게).
- * 아이콘·색 강조 없음.
+ * 본문·상담 문구는 문단을 나누지 않고 한 문단으로 잇는다(오너 지시 2026-08-07:
+ * "문단 바꿈 하지 말라고"). 출처만 별도 문단, 보조 글씨(작게·연하게). 아이콘·색 강조 없음.
  */
 import type { ExerciseSource } from '../lib/exerciseSource';
 
@@ -14,8 +14,11 @@ const { source } = Astro.props;
 ---
 
 <div class="source-note">
-  <p class="body">{source.intro.map((run) => (run.bold ? <b>{run.text}</b> : run.text))}</p>
-  <p class="body">{source.disclaimer}</p>
+  <p class="body">
+    {source.intro.map((run) => (run.bold ? <b>{run.text}</b> : run.text))}
+    {' '}
+    {source.disclaimer}
+  </p>
   <p class="cite">
     {source.citation}
     {source.link && (
@@ -48,9 +51,6 @@ const { source } = Astro.props;
     font-size: 15px;
     line-height: 24px;
     color: var(--text);
-  }
-  .body + .body {
-    margin-top: 14px;
   }
   .cite {
     margin-top: 14px;

@@ -45,6 +45,7 @@ const ko: Dict = {
   'phaseDesc.PHASE4': '이미 승인된 약을 대상으로, 승인 후 추가 안전성·효과·최적 사용법 정보를 모으는 단계입니다.',
   'phaseDesc.NA': '약물 개발 단계 구분이 적용되지 않는 임상시험입니다(의료기기·행동요법 등).',
   'clinical.phaseHelp': '이 단계가 무슨 뜻인가요?',
+  'clinical.phaseMore': '자세히 알아보기',
   'clinical.duration': '기간',
   'clinical.estimated': '예정',
   'clinical.recruiting': '모집 중',

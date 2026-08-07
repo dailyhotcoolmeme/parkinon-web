@@ -69,6 +69,7 @@ const en = {
   'phaseDesc.PHASE4': 'Happens after a drug is approved, to gather further information on safety, effectiveness, or best use.',
   'phaseDesc.NA': 'A trial without a drug-development phase (for example, a device or behavioral study).',
   'clinical.phaseHelp': 'What does this phase mean?',
+  'clinical.phaseMore': 'Learn more',
   'clinical.duration': 'Duration',
   'clinical.estimated': 'estimated',
   'clinical.recruiting': 'Recruiting',

@@ -27,6 +27,10 @@ import koTitles from '../../../data/clinicalTrialTitles.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
 
+/* 임상 단계 물음표 팝오버의 "자세히 알아보기" 링크. 생활 요령 하위 용어 설명 글
+   (`src/content/articles/ko/lifestyle/clinical-trial-phases.mdx`)로 보낸다. */
+const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/clinical-trial-phases');
+
 /*
  * 임상시험 제목 번역 — 시범 1건(2026-08-08, 오너 확인 요청: "너가 또 이상하게 보여줄게
  * 뻔해서 미리 체크해둬야겠다"). NCT 번호로 찾아서 있으면 번역, 없으면 원문(영어) 그대로.
@@ -138,7 +142,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                               {phaseLabel(trial.phaseKey)}
                               <details class="phase-help">
                                 <summary aria-label={t(locale, 'clinical.phaseHelp' as DictKey)}>?</summary>
-                                <p>{phaseDesc(trial.phaseKey)}</p>
+                                <p>
+                                  {phaseDesc(trial.phaseKey)}
+                                  <a href={phaseGlossaryUrl}><Tr k="clinical.phaseMore" /></a>
+                                </p>
                               </details>
                             </dd>
                           </>
@@ -392,6 +399,12 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     line-height: 1.55;
     color: var(--text);
     white-space: normal;
+  }
+  .phase-help p a {
+    display: inline-block;
+    margin-top: 6px;
+    color: var(--primary);
+    font-weight: 700;
   }
 
   .empty {

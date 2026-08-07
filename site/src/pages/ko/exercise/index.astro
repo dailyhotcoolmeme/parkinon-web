@@ -10,9 +10,10 @@
  *   (site-implementation.md "쿠키 동의·CMP"), YouTube iframe 을 심으면 그 상태가
  *   조용히 깨진다. Google 인증 CMP 를 켤 때(1-8) 같이 정리한다.
  *
- * 필터칩은 앱 전역 표준(VideoList 스타일)을 그대로 옮겼다 — 선택=주색 배경+흰 글자,
- * 비선택=흰 배경+테두리(오너가 기준 화면으로 확정한 스타일, memory
- * project_parkinon_filter_chip_standard). 새 스타일을 발명하지 않았다.
+ * 난이도 탭은 밑줄 방식이다(오너 확정 2026-08-08: "필터칩 스타일이 틀린거라고
+ * 얘기했잖아 — 알약 칩은 웹사이트에 안 쓴다"). 앱 전역 표준(VideoList 알약 칩,
+ * memory project_parkinon_filter_chip_standard)은 **앱 전용**이라 이 웹사이트에는
+ * 안 옮긴다 — 헤더 메뉴·임상시험 국가 탭과 같은 밑줄 방식으로 통일한다.
  */
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
@@ -117,37 +118,47 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
   }
 
   /*
-   * 필터칩 = 앱 전역 표준 그대로(memory project_parkinon_filter_chip_standard).
-   * 비선택: 흰 배경 + 테두리 1.5 + textSub. 선택: 주색 배경 + 흰 글자.
-   * 렌더 높이 ≈40px, 세로 잘림 방지를 위해 고정 height 대신 padding 으로만 높이를 만든다.
+   * 필터탭 = 밑줄 방식(헤더 메뉴·임상시험 국가 탭과 같은 방식, 오너 확정 2026-08-08).
+   * 알약 칩(앱 전용 project_parkinon_filter_chip_standard)은 이 웹사이트에는 안 쓴다.
    */
   .hub-tabs {
     display: flex;
-    gap: 8px;
+    flex-wrap: nowrap;
     overflow-x: auto;
-    margin: 22px 0 28px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
   }
   .hub-tabs::-webkit-scrollbar {
     display: none;
   }
   .tab {
-    flex: 0 0 auto;
-    font-size: 15px;
-    font-weight: 600;
+    flex-shrink: 0;
+    position: relative;
+    font: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 15.5px;
+    font-weight: 700;
     color: var(--text-sub);
-    background: var(--bg);
-    border: 1.5px solid var(--outline);
-    border-radius: 20px;
-    padding: 8px 18px;
     white-space: nowrap;
   }
   .tab.active {
+    color: var(--primary);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
     background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-    font-weight: 700;
   }
 
   .video-grid {

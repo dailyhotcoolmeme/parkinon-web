@@ -11,7 +11,8 @@ import familyImg from '../../../assets/images/family.jpg';
 
 const locale = Astro.currentLocale ?? 'ko';
 
-const tabs = ['전체', '산정특례', '장애등록', '장기요양', '의료비 공제', '보조기기'];
+/* 제도 이름 자체가 필터 단위다 — 생활 요령처럼 별도 상위 분류(section)를 안 둔다. */
+const TAGS = ['산정특례', '장애등록', '장기요양', '의료비 공제', '보조기기'];
 
 /*
  * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
@@ -67,12 +68,13 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
         <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>제도·지원</span>
       </nav>
 
-      <div class="hub-tabs">
-        {tabs.map((t, i) => <a class:list={['tab', { active: i === 0 }]} href="#">{t}</a>)}
+      <div class="hub-tabs" id="tagTabs">
+        <button class="tab active" data-tag="전체">전체</button>
+        {TAGS.map((t) => <button class="tab" data-tag={t}>{t}</button>)}
       </div>
 
       <div class="content-body">
-        <div class="hub-list">
+        <div class="hub-list" id="hubList">
           {
             rows.map((row) =>
               row.ad ? (
@@ -81,7 +83,11 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
                   <AdBox minHeight="90px" />
                 </div>
               ) : (
-                <a class="hub-row" href={getRelativeLocaleUrl(locale, `institutions/${slugOf(row.post)}`)}>
+                <a
+                  class="hub-row"
+                  data-tag={row.post.data.tag}
+                  href={getRelativeLocaleUrl(locale, `institutions/${slugOf(row.post)}`)}
+                >
                   <span class="tag">{row.post.data.tag}</span>
                   <h3>{row.post.data.title}</h3>
                   <p>{row.post.data.description}</p>
@@ -94,6 +100,7 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
             )
           }
         </div>
+        <p class="empty-state" id="emptyState" hidden>이 제도의 글은 아직 없습니다. 곧 채워질 예정입니다.</p>
 
         <ArticleSide links={sideLinks} linksTitle="제도·지원 다른 글" />
       </div>
@@ -122,30 +129,57 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
     opacity: 0.6;
   }
 
+  /*
+   * 필터탭 = 밑줄 방식(헤더 메뉴·임상시험 국가 탭과 같은 방식, 오너 확정 2026-08-08).
+   * 알약 칩(앱 전용 project_parkinon_filter_chip_standard)은 이 웹사이트에는 안 쓴다.
+   */
   .hub-tabs {
     display: flex;
-    gap: 6px;
+    flex-wrap: nowrap;
     overflow-x: auto;
-    border-bottom: 1px solid var(--outline);
-    margin-bottom: 32px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
   }
   .hub-tabs::-webkit-scrollbar {
     display: none;
   }
   .tab {
-    flex: 0 0 auto;
-    font-size: 15px;
+    flex-shrink: 0;
+    position: relative;
+    font: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 15.5px;
     font-weight: 700;
     color: var(--text-sub);
-    padding: 12px 14px;
-    border-bottom: 2.5px solid transparent;
     white-space: nowrap;
   }
   .tab.active {
     color: var(--primary);
-    border-color: var(--primary);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
+    background: var(--primary);
+  }
+  .hub-row[hidden] {
+    display: none;
+  }
+  .empty-state {
+    font-size: 15px;
+    color: var(--text-sub);
+    padding: 40px 0;
+    text-align: center;
   }
   .hub-list {
     display: flex;
@@ -227,3 +261,24 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
     font-size: 14px;
   }
 </style>
+
+<script>
+  // 순수 필터링(서버 재요청 없음) — /ko/exercise/ 와 같은 방식.
+  const tabs = document.querySelectorAll<HTMLButtonElement>('#tagTabs .tab');
+  const rows = document.querySelectorAll<HTMLAnchorElement>('#hubList .hub-row');
+  const emptyState = document.querySelector<HTMLParagraphElement>('#emptyState');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      const tag = tab.dataset.tag;
+      let shown = 0;
+      rows.forEach((row) => {
+        row.hidden = tag !== '전체' && row.dataset.tag !== tag;
+        if (!row.hidden) shown++;
+      });
+      if (emptyState) emptyState.hidden = shown > 0;
+    });
+  });
+</script>

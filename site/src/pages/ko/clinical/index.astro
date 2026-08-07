@@ -66,16 +66,21 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
         <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>임상시험</span>
       </nav>
 
-      <div class="hub-tabs" id="countryTabs">
+      {/*
+        국가 전환 = 완전히 다른 나라의 데이터로 넘어가는 것이다. 필터(운동 영상 난이도처럼
+        한 목록을 거르는 것)와 성격이 달라서 알약 버튼을 쓰지 않는다(오너 지적 2026-08-08:
+        "니처럼 알약으로 메뉴탭 하는 곳이 있나" — 실제로 WHO 국가 목록·위키백과 언어 전환
+        둘 다 평범한 텍스트 링크였다). 이 사이트 헤더 메뉴와 같은 밑줄 방식으로 통일한다.
+      */}
+      <nav class="country-select" id="countryTabs">
         {
           byCountry.map((c) => (
-            <button class:list={['tab', { active: c.code === defaultCountry }]} data-country={c.code}>
-              {c.label}
-              <span class="count">{c.data.total}</span>
+            <button class:list={['country-link', { active: c.code === defaultCountry }]} data-country={c.code}>
+              {c.label} <span class="n">{c.data.total}</span>
             </button>
           ))
         }
-      </div>
+      </nav>
 
       <div id="countryPanels">
         {
@@ -171,48 +176,51 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
     opacity: 0.6;
   }
 
-  /* 국가 선택 = 필터칩 표준(운동 영상 난이도 탭과 같은 스타일) */
-  .hub-tabs {
+  /*
+   * 국가 선택 — 헤더 메뉴(.nav-links a)와 같은 밑줄 방식. 알약 배경을 쓰지 않는다.
+   * WHO 국가 목록·위키백과 언어 전환도 이런 평범한 텍스트 링크였다(2026-08-08 조사).
+   */
+  .country-select {
     display: flex;
-    gap: 8px;
+    /* 줄바꿈하지 않는다 — 모바일에서 두 줄로 접히는 대신 옆으로 스와이프해서 본다
+       (오너 지시 2026-08-08). 데스크톱은 폭이 넉넉해 스크롤이 실제로 일어나지 않는다. */
+    flex-wrap: nowrap;
     overflow-x: auto;
-    margin: 22px 0 28px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
   }
-  .hub-tabs::-webkit-scrollbar {
+  .country-select::-webkit-scrollbar {
     display: none;
   }
-  .tab {
-    flex: 0 0 auto;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-sub);
-    background: var(--bg);
-    border: 1.5px solid var(--outline);
-    border-radius: 20px;
-    padding: 8px 16px;
-    white-space: nowrap;
-  }
-  .tab .count {
-    font-size: 12px;
+  .country-link {
+    flex-shrink: 0;
+    position: relative;
+    font-size: 15.5px;
     font-weight: 700;
     color: var(--text-sub);
-    background: var(--surface-low);
-    border-radius: 10px;
-    padding: 1px 7px;
+    white-space: nowrap;
   }
-  .tab.active {
+  .country-link .n {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .country-link.active {
+    color: var(--primary);
+  }
+  .country-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
     background: var(--primary);
-    border-color: var(--primary);
-    color: #fff;
-  }
-  .tab.active .count {
-    background: rgba(255, 255, 255, 0.25);
-    color: #fff;
   }
 
   .trial-list {
@@ -320,7 +328,7 @@ const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${p
 </style>
 
 <script>
-  const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .tab');
+  const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .country-link');
   const panels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
 
   tabs.forEach((tab) => {

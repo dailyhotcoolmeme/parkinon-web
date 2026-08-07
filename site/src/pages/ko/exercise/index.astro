@@ -21,6 +21,8 @@ import Footer from '../../../components/Footer.astro';
 import AdBox from '../../../components/AdBox.astro';
 import yogaImg from '../../../assets/images/yoga.jpg';
 import { VIDEO_DATA, DIFFICULTIES } from '../../../lib/exerciseVideos.ko';
+import { EXERCISE_SOURCE } from '../../../lib/exerciseSource.ko';
+import ExerciseSourceNote from '../../../components/ExerciseSourceNote.astro';
 
 const locale = Astro.currentLocale ?? 'ko';
 
@@ -55,18 +57,7 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
         <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>운동 영상</span>
       </nav>
 
-      <div class="source-note">
-        <p>
-          이 영상들은 <b>질병관리청 국립보건연구원</b>이 <b>대한파킨슨병및이상운동질환학회</b>와 함께 개발한
-          비대면 운동 프로그램입니다. 임상연구에서 운동기능 지표(UPDRS)가 22%, 불안·우울 지표가 각각
-          31% 개선됐고 특별한 부작용은 확인되지 않았습니다.
-        </p>
-        <p class="cite">
-          국립보건연구원 보도자료(2024-05-08) · 연구책임 조진환 교수(삼성서울병원 신경과) ·
-          <a href="https://parkinson.co.kr/" target="_blank" rel="noopener">parkinson.co.kr</a>
-        </p>
-        <p class="disclaimer">현재 몸 상태에 맞는 운동인지는 담당 의사·물리치료사와 먼저 상의하세요.</p>
-      </div>
+      <ExerciseSourceNote source={EXERCISE_SOURCE} />
 
       <div class="hub-tabs" id="diffTabs">
         <button class="tab active" data-diff="전체">전체</button>
@@ -121,32 +112,6 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
     opacity: 0.6;
   }
 
-  /* 출처 안내 — SourceBox 와 결이 같다(박스를 씌우지 않고 얇은 선으로만 구분) */
-  .source-note {
-    padding: 16px 0 22px;
-    border-bottom: 1px solid var(--outline);
-    margin-bottom: 4px;
-  }
-  .source-note p {
-    font-size: 14.5px;
-    line-height: 1.7;
-    color: var(--text);
-  }
-  .source-note .cite {
-    margin-top: 8px;
-    font-size: 12.5px;
-    color: var(--text-sub);
-  }
-  .source-note .cite a:hover {
-    color: var(--primary);
-  }
-  .source-note .disclaimer {
-    margin-top: 6px;
-    font-size: 12.5px;
-    color: var(--text-sub);
-    opacity: 0.85;
-  }
-
   /*
    * 필터칩 = 앱 전역 표준 그대로(memory project_parkinon_filter_chip_standard).
    * 비선택: 흰 배경 + 테두리 1.5 + textSub. 선택: 주색 배경 + 흰 글자.
@@ -184,7 +149,9 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
   .video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 22px 18px;
+    /* 세로 간격만 22→40px 로 키웠다 — 카드 아래 두 줄 설명이 다음 줄 썸네일과 거의 붙어
+       보였다는 지적(2026-08-07). 가로 간격은 그대로 둔다. */
+    gap: 40px 18px;
     padding-bottom: 8px;
   }
   .video-card {
@@ -266,7 +233,7 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
   @media (max-width: 480px) {
     .video-grid {
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 18px 12px;
+      gap: 32px 12px;
     }
   }
 </style>

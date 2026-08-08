@@ -306,7 +306,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
         }
       </div>
 
-      <p class="disclaimer"><Tr k="clinical.disclaimer" /></p>
       </div>
 
       <div id="researchFeed" hidden>
@@ -369,8 +368,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
             ))
           }
         </div>
-
-        <p class="disclaimer"><Tr k="research.disclaimer" /></p>
       </div>
     </main>
 
@@ -474,7 +471,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 
   .lang-notice {
     margin: -8px 0 24px;
-    font-size: 13px;
+    font-size: 13.5px;
+    line-height: 1.6;
     color: var(--text-sub);
     opacity: 0.85;
   }
@@ -643,14 +641,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   }
   .overflow a:hover {
     color: var(--primary);
-  }
-
-  .disclaimer {
-    margin-top: 36px;
-    padding-top: 18px;
-    border-top: 1px solid var(--outline);
-    font-size: 13px;
-    color: var(--text-sub);
   }
 
   .research-tagline {

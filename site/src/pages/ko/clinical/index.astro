@@ -48,9 +48,13 @@ const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#
 const TRANSLATED_TITLES: Record<string, Record<string, string>> = { ko: koTitles };
 const titleFor = (nctId: string, original: string) => TRANSLATED_TITLES[locale]?.[nctId] ?? original;
 
-/* 한국어판의 기본 국가 = 한국. 언어판을 늘릴 때 이 매핑에 그 언어의 기본 나라를 추가한다. */
-const DEFAULT_COUNTRY: Record<string, string> = { ko: 'kr' };
-const defaultCountry = DEFAULT_COUNTRY[locale] ?? 'kr';
+/*
+ * 기본 국가 = "전체"(오너 확정 2026-08-08: "한국이 메인이 아니다" — 여러 번 반복된 지적).
+ * 방문자 위치를 알아내면(아래 지오로케이션 스크립트) 그 나라로 바꾸고, 못 알아내거나
+ * 목록에 없는 나라면 "전체"에 그대로 둔다. ⚠️ "전체" 옵션이 없는 다른 화면을 만들 때는
+ * 한국을 기본값으로 두지 말고 미국을 기본값으로 할 것 — 같은 원칙이 이미 여러 번 얘기됐다.
+ */
+const defaultCountry = 'all';
 
 const allTrials = await fetchAllRecruitingTrials();
 /*
@@ -806,4 +810,28 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       if (!d.contains(e.target as Node)) d.removeAttribute('open');
     });
   });
+
+  /*
+   * 방문자 나라를 국가 탭 맨 앞(전체 다음)으로 보내고 그 탭을 활성화한다(오너 확정
+   * 2026-08-08: "한국이 메인이 아니다"). `/api/geo`(Cloudflare Pages Function, CF-IPCountry
+   * 헤더)로 알아내고, 못 알아내거나 목록에 없는 나라면 조용히 "전체" 기본값을 유지한다.
+   */
+  (async () => {
+    try {
+      const res = await fetch('/api/geo');
+      const { country } = (await res.json()) as { country: string | null };
+      const code = country?.toLowerCase();
+      const validCodes = ['kr', 'us', 'jp', 'fr', 'de', 'it', 'au'];
+      if (!code || !validCodes.includes(code)) return;
+
+      const allBtn = document.querySelector<HTMLButtonElement>('#countryTabs [data-country="all"]');
+      const myBtn = document.querySelector<HTMLButtonElement>(`#countryTabs [data-country="${code}"]`);
+      if (!allBtn || !myBtn) return;
+
+      allBtn.after(myBtn);
+      myBtn.click();
+    } catch {
+      /* 지오로케이션 실패 시 조용히 "전체" 기본값 유지 — 오류를 화면에 보여주지 않는다. */
+    }
+  })();
 </script>

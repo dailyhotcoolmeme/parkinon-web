@@ -24,7 +24,7 @@ import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import koTitles from '../../../data/clinicalTrialTitles.ko.json';
-import { fetchResearchPapers } from '../../../lib/pubmed';
+import { fetchResearchPapersForCountry } from '../../../lib/pubmed';
 import koResearch from '../../../data/pubmedTranslations.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
@@ -53,11 +53,24 @@ const DEFAULT_COUNTRY: Record<string, string> = { ko: 'kr' };
 const defaultCountry = DEFAULT_COUNTRY[locale] ?? 'kr';
 
 const allTrials = await fetchAllRecruitingTrials();
-const byCountry = TRIAL_COUNTRIES.map((c) => ({
-  ...c,
-  label: t(locale, `country.${c.code}` as DictKey),
-  data: trialsForCountry(allTrials, c.apiName),
-}));
+/*
+ * 연구도 국가별로 나눈다(오너 지시 2026-08-08: "제대로 국가별로 분류해"). 나라마다
+ * 따로 PubMed 를 부른다 — `src/lib/pubmed.ts` 상단 주석에 저자 소속기관 기반 분류의
+ * 한계(국제 공동연구는 여러 나라에 동시에 걸림)를 적어뒀다.
+ * ⚠️ 7개국을 동시에 부르면 NCBI 비인증 요청 한도(3건/초)에 걸려 429가 난다
+ * (2026-08-08 실측). Promise.all 로 한꺼번에 부르지 말고 순서대로, 사이에 살짝 쉬어가며 부른다.
+ */
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const byCountry = [];
+for (const c of TRIAL_COUNTRIES) {
+  byCountry.push({
+    ...c,
+    label: t(locale, `country.${c.code}` as DictKey),
+    data: trialsForCountry(allTrials, c.apiName),
+    research: await fetchResearchPapersForCountry(c.code),
+  });
+  await sleep(400);
+}
 
 const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
 
@@ -85,7 +98,6 @@ const PUBTYPE_BADGE: Record<string, DictKey> = {
 };
 const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).filter((k): k is DictKey => Boolean(k));
 
-const researchPapers = await fetchResearchPapers();
 const phaseDesc = (phaseKey: string | null) => (phaseKey ? t(locale, `phaseDesc.${phaseKey}` as DictKey) : null);
 
 /* 시작일·종료일 중 있는 것만 이어붙인다. 둘 다 없으면 이 줄 자체를 안 그린다(astro 쪽에서 처리). */
@@ -137,6 +149,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
               class:list={['country-link', { active: c.code === defaultCountry }]}
               data-country={c.code}
               data-total={c.data.total}
+              data-research-total={c.research.total}
             >
               {c.label} <span class="n">{c.data.total}</span>
             </button>
@@ -146,8 +159,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 
       {/*
         국가 탭 밑에 "임상시험/연구" 중 뭘 볼지 고르는 두 번째 단계다(오너 확정 2026-08-08).
-        연구는 나라별로 나뉘지 않는 하나의 목록이라, 국가 패널마다 통째로 복제하지 않고
-        이 목록 하나를 공유한다 — 국가 탭은 임상시험 쪽 내용만 바꾼다.
+        연구도 국가 탭에 따라 나뉜다(저자 소속기관 기반, src/lib/pubmed.ts 주석 참고) —
+        국가 탭을 바꾸면 임상시험·연구 패널과 두 숫자가 같이 바뀐다.
         이 단계는 "필터"라 알약 스타일을 써도 된다고 오너가 확인함(국가 탭과는 다른 성격).
       */}
       <nav class="feed-tabs" id="feedTabs">
@@ -155,7 +168,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
           <Tr k="clinical.feedTrials" /> <span class="n" id="trialsFeedCount">{byCountry.find((c) => c.code === defaultCountry)?.data.total ?? 0}</span>
         </button>
         <button class="pill" data-feed="research">
-          <Tr k="research.feedLabel" /> <span class="n">{researchPapers.total}</span>
+          <Tr k="research.feedLabel" /> <span class="n" id="researchFeedCount">{byCountry.find((c) => c.code === defaultCountry)?.research.total ?? 0}</span>
         </button>
       </nav>
 
@@ -267,53 +280,60 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       <div id="researchFeed" hidden>
         <p class="research-tagline"><Tr k="research.tagline" /></p>
 
-        {researchPapers.shown.length === 0 ? (
-          <p class="empty"><Tr k="research.noPapers" /></p>
-        ) : (
-          <div class="research-list">
-            {researchPapers.shown.map((paper) => {
-              const tr = researchTrFor(paper.pmid);
-              const badges = badgesFor(paper.pubTypes);
-              return (
-                <details class="research-card">
-                  <summary>
-                    <div class="badges">
-                      {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
-                    </div>
-                    <h3>{tr?.title ?? paper.title}</h3>
-                  </summary>
-                  <p class="research-meta">
-                    <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {paper.pubDate}
-                  </p>
-                  {tr ? (
-                    <div class="research-abstract">
-                      {tr.abstract.map((sec) => (
-                        <p>{sec.label && <strong>{sec.label}. </strong>}{sec.text}</p>
-                      ))}
-                    </div>
-                  ) : (
-                    <p class="pending"><Tr k="research.translationPending" /></p>
-                  )}
-                  <p class="paid-notice"><Tr k="research.paidNotice" /></p>
-                  <div class="research-links">
-                    <a href={paper.pubmedUrl} target="_blank" rel="noopener"><Tr k="research.readAbstract" /></a>
-                    {paper.fullTextUrl && (
-                      <a href={paper.fullTextUrl} target="_blank" rel="noopener"><Tr k="research.readFullText" /></a>
-                    )}
+        <div id="researchPanels">
+          {
+            byCountry.map((c) => (
+              <div class="research-panel" data-country={c.code} hidden={c.code !== defaultCountry}>
+                {c.research.shown.length === 0 ? (
+                  <p class="empty"><Tr k="research.noPapers" /></p>
+                ) : (
+                  <div class="research-list">
+                    {c.research.shown.map((paper) => {
+                      const tr = researchTrFor(paper.pmid);
+                      const badges = badgesFor(paper.pubTypes);
+                      return (
+                        <details class="research-card">
+                          <summary>
+                            <div class="badges">
+                              {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
+                            </div>
+                            <h3>{tr?.title ?? paper.title}</h3>
+                          </summary>
+                          <p class="research-meta">
+                            <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {paper.pubDate}
+                          </p>
+                          {tr ? (
+                            <div class="research-abstract">
+                              {tr.abstract.map((sec) => (
+                                <p>{sec.label && <strong>{sec.label}. </strong>}{sec.text}</p>
+                              ))}
+                            </div>
+                          ) : (
+                            <p class="pending"><Tr k="research.translationPending" /></p>
+                          )}
+                          <p class="paid-notice"><Tr k="research.paidNotice" /></p>
+                          <div class="research-links">
+                            <a href={paper.pubmedUrl} target="_blank" rel="noopener"><Tr k="research.readAbstract" /></a>
+                            {paper.fullTextUrl && (
+                              <a href={paper.fullTextUrl} target="_blank" rel="noopener"><Tr k="research.readFullText" /></a>
+                            )}
+                          </div>
+                        </details>
+                      );
+                    })}
                   </div>
-                </details>
-              );
-            })}
-          </div>
-        )}
-
-        {researchPapers.overflowUrl && (
-          <p class="overflow">
-            {tv(locale, 'research.overflowNote', { shown: String(researchPapers.shown.length), total: String(researchPapers.total) })}
-            {' · '}
-            <a href={researchPapers.overflowUrl} target="_blank" rel="noopener"><Tr k="research.seeAll" /></a>
-          </p>
-        )}
+                )}
+                {c.research.overflowUrl && (
+                  <p class="overflow">
+                    {tv(locale, 'research.overflowNote', { shown: String(c.research.shown.length), total: String(c.research.total) })}
+                    {' · '}
+                    <a href={c.research.overflowUrl} target="_blank" rel="noopener"><Tr k="research.seeAll" /></a>
+                  </p>
+                )}
+              </div>
+            ))
+          }
+        </div>
 
         <p class="disclaimer"><Tr k="research.disclaimer" /></p>
       </div>
@@ -413,6 +433,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     font-weight: 700;
   }
   .pill .n {
+    display: inline-block;
+    /* 국가마다 숫자 자릿수가 달라(6~212) 나라 바꿀 때마다 알약 가로 크기가 바뀌던 것을
+       고정폭으로 막는다(오너 지적 2026-08-08). */
+    min-width: 3ch;
+    text-align: left;
     font-size: 12.5px;
     opacity: 0.85;
   }
@@ -697,22 +722,28 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 
 <script>
   const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .country-link');
-  const panels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
+  const trialPanels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
+  const researchPanels = document.querySelectorAll<HTMLDivElement>('#researchPanels .research-panel');
   const trialsFeedCount = document.querySelector<HTMLSpanElement>('#trialsFeedCount');
+  const researchFeedCount = document.querySelector<HTMLSpanElement>('#researchFeedCount');
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       tabs.forEach((t) => t.classList.remove('active'));
       tab.classList.add('active');
       const country = tab.dataset.country;
-      panels.forEach((panel) => {
+      trialPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.country !== country;
+      });
+      researchPanels.forEach((panel) => {
         panel.hidden = panel.dataset.country !== country;
       });
       if (trialsFeedCount) trialsFeedCount.textContent = tab.dataset.total ?? '0';
+      if (researchFeedCount) researchFeedCount.textContent = tab.dataset.researchTotal ?? '0';
     });
   });
 
-  /* 임상시험/연구 전환 — 국가 탭과 별개 축. 연구 목록은 나라별로 나뉘지 않아 하나만 있다. */
+  /* 임상시험/연구 전환 — 국가 탭과는 별개 축. 국가 탭은 두 피드 모두에 영향을 준다. */
   const feedTabs = document.querySelectorAll<HTMLButtonElement>('#feedTabs .pill');
   const trialsFeed = document.querySelector<HTMLDivElement>('#trialsFeed');
   const researchFeed = document.querySelector<HTMLDivElement>('#researchFeed');

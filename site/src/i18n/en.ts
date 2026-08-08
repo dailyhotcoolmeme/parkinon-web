@@ -54,7 +54,7 @@ const en = {
   'phase.NA': 'Not applicable',
 
   // 임상시험 페이지 UI 문구 — 전부 전 언어 공통(사전에만 있음, 나라별 데이터 아님)
-  'clinical.tagline': 'See Parkinson\u2019s clinical trials that are currently recruiting, by country.',
+  'clinical.tagline': 'See Parkinson\u2019s clinical trials that are currently recruiting, by country \u2014 plus related research.',
   'clinical.englishNotice': 'These are Parkinson\u2019s clinical trials currently underway, for your reference. If one looks relevant, talk to your doctor or nurse about it.',
   'clinical.phase': 'Phase',
   'clinical.location': 'Location',

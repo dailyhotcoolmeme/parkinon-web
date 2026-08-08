@@ -12,7 +12,25 @@
  * ⚠️ PubMed API 는 초록(저자가 쓴 요약)과 서지정보만 준다. **논문 전체 본문은 없다** —
  * 대부분 유료(예: Neurology 는 $39/24시간, 기관 인증 없이 개인 결제 가능, 2026-08-08 확인).
  * 그래서 화면에는 "원문 전체 보기(유료)" 링크를 DOI로 따로 건다.
+ *
+ * ⚠️ 국가별 분류(2026-08-08, 오너 지시: "제대로 국가별로 분류해") — PubMed 는
+ * ClinicalTrials.gov 같은 깨끗한 국가 필드가 없다. 대신 저자 소속기관 주소
+ * (`[Affiliation]`)에 나라 이름이 텍스트로 들어있어서 그걸로 검색한다.
+ * "이건 저자 소속 국가일 뿐 그 나라 환자 대상 연구라는 뜻은 아니다" — 국제 공동연구는
+ * 한 논문이 여러 나라에 동시에 걸릴 수 있다(임상시험처럼 한 나라에만 속하지 않음).
+ * 표기 변형은 실측해서 확인한 것만 쓴다(2026-08-08) — "United States"만 쓰면 25건인데
+ * "USA"까지 더하면 2,786건으로 뛴다. 표기가 몇 개 안 되는 걸 "일관성이 없다"고
+ * 넘기지 말고 실제로 몇 개 쓰는지 확인해서 목록에 넣을 것.
  */
+const COUNTRY_AFFILIATION: Record<string, string[]> = {
+  kr: ['South Korea', 'Republic of Korea'],
+  us: ['United States', 'USA'],
+  jp: ['Japan'],
+  fr: ['France'],
+  de: ['Germany'],
+  it: ['Italy'],
+  au: ['Australia'],
+};
 
 const API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
 
@@ -45,8 +63,17 @@ export interface ResearchPaper {
   fullTextUrl: string | null;
 }
 
-function searchUrl() {
-  const params = new URLSearchParams({ term: SEARCH_TERM });
+function countryClause(code: string): string {
+  const aliases = COUNTRY_AFFILIATION[code] ?? [];
+  return aliases.map((a) => `("${a}"[Affiliation])`).join(' OR ');
+}
+
+function termForCountry(code: string): string {
+  return `${SEARCH_TERM} AND (${countryClause(code)})`;
+}
+
+function searchUrl(term: string) {
+  const params = new URLSearchParams({ term });
   return `https://pubmed.ncbi.nlm.nih.gov/?${params}`;
 }
 
@@ -56,13 +83,13 @@ export interface ResearchPapers {
   overflowUrl: string | null;
 }
 
-export async function fetchResearchPapers(): Promise<ResearchPapers> {
+async function runSearch(term: string): Promise<ResearchPapers> {
   const searchParams = new URLSearchParams({
     db: 'pubmed',
     retmode: 'json',
     retmax: String(MAX_PAPERS),
     sort: 'pub date',
-    term: SEARCH_TERM,
+    term,
   });
   const searchRes = await fetch(`${API_BASE}/esearch.fcgi?${searchParams}`);
   if (!searchRes.ok) throw new Error(`PubMed esearch request failed: ${searchRes.status}`);
@@ -82,8 +109,18 @@ export async function fetchResearchPapers(): Promise<ResearchPapers> {
   return {
     shown,
     total,
-    overflowUrl: total > shown.length ? searchUrl() : null,
+    overflowUrl: total > shown.length ? searchUrl(term) : null,
   };
+}
+
+/** 국가 무관 전체(현재는 화면에서 안 씀 — 국가별 조회로 대체했다. 필요해질 때를 위해 남긴다). */
+export async function fetchResearchPapers(): Promise<ResearchPapers> {
+  return runSearch(SEARCH_TERM);
+}
+
+/** 그 나라 저자 소속기관이 걸린 연구만. code 는 clinicalTrials.ts 의 TRIAL_COUNTRIES 와 같다. */
+export async function fetchResearchPapersForCountry(code: string): Promise<ResearchPapers> {
+  return runSearch(termForCountry(code));
 }
 
 /*

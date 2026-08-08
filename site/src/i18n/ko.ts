@@ -32,7 +32,7 @@ const ko: Dict = {
   'phase.PHASE4': '4상',
   'phase.NA': '해당 없음',
 
-  'clinical.tagline': '지금 모집 중인 파킨슨병 임상시험을 나라별로 찾아볼 수 있습니다.',
+  'clinical.tagline': '지금 모집 중인 파킨슨병 임상시험을 나라별로 찾아보고, 관련 연구도 함께 확인할 수 있습니다.',
   'clinical.englishNotice': '지금 이런 파킨슨병 임상시험들이 진행되고 있습니다. 참고하시고, 관심 있는 시험이 있으면 담당 의사·간호사와 상담하세요.',
   'clinical.phase': '임상 단계',
   'clinical.location': '위치',

@@ -24,6 +24,8 @@ import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import koTitles from '../../../data/clinicalTrialTitles.ko.json';
+import { fetchResearchPapers } from '../../../lib/pubmed';
+import koResearch from '../../../data/pubmedTranslations.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
 
@@ -58,6 +60,32 @@ const byCountry = TRIAL_COUNTRIES.map((c) => ({
 }));
 
 const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
+
+/*
+ * 연구 카드 — PubMed E-utilities (`src/lib/pubmed.ts`). 선별 기준·저널 축약명 함정은 그 파일
+ * 상단 주석 참고. 제목·초록 번역은 클리니컬 시험 제목과 같은 패턴
+ * (`src/data/pubmedTranslations.<언어>.json`, NCT 대신 PMID로 찾는다) — 없으면 원문(영어) +
+ * "번역 준비 중" 안내.
+ *
+ * ⚠️ 오너 지적(2026-08-08): "환자·보호자는 저런 연구를 무조건 찾아본다" — 그래서 제목만
+ * 번역하지 않고 **초록 전체**를 문단·숫자까지 빠짐없이 옮긴다(요약·축약 금지).
+ */
+type ResearchTranslation = { title: string; abstract: { label: string | null; text: string }[] };
+const RESEARCH_TRANSLATIONS: Record<string, Record<string, ResearchTranslation>> = { ko: koResearch as Record<string, ResearchTranslation> };
+const researchTrFor = (pmid: string) => RESEARCH_TRANSLATIONS[locale]?.[pmid];
+
+/* PubMed 발행유형(pubTypes) 원문 문자열 → 뱃지 사전 키. 여기 없는 유형(예: "Journal Article")은 뱃지를 안 단다. */
+const PUBTYPE_BADGE: Record<string, DictKey> = {
+  'Meta-Analysis': 'research.pubtype.metaAnalysis',
+  'Clinical Trial, Phase III': 'research.pubtype.phase3',
+  'Clinical Trial, Phase IV': 'research.pubtype.phase4',
+  'Randomized Controlled Trial': 'research.pubtype.rct',
+  'Systematic Review': 'research.pubtype.systematicReview',
+  'Observational Study': 'research.pubtype.observational',
+};
+const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).filter((k): k is DictKey => Boolean(k));
+
+const researchPapers = await fetchResearchPapers();
 const phaseDesc = (phaseKey: string | null) => (phaseKey ? t(locale, `phaseDesc.${phaseKey}` as DictKey) : null);
 
 /* 시작일·종료일 중 있는 것만 이어붙인다. 둘 다 없으면 이 줄 자체를 안 그린다(astro 쪽에서 처리). */
@@ -212,6 +240,59 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       </div>
 
       <p class="disclaimer"><Tr k="clinical.disclaimer" /></p>
+
+      <section class="research-section">
+        <h2><Tr k="research.heading" /></h2>
+        <p class="research-tagline"><Tr k="research.tagline" /></p>
+
+        {researchPapers.shown.length === 0 ? (
+          <p class="empty"><Tr k="research.noPapers" /></p>
+        ) : (
+          <div class="research-list">
+            {researchPapers.shown.map((paper) => {
+              const tr = researchTrFor(paper.pmid);
+              const badges = badgesFor(paper.pubTypes);
+              return (
+                <article class="research-card">
+                  <div class="badges">
+                    {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
+                  </div>
+                  <h3>{tr?.title ?? paper.title}</h3>
+                  <p class="research-meta">
+                    <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {paper.pubDate}
+                  </p>
+                  {tr ? (
+                    <div class="research-abstract">
+                      {tr.abstract.map((sec) => (
+                        <p>{sec.label && <strong>{sec.label}. </strong>}{sec.text}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p class="pending"><Tr k="research.translationPending" /></p>
+                  )}
+                  <p class="paid-notice"><Tr k="research.paidNotice" /></p>
+                  <div class="research-links">
+                    <a href={paper.pubmedUrl} target="_blank" rel="noopener"><Tr k="research.readAbstract" /></a>
+                    {paper.fullTextUrl && (
+                      <a href={paper.fullTextUrl} target="_blank" rel="noopener"><Tr k="research.readFullText" /></a>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {researchPapers.overflowUrl && (
+          <p class="overflow">
+            {tv(locale, 'research.overflowNote', { shown: String(researchPapers.shown.length), total: String(researchPapers.total) })}
+            {' · '}
+            <a href={researchPapers.overflowUrl} target="_blank" rel="noopener"><Tr k="research.seeAll" /></a>
+          </p>
+        )}
+
+        <p class="disclaimer"><Tr k="research.disclaimer" /></p>
+      </section>
     </main>
 
     <aside class="ad-rail right">
@@ -434,6 +515,86 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     border-top: 1px solid var(--outline);
     font-size: 13px;
     color: var(--text-sub);
+  }
+
+  .research-section {
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--outline);
+  }
+  .research-section > h2 {
+    font-size: 21px;
+    color: var(--text);
+  }
+  .research-tagline {
+    margin-top: 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+  .research-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 24px;
+  }
+  .research-card {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .research-card:first-child {
+    padding-top: 0;
+  }
+  .research-card .badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .research-card h3 {
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .research-meta {
+    margin-top: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .research-abstract {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+  .research-abstract strong {
+    color: var(--text-sub);
+  }
+  .pending {
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: var(--text-sub);
+  }
+  .paid-notice {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.85;
+  }
+  .research-links {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+  }
+  .research-links a {
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .research-links a:hover {
+    color: var(--primary);
   }
 
   @media (max-width: 480px) {

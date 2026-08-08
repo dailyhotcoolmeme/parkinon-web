@@ -57,6 +57,25 @@ const ko: Dict = {
   'clinical.seeAll': 'ClinicalTrials.gov에서 전체 보기',
   'clinical.disclaimer': '이 목록은 정보 제공용입니다. 참여를 원하시면 먼저 담당 의사와 상의하고 연구팀에 직접 문의하세요.',
 
+  'research.heading': '관련 연구',
+  'research.tagline': '파킨슨병에 관한 주요 연구를 모았습니다. 선정 기준은 임상 3상 이상·메타분석·주요 의학저널(Lancet Neurology, Brain, Movement Disorders, JAMA Neurology, Neurology)입니다.',
+  'research.journal': '게재지',
+  'research.published': '발표',
+  'research.readAbstract': 'PubMed에서 원문 초록 보기',
+  'research.readFullText': '원문 전체 보기',
+  'research.paidNotice': '원문 전체는 유료입니다(결제 후 열람). 위 내용은 저자가 공개한 초록 전체를 옮긴 것입니다.',
+  'research.translationPending': '이 논문은 아직 한국어 번역 준비 중입니다. 초록 원문(영어)은 PubMed에서 볼 수 있습니다.',
+  'research.disclaimer': '이 연구 결과를 진료나 치료 결정에 바로 적용하지 마세요. 궁금한 점은 담당 의사와 상담하세요.',
+  'research.noPapers': '지금은 기준에 맞는 새 연구가 없습니다.',
+  'research.overflowNote': '전체 {total}건 중 최근 {shown}건을 보여줍니다.',
+  'research.seeAll': 'PubMed에서 전체 보기',
+  'research.pubtype.metaAnalysis': '메타분석',
+  'research.pubtype.phase3': '임상 3상 연구',
+  'research.pubtype.phase4': '임상 4상 연구',
+  'research.pubtype.rct': '무작위대조연구',
+  'research.pubtype.systematicReview': '체계적 문헌고찰',
+  'research.pubtype.observational': '관찰연구',
+
   // 메뉴는 '소식' 이지만 카테고리 라벨은 아직 '파킨온 소식' 이다.
   // 허브 페이지 문구가 옛 정의(파킨온이 정리하는 연구 요약)로 쓰여 있어서,
   // 소식 발행 체계를 만드는 0-7 에서 한꺼번에 다시 쓴다.

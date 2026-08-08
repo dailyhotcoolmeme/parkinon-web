@@ -81,6 +81,25 @@ const en = {
   'clinical.seeAll': 'See all on ClinicalTrials.gov',
   'clinical.disclaimer': 'This list is for information only. If you are interested in joining a trial, talk to your doctor first and contact the study team directly.',
 
+  'research.heading': 'Related Research',
+  'research.tagline': "A collection of major Parkinson's disease research. Selection criteria: Phase III+ trials, meta-analyses, or major medical journals (Lancet Neurology, Brain, Movement Disorders, JAMA Neurology, Neurology).",
+  'research.journal': 'Journal',
+  'research.published': 'Published',
+  'research.readAbstract': 'View abstract on PubMed',
+  'research.readFullText': 'Read full text',
+  'research.paidNotice': 'The full text is paid access (available after purchase). The text above is the complete abstract as published by the authors.',
+  'research.translationPending': 'A translation of this paper is not ready yet. The original abstract (English) is available on PubMed.',
+  'research.disclaimer': "Don't apply these findings to your care or treatment decisions directly. Talk to your doctor about any questions.",
+  'research.noPapers': 'No new research currently matches the criteria.',
+  'research.overflowNote': 'Showing the {shown} most recent of {total} total.',
+  'research.seeAll': 'See all on PubMed',
+  'research.pubtype.metaAnalysis': 'Meta-analysis',
+  'research.pubtype.phase3': 'Phase III trial',
+  'research.pubtype.phase4': 'Phase IV trial',
+  'research.pubtype.rct': 'Randomized controlled trial',
+  'research.pubtype.systematicReview': 'Systematic review',
+  'research.pubtype.observational': 'Observational study',
+
   // 카테고리 라벨 — 빵부스러기와 사이드 패널 제목에 쓴다.
   // 메뉴 라벨과 일부러 분리해 뒀다: 메뉴는 짧게, 카테고리는 설명적으로 갈 수 있다.
   'category.news': 'News',

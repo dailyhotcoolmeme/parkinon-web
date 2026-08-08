@@ -303,18 +303,14 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                               <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {pubDateText(paper)}
                             </p>
                           </summary>
-                          {paper.abstractTranslated ? (
-                            <div class="research-abstract">
-                              {paper.abstractTranslated.map((sec) => (
-                                <div class="abstract-section">
-                                  {sec.label && <p class="abstract-label">{sec.label}</p>}
-                                  <p class="abstract-text">{sec.text}</p>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p class="pending"><Tr k="research.translationPending" /></p>
-                          )}
+                          <div class="research-abstract">
+                            {(paper.abstractTranslated ?? paper.abstract).map((sec) => (
+                              <div class="abstract-section">
+                                {sec.label && <p class="abstract-label">{sec.label}</p>}
+                                <p class="abstract-text">{sec.text}</p>
+                              </div>
+                            ))}
+                          </div>
                           <p class="paid-notice"><Tr k="research.paidNotice" /></p>
                           <div class="research-links">
                             <a href={paper.pubmedUrl} target="_blank" rel="noopener"><Tr k="research.readAbstract" /></a>

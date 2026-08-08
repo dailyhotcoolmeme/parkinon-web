@@ -305,7 +305,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                           {tr ? (
                             <div class="research-abstract">
                               {tr.abstract.map((sec) => (
-                                <p>{sec.label && <strong>{sec.label}. </strong>}{sec.text}</p>
+                                <div class="abstract-section">
+                                  {sec.label && <p class="abstract-label">{sec.label}</p>}
+                                  <p class="abstract-text">{sec.text}</p>
+                                </div>
                               ))}
                             </div>
                           ) : (
@@ -433,11 +436,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     font-weight: 700;
   }
   .pill .n {
-    display: inline-block;
-    /* 국가마다 숫자 자릿수가 달라(6~212) 나라 바꿀 때마다 알약 가로 크기가 바뀌던 것을
-       고정폭으로 막는다(오너 지적 2026-08-08). */
-    min-width: 3ch;
-    text-align: left;
     font-size: 12.5px;
     opacity: 0.85;
   }
@@ -647,7 +645,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     display: none;
   }
   .research-card > summary::after {
-    content: '더 보기 ▾';
+    content: '자세히 보기 ▾';
     display: inline-block;
     margin-top: 10px;
     font-size: 12.5px;
@@ -682,8 +680,19 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     line-height: 1.75;
     color: var(--text);
   }
-  .research-abstract strong {
-    color: var(--text-sub);
+  /*
+   * 배경/방법/결과/논의 — 세로 녹색줄은 항목명(제목) 줄에만 붙는다(오너 확정 2026-08-08).
+   * 내용 문단까지 줄이 이어지지 않는다. 논문마다 초록 구조가 비슷하니 전부 이 틀을 쓴다.
+   */
+  .abstract-label {
+    border-left: 3px solid var(--primary);
+    padding-left: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .abstract-text {
+    margin-top: 4px;
+    padding-left: 17px;
   }
   .pending {
     margin-top: 12px;

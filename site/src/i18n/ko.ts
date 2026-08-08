@@ -79,6 +79,20 @@ const ko: Dict = {
   'research.pubtype.systematicReview': '체계적 문헌고찰',
   'research.pubtype.observational': '관찰연구',
 
+  'search.placeholder': '제목으로 검색',
+  'search.submit': '검색',
+  'search.clear': '초기화',
+  'search.loadMore': '더 보기',
+  'search.noResults': '검색 결과가 없습니다.',
+  'search.filter.anyPhase': '임상 단계 전체',
+  'search.filter.startDate': '시작일',
+  'search.filter.sponsor': '주관 기관',
+  'search.filter.anyPubtype': '연구 유형 전체',
+  'search.filter.anyJournal': '게재지 전체',
+  'search.filter.year': '발표 연도',
+  'search.filter.yearFrom': '연도부터',
+  'search.filter.yearTo': '연도까지',
+
   // 메뉴는 '소식' 이지만 카테고리 라벨은 아직 '파킨온 소식' 이다.
   // 허브 페이지 문구가 옛 정의(파킨온이 정리하는 연구 요약)로 쓰여 있어서,
   // 소식 발행 체계를 만드는 0-7 에서 한꺼번에 다시 쓴다.

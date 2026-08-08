@@ -140,6 +140,57 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       </nav>
 
       {/*
+        검색+필터(오너 확정 2026-08-08: "검색은 db에서 검색되는거 맞지" — 화면에 이미 구운
+        30/15건과 무관하게 Supabase 를 실시간으로 조회한다. functions/api/trials.js,
+        functions/api/research.js 참고). 국가 탭보다 위에 둔다(오너 지시). 검색 중엔
+        아래 국가 탭·피드를 숨기고 결과 목록으로 바꾼다 — 두 모드가 동시에 안 보인다.
+      */}
+      <div class="search-bar" id="searchBar">
+        <div class="search-row">
+          <input type="search" id="searchQuery" class="search-input" placeholder={t(locale, 'search.placeholder' as DictKey)} />
+          <select id="searchCountry" class="search-select">
+            <option value="all">{t(locale, 'country.all' as DictKey)}</option>
+            {TRIAL_COUNTRIES.map((c) => <option value={c.code}>{t(locale, `country.${c.code}` as DictKey)}</option>)}
+          </select>
+          <button id="searchSubmit" class="search-btn"><Tr k="search.submit" /></button>
+          <button id="searchClear" class="search-btn-ghost" hidden><Tr k="search.clear" /></button>
+        </div>
+        <div class="search-filters" id="filtersTrials">
+          <select id="filterPhase">
+            <option value="">{t(locale, 'search.filter.anyPhase' as DictKey)}</option>
+            {['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => (
+              <option value={k}>{t(locale, `phase.${k}` as DictKey)}</option>
+            ))}
+          </select>
+          <label class="date-filter">
+            <Tr k="search.filter.startDate" />
+            <input type="date" id="filterDateFrom" />
+            <span>~</span>
+            <input type="date" id="filterDateTo" />
+          </label>
+          <input type="text" id="filterSponsor" placeholder={t(locale, 'search.filter.sponsor' as DictKey)} />
+        </div>
+        <div class="search-filters" id="filtersResearch" hidden>
+          <select id="filterPubtype">
+            <option value="">{t(locale, 'search.filter.anyPubtype' as DictKey)}</option>
+            {Object.entries(PUBTYPE_BADGE).map(([raw, key]) => <option value={raw}>{t(locale, key)}</option>)}
+          </select>
+          <select id="filterJournal">
+            <option value="">{t(locale, 'search.filter.anyJournal' as DictKey)}</option>
+            {['Mov Disord', 'Lancet Neurol', 'Brain', 'JAMA Neurol', 'Neurology'].map((j) => <option value={j}>{j}</option>)}
+          </select>
+          <label class="date-filter">
+            <Tr k="search.filter.year" />
+            <input type="number" id="filterYearFrom" placeholder={t(locale, 'search.filter.yearFrom' as DictKey)} />
+            <span>~</span>
+            <input type="number" id="filterYearTo" placeholder={t(locale, 'search.filter.yearTo' as DictKey)} />
+          </label>
+        </div>
+      </div>
+
+      <div id="browseMode">
+
+      {/*
         국가 전환 = 완전히 다른 나라의 데이터로 넘어가는 것이다. 필터(운동 영상 난이도처럼
         한 목록을 거르는 것)와 성격이 달라서 알약 버튼을 쓰지 않는다(오너 지적 2026-08-08:
         "니처럼 알약으로 메뉴탭 하는 곳이 있나" — 실제로 WHO 국가 목록·위키백과 언어 전환
@@ -265,12 +316,15 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                   ))}
                 </div>
               )}
-              {c.data.overflowUrl && (
-                <p class="overflow">
-                  {tv(locale, 'clinical.overflowNote', { shown: String(c.data.shown.length), total: String(c.data.total) })}
-                  {' · '}
-                  <a href={c.data.overflowUrl} target="_blank" rel="noopener"><Tr k="clinical.seeAll" /></a>
-                </p>
+              {c.data.total > c.data.shown.length && (
+                <button
+                  class="load-more"
+                  data-feed="trials"
+                  data-country={c.code}
+                  data-shown={c.data.shown.length}
+                >
+                  <Tr k="search.loadMore" /> ({c.data.shown.length}/{c.data.total})
+                </button>
               )}
             </div>
           ))
@@ -323,17 +377,29 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                     })}
                   </div>
                 )}
-                {c.research.overflowUrl && (
-                  <p class="overflow">
-                    {tv(locale, 'research.overflowNote', { shown: String(c.research.shown.length), total: String(c.research.total) })}
-                    {' · '}
-                    <a href={c.research.overflowUrl} target="_blank" rel="noopener"><Tr k="research.seeAll" /></a>
-                  </p>
+                {c.research.total > c.research.shown.length && (
+                  <button
+                    class="load-more"
+                    data-feed="research"
+                    data-country={c.code}
+                    data-shown={c.research.shown.length}
+                  >
+                    <Tr k="search.loadMore" /> ({c.research.shown.length}/{c.research.total})
+                  </button>
                 )}
               </div>
             ))
           }
         </div>
+      </div>
+
+      </div>
+
+      <div id="searchResults" hidden>
+        <p id="searchResultCount" class="search-result-count"></p>
+        <div class="trial-list" id="searchResultList"></div>
+        <p class="empty" id="searchEmpty" hidden><Tr k="search.noResults" /></p>
+        <button class="load-more" id="searchLoadMore" hidden><Tr k="search.loadMore" /></button>
       </div>
     </main>
 
@@ -344,6 +410,36 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 
   <Footer />
 </Layout>
+
+{/*
+  클라이언트에서 검색·더보기 결과로 새 카드를 그릴 때 쓰는 라벨 모음 — 사전(src/i18n)
+  값을 여기 한 번만 내려보낸다. functions/api/*.js(순수 JS, i18n 접근 불가)가 아니라
+  이 페이지가 서버에서 번역해 내려주는 것이라 한글을 새로 하드코딩하지 않는다.
+*/}
+<script type="application/json" id="clientLabels" set:html={JSON.stringify({
+  locale,
+  phaseGlossaryUrl,
+  phaseLabels: Object.fromEntries(['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => [k, phaseLabel(k)])),
+  phaseDescs: Object.fromEntries(['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => [k, phaseDesc(k)])),
+  pubtypeLabels: Object.fromEntries(Object.entries(PUBTYPE_BADGE).map(([raw, key]) => [raw, t(locale, key)])),
+  ui: {
+    recruiting: t(locale, 'clinical.recruiting' as DictKey),
+    viewOriginal: t(locale, 'clinical.viewOriginal' as DictKey),
+    phase: t(locale, 'clinical.phase' as DictKey),
+    phaseHelp: t(locale, 'clinical.phaseHelp' as DictKey),
+    phaseMore: t(locale, 'clinical.phaseMore' as DictKey),
+    duration: t(locale, 'clinical.duration' as DictKey),
+    estimated: t(locale, 'clinical.estimated' as DictKey),
+    sponsor: t(locale, 'clinical.sponsor' as DictKey),
+    journal: t(locale, 'research.journal' as DictKey),
+    published: t(locale, 'research.published' as DictKey),
+    readAbstract: t(locale, 'research.readAbstract' as DictKey),
+    readFullText: t(locale, 'research.readFullText' as DictKey),
+    paidNotice: t(locale, 'research.paidNotice' as DictKey),
+    loadMore: t(locale, 'search.loadMore' as DictKey),
+    noResults: t(locale, 'search.noResults' as DictKey),
+  },
+})} />
 
 <style>
   .breadcrumb {
@@ -719,6 +815,120 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       margin-top: 8px;
     }
   }
+
+  /* 검색+필터 — 국가 탭보다 위(오너 지시 2026-08-08). */
+  .search-bar {
+    margin: 20px 0 8px;
+    padding: 16px;
+    background: var(--surface-low);
+    border-radius: 12px;
+  }
+  .search-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--outline);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  .search-select,
+  .search-filters select,
+  .search-filters input {
+    height: 40px;
+    padding: 0 10px;
+    border: 1.5px solid var(--outline);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13.5px;
+  }
+  .search-btn,
+  .search-btn-ghost {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .search-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+  }
+  .search-btn-ghost {
+    background: none;
+    border: 1.5px solid var(--outline);
+    color: var(--text-sub);
+  }
+  .search-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  /* [hidden]이 display:flex 에 덮여쓰던 것을 되돌린다(2026-08-08 실측 — 임상시험/연구
+     필터가 동시에 보였음). display 속성을 직접 쓰는 요소는 항상 [hidden] 도 같이 챙길 것. */
+  .search-filters[hidden] {
+    display: none;
+  }
+  .date-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .date-filter input {
+    width: 90px;
+  }
+  #filterYearFrom,
+  #filterYearTo {
+    width: 80px;
+  }
+
+  .load-more {
+    display: block;
+    margin: 20px auto 0;
+    height: 44px;
+    padding: 0 24px;
+    background: var(--surface-low);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .load-more[hidden] {
+    display: none;
+  }
+  .search-result-count {
+    font-size: 13.5px;
+    color: var(--text-sub);
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    .search-row {
+      flex-direction: column;
+    }
+    .search-input,
+    .search-select,
+    .search-btn,
+    .search-btn-ghost {
+      width: 100%;
+      /* flex-direction 이 column 이 되면 flex-basis(200px)가 가로 대신 높이에 적용돼
+         입력창이 200px 높이로 늘어졌다(2026-08-08 실측) — flex 자체를 꺼서 막는다. */
+      flex: none;
+    }
+  }
 </style>
 
 <script>
@@ -790,4 +1000,210 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       /* 지오로케이션 실패 시 조용히 "전체" 기본값 유지 — 오류를 화면에 보여주지 않는다. */
     }
   })();
+</script>
+
+<script>
+  /*
+   * 검색+더보기 — functions/api/trials.js, functions/api/research.js 를 방문 중에 실시간
+   * 호출한다(오너 확정 2026-08-08). 새 카드를 그릴 때 쓰는 라벨은 #clientLabels(위 JSON,
+   * 서버에서 사전 값을 미리 번역해 내려준 것)에서 가져온다 — 여기서 한글을 새로 짓지 않는다.
+   */
+  interface ClientLabels {
+    locale: string;
+    phaseGlossaryUrl: string;
+    phaseLabels: Record<string, string>;
+    phaseDescs: Record<string, string>;
+    pubtypeLabels: Record<string, string>;
+    ui: Record<string, string>;
+  }
+  const LABELS: ClientLabels = JSON.parse(document.getElementById('clientLabels')!.textContent!);
+  const MONTH_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function esc(s: string) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function durationTextClient(t: { startDate: string | null; startDateEstimated: boolean; completionDate: string | null; completionDateEstimated: boolean }) {
+    const est = LABELS.ui.estimated;
+    const start = t.startDate ? t.startDate + (t.startDateEstimated ? ` (${est})` : '') : null;
+    const end = t.completionDate ? t.completionDate + (t.completionDateEstimated ? ` (${est})` : '') : null;
+    if (start && end) return `${start} ~ ${end}`;
+    return start ?? end;
+  }
+
+  function pubDateTextClient(paper: { pubYear: string | null; pubMonth: number | null }) {
+    if (!paper.pubYear) return '';
+    if (LABELS.locale === 'en') {
+      return paper.pubMonth ? `${MONTH_EN[paper.pubMonth - 1]} ${paper.pubYear}` : paper.pubYear;
+    }
+    return paper.pubMonth ? `${paper.pubYear}년 ${paper.pubMonth}월` : `${paper.pubYear}년`;
+  }
+
+  function trialCardHtml(trial: any): string {
+    const title = esc(trial.titleTranslated ?? trial.title);
+    const phaseLabel = trial.phaseKey ? LABELS.phaseLabels[trial.phaseKey] : null;
+    const phaseDesc = trial.phaseKey ? LABELS.phaseDescs[trial.phaseKey] : null;
+    const duration = durationTextClient(trial);
+    let dl = '';
+    if (phaseLabel) {
+      dl += `<dt>${esc(LABELS.ui.phase)}</dt><dd>${esc(phaseLabel)}
+        <details class="phase-help"><summary aria-label="${esc(LABELS.ui.phaseHelp)}">?</summary>
+        <p>${esc(phaseDesc ?? '')} <a href="${LABELS.phaseGlossaryUrl}">${esc(LABELS.ui.phaseMore)}</a></p>
+        </details></dd>`;
+    }
+    if (duration) dl += `<dt>${esc(LABELS.ui.duration)}</dt><dd>${esc(duration)}</dd>`;
+    if (trial.sponsor) dl += `<dt>${esc(LABELS.ui.sponsor)}</dt><dd>${esc(trial.sponsor)}</dd>`;
+    return `<details class="trial-card">
+      <summary><span class="badge">${esc(LABELS.ui.recruiting)}</span><h3>${title}</h3></summary>
+      <a class="view-link" href="${trial.url}" target="_blank" rel="noopener">${esc(LABELS.ui.viewOriginal)} (${esc(trial.nctId)})</a>
+      <dl>${dl}</dl>
+    </details>`;
+  }
+
+  function researchCardHtml(paper: any): string {
+    const title = esc(paper.titleTranslated ?? paper.title);
+    const badges = (paper.pubTypes ?? []).map((pt: string) => LABELS.pubtypeLabels[pt]).filter(Boolean);
+    const badgesHtml = badges.map((b: string) => `<span class="badge">${esc(b)}</span>`).join('');
+    const sections = paper.abstractTranslated ?? paper.abstract ?? [];
+    const abstractHtml = sections
+      .map((sec: any) => `<div class="abstract-section">${sec.label ? `<p class="abstract-label">${esc(sec.label)}</p>` : ''}<p class="abstract-text">${esc(sec.text)}</p></div>`)
+      .join('');
+    return `<details class="research-card">
+      <summary>
+        <div class="badges">${badgesHtml}</div>
+        <h3>${title}</h3>
+        <p class="research-meta">${esc(LABELS.ui.journal)}: ${esc(paper.journal)} · ${esc(LABELS.ui.published)}: ${esc(pubDateTextClient(paper))}</p>
+      </summary>
+      <div class="research-abstract">${abstractHtml}</div>
+      <p class="paid-notice">${esc(LABELS.ui.paidNotice)}</p>
+      <div class="research-links">
+        <a href="${paper.pubmedUrl}" target="_blank" rel="noopener">${esc(LABELS.ui.readAbstract)}</a>
+        ${paper.fullTextUrl ? `<a href="${paper.fullTextUrl}" target="_blank" rel="noopener">${esc(LABELS.ui.readFullText)}</a>` : ''}
+      </div>
+    </details>`;
+  }
+
+  /* 국가 탭 브라우징 화면의 "더 보기" — 그 나라·그 피드만 다음 페이지를 이어붙인다. */
+  document.querySelectorAll<HTMLButtonElement>('#browseMode .load-more').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const feed = btn.dataset.feed as 'trials' | 'research';
+      const country = btn.dataset.country!;
+      const shown = Number(btn.dataset.shown ?? '0');
+      btn.disabled = true;
+      try {
+        const params = new URLSearchParams({ country, offset: String(shown), locale: LABELS.locale });
+        const res = await fetch(`/api/${feed === 'trials' ? 'trials' : 'research'}?${params}`);
+        const json = await res.json();
+        const items = json.items ?? [];
+        const panel = btn.closest(feed === 'trials' ? '.country-panel' : '.research-panel');
+        const list = panel?.querySelector(feed === 'trials' ? '.trial-list' : '.research-list');
+        if (list) list.insertAdjacentHTML('beforeend', items.map((it: any) => (feed === 'trials' ? trialCardHtml(it) : researchCardHtml(it))).join(''));
+        const newShown = shown + items.length;
+        const total = json.total ?? newShown;
+        if (newShown >= total) {
+          btn.remove();
+        } else {
+          btn.dataset.shown = String(newShown);
+          btn.textContent = `${LABELS.ui.loadMore} (${newShown}/${total})`;
+          btn.disabled = false;
+        }
+      } catch {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  /* 검색+필터 */
+  const searchQuery = document.getElementById('searchQuery') as HTMLInputElement;
+  const searchCountrySel = document.getElementById('searchCountry') as HTMLSelectElement;
+  const searchSubmitBtn = document.getElementById('searchSubmit') as HTMLButtonElement;
+  const searchClearBtn = document.getElementById('searchClear') as HTMLButtonElement;
+  const filtersTrialsEl = document.getElementById('filtersTrials')!;
+  const filtersResearchEl = document.getElementById('filtersResearch')!;
+  const browseModeEl = document.getElementById('browseMode')!;
+  const searchResultsEl = document.getElementById('searchResults')!;
+  const searchResultListEl = document.getElementById('searchResultList')!;
+  const searchResultCountEl = document.getElementById('searchResultCount')!;
+  const searchEmptyEl = document.getElementById('searchEmpty') as HTMLParagraphElement;
+  const searchLoadMoreBtn = document.getElementById('searchLoadMore') as HTMLButtonElement;
+
+  function currentFeed(): 'trials' | 'research' {
+    return document.querySelector<HTMLButtonElement>('#feedTabs .pill.active')?.dataset.feed === 'research' ? 'research' : 'trials';
+  }
+
+  /* 필터 패널도 임상시험/연구 전환에 맞춰 같이 바뀐다. */
+  document.querySelectorAll<HTMLButtonElement>('#feedTabs .pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const feed = btn.dataset.feed;
+      filtersTrialsEl.hidden = feed !== 'trials';
+      filtersResearchEl.hidden = feed !== 'research';
+    });
+  });
+
+  function buildParams(offset: number): URLSearchParams {
+    const feed = currentFeed();
+    const params = new URLSearchParams({ locale: LABELS.locale, country: searchCountrySel.value, offset: String(offset) });
+    const q = searchQuery.value.trim();
+    if (q) params.set('q', q);
+    if (feed === 'trials') {
+      const phase = (document.getElementById('filterPhase') as HTMLSelectElement).value;
+      const dateFrom = (document.getElementById('filterDateFrom') as HTMLInputElement).value;
+      const dateTo = (document.getElementById('filterDateTo') as HTMLInputElement).value;
+      const sponsor = (document.getElementById('filterSponsor') as HTMLInputElement).value.trim();
+      if (phase) params.set('phase', phase);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+      if (sponsor) params.set('sponsor', sponsor);
+    } else {
+      const pubtype = (document.getElementById('filterPubtype') as HTMLSelectElement).value;
+      const journal = (document.getElementById('filterJournal') as HTMLSelectElement).value;
+      const yearFrom = (document.getElementById('filterYearFrom') as HTMLInputElement).value.trim();
+      const yearTo = (document.getElementById('filterYearTo') as HTMLInputElement).value.trim();
+      if (pubtype) params.set('pubtype', pubtype);
+      if (journal) params.set('journal', journal);
+      if (yearFrom) params.set('year_from', yearFrom);
+      if (yearTo) params.set('year_to', yearTo);
+    }
+    return params;
+  }
+
+  let searchOffset = 0;
+
+  async function runSearch(reset: boolean) {
+    const feed = currentFeed();
+    if (reset) {
+      searchOffset = 0;
+      searchResultListEl.innerHTML = '';
+    }
+    const params = buildParams(searchOffset);
+    const res = await fetch(`/api/${feed === 'trials' ? 'trials' : 'research'}?${params}`);
+    const json = await res.json();
+    const total = json.total ?? 0;
+    const items = json.items ?? [];
+    searchResultListEl.insertAdjacentHTML('beforeend', items.map((it: any) => (feed === 'trials' ? trialCardHtml(it) : researchCardHtml(it))).join(''));
+    searchOffset += items.length;
+
+    searchEmptyEl.hidden = total > 0;
+    searchResultCountEl.textContent = total > 0 ? `${total}` : '';
+    searchLoadMoreBtn.hidden = searchOffset >= total;
+    if (!searchLoadMoreBtn.hidden) searchLoadMoreBtn.textContent = `${LABELS.ui.loadMore} (${searchOffset}/${total})`;
+  }
+
+  searchSubmitBtn.addEventListener('click', () => {
+    browseModeEl.hidden = true;
+    searchResultsEl.hidden = false;
+    searchClearBtn.hidden = false;
+    runSearch(true);
+  });
+  searchQuery.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchSubmitBtn.click();
+  });
+  searchClearBtn.addEventListener('click', () => {
+    browseModeEl.hidden = false;
+    searchResultsEl.hidden = true;
+    searchClearBtn.hidden = true;
+    searchQuery.value = '';
+    searchResultListEl.innerHTML = '';
+  });
+  searchLoadMoreBtn.addEventListener('click', () => runSearch(false));
 </script>

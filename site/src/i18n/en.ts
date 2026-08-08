@@ -103,6 +103,20 @@ const en = {
   'research.pubtype.systematicReview': 'Systematic review',
   'research.pubtype.observational': 'Observational study',
 
+  'search.placeholder': 'Search by title',
+  'search.submit': 'Search',
+  'search.clear': 'Clear',
+  'search.loadMore': 'Load more',
+  'search.noResults': 'No results found.',
+  'search.filter.anyPhase': 'Any phase',
+  'search.filter.startDate': 'Start date',
+  'search.filter.sponsor': 'Sponsor',
+  'search.filter.anyPubtype': 'Any study type',
+  'search.filter.anyJournal': 'Any journal',
+  'search.filter.year': 'Published year',
+  'search.filter.yearFrom': 'From year',
+  'search.filter.yearTo': 'To year',
+
   // 카테고리 라벨 — 빵부스러기와 사이드 패널 제목에 쓴다.
   // 메뉴 라벨과 일부러 분리해 뒀다: 메뉴는 짧게, 카테고리는 설명적으로 갈 수 있다.
   'category.news': 'News',

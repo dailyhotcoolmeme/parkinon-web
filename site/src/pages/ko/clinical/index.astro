@@ -98,6 +98,17 @@ const PUBTYPE_BADGE: Record<string, DictKey> = {
 };
 const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).filter((k): k is DictKey => Boolean(k));
 
+/* 발표일도 번역 대상이다(오너 확정 2026-08-08) — PubMed 영어 월 축약("Aug")을 그대로
+   보여주지 않고 언어판에 맞게 새로 조립한다. */
+const MONTH_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function pubDateText(paper: { pubYear: string | null; pubMonth: number | null }) {
+  if (!paper.pubYear) return '';
+  if (locale === 'en') {
+    return paper.pubMonth ? `${MONTH_EN[paper.pubMonth - 1]} ${paper.pubYear}` : paper.pubYear;
+  }
+  return paper.pubMonth ? `${paper.pubYear}년 ${paper.pubMonth}월` : `${paper.pubYear}년`;
+}
+
 const phaseDesc = (phaseKey: string | null) => (phaseKey ? t(locale, `phaseDesc.${phaseKey}` as DictKey) : null);
 
 /* 시작일·종료일 중 있는 것만 이어붙인다. 둘 다 없으면 이 줄 자체를 안 그린다(astro 쪽에서 처리). */
@@ -151,7 +162,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
               data-total={c.data.total}
               data-research-total={c.research.total}
             >
-              {c.label} <span class="n">{c.data.total}</span>
+              {c.label}
             </button>
           ))
         }
@@ -298,10 +309,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                               {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
                             </div>
                             <h3>{tr?.title ?? paper.title}</h3>
+                            <p class="research-meta">
+                              <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {pubDateText(paper)}
+                            </p>
                           </summary>
-                          <p class="research-meta">
-                            <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {paper.pubDate}
-                          </p>
                           {tr ? (
                             <div class="research-abstract">
                               {tr.abstract.map((sec) => (
@@ -499,6 +510,9 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     font-size: 17px;
     line-height: 1.5;
     color: var(--text);
+    /* 한글 어절 중간에서 줄바꿈되던 것을 막는다(오너 지적 2026-08-08) — 이 사이트 다른
+       제목들과 같은 규칙(AppPromo.astro, index.astro). */
+    word-break: keep-all;
   }
   .trial-card dl {
     margin-top: 12px;
@@ -665,6 +679,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     font-size: 17px;
     line-height: 1.5;
     color: var(--text);
+    word-break: keep-all;
   }
   .research-meta {
     margin-top: 6px;

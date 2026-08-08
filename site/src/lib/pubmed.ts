@@ -54,7 +54,9 @@ export interface ResearchPaper {
   pmid: string;
   title: string;
   journal: string;
-  pubDate: string;
+  /** 연·월을 숫자로 따로 둔다 — 화면에서 언어별로 "2026년 8월"/"Aug 2026" 형식을 고른다. */
+  pubYear: string | null;
+  pubMonth: number | null;
   pubTypes: string[];
   abstract: AbstractSection[];
   doi: string | null;
@@ -123,6 +125,12 @@ export async function fetchResearchPapersForCountry(code: string): Promise<Resea
   return runSearch(termForCountry(code));
 }
 
+/** PubMed XML의 <Month> 은 보통 영어 3글자 축약(Aug)이다 — 화면에서 언어별로 새로 조립한다. */
+const MONTH_NUMBER: Record<string, number> = {
+  Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
+  Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
+};
+
 /*
  * 가벼운 XML 파싱 — DOMParser 가 없는 빌드 환경(Node/Astro SSG)이라 정규식으로 뽑는다.
  * PubMedArticle 블록 단위로 잘라서 그 안에서만 찾기 때문에, 다른 논문의 값이
@@ -135,7 +143,8 @@ function parsePubmedXml(xml: string): ResearchPaper[] {
     const title = decodeEntities(matchOne(block, /<ArticleTitle[^>]*>([\s\S]*?)<\/ArticleTitle>/) ?? '').replace(/<[^>]+>/g, '');
     const journal = decodeEntities(matchOne(block, /<Journal>[\s\S]*?<Title>([\s\S]*?)<\/Title>/) ?? '');
     const year = matchOne(block, /<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/);
-    const month = matchOne(block, /<PubDate>[\s\S]*?<Month>(\w+)<\/Month>/);
+    const monthRaw = matchOne(block, /<PubDate>[\s\S]*?<Month>(\w+)<\/Month>/);
+    const month = monthRaw ? (MONTH_NUMBER[monthRaw] ?? Number(monthRaw)) || null : null;
     const pubTypes = [...block.matchAll(/<PublicationType[^>]*>([\s\S]*?)<\/PublicationType>/g)].map((m) =>
       decodeEntities(m[1])
     );
@@ -150,7 +159,8 @@ function parsePubmedXml(xml: string): ResearchPaper[] {
       pmid: pmid ?? '',
       title,
       journal,
-      pubDate: [year, month].filter(Boolean).join(' '),
+      pubYear: year,
+      pubMonth: month,
       pubTypes,
       abstract,
       doi,

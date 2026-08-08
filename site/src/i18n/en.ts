@@ -25,7 +25,7 @@ const en = {
   // 메뉴 — 항목별 노출 여부는 src/lib/nav.ts 의 AVAILABLE 이 정한다(번역과 별개)
   'nav.news': 'News',
   'nav.lifestyle': 'Daily living',
-  'nav.clinical': 'Clinical trials',
+  'nav.clinical': 'Clinical Trials & Research',
   'nav.exercise': 'Exercise videos',
   /* ⚠️ 허브 히어로 보조문구 — 절대 기관명·통계·나라별 사실을 넣지 말 것.
      이 값은 그대로 '번역'만 되어 모든 언어판에 실린다(다시 쓰지 않는다).

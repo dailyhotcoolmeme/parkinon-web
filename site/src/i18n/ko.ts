@@ -84,14 +84,19 @@ const ko: Dict = {
   'search.clear': '초기화',
   'search.loadMore': '더 보기',
   'search.noResults': '검색 결과가 없습니다.',
+  'search.resultCount': '검색 결과 {n}건',
+  'search.resultCountForQuery': "'{q}' 검색 결과 {n}건",
   'search.filter.anyPhase': '임상 단계 전체',
-  'search.filter.startDate': '시작일',
+  'search.filter.startDate': '기간',
   'search.filter.sponsor': '주관 기관',
   'search.filter.anyPubtype': '연구 유형 전체',
   'search.filter.anyJournal': '게재지 전체',
   'search.filter.year': '발표 연도',
   'search.filter.yearFrom': '연도부터',
   'search.filter.yearTo': '연도까지',
+
+  'date.yearMonth': '{y}년 {m}월',
+  'date.yearOnly': '{y}년',
 
   // 메뉴는 '소식' 이지만 카테고리 라벨은 아직 '파킨온 소식' 이다.
   // 허브 페이지 문구가 옛 정의(파킨온이 정리하는 연구 요약)로 쓰여 있어서,
@@ -115,9 +120,16 @@ const ko: Dict = {
   'source.contact': '문의',
   'source.notice': '내용이 바뀐 것을 발견하시면 admin@ourmine.co.kr 로 알려주세요.',
 
+  'home.todayRecommend': '{m}월 {d}일의 추천',
+  'home.todayDate': '오늘 · {y}.{m}.{d}',
+  'home.featureExpand': '내용 전체 보기',
+  'home.featureCollapse': '접기',
+
   'app.promoTitle': '약 복용은 앱으로 관리하세요',
   'app.promoBody': '파킨온 앱은 복용 시간을 알려주고 기록을 남깁니다. 보호자와도 함께 볼 수 있습니다.',
   'app.shotAlt': '파킨온 앱의 오늘 복용 현황 화면',
+
+  'medSchedule.deleteMed': '{name} 삭제',
 
   'footer.quickLinks': '바로가기',
   'footer.support': '고객지원',

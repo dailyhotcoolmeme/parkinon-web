@@ -69,7 +69,8 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       </nav>
 
       <div class="hub-tabs" id="tagTabs">
-        <button class="tab active" data-tag="전체">전체</button>
+        {/* data-tag="all" — 고정 식별자. exercise 페이지와 같은 이유(2026-08-08). */}
+        <button class="tab active" data-tag="all">전체</button>
         {TAGS.map((t) => <button class="tab" data-tag={t}>{t}</button>)}
       </div>
 
@@ -275,7 +276,7 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       const tag = tab.dataset.tag;
       let shown = 0;
       rows.forEach((row) => {
-        row.hidden = tag !== '전체' && row.dataset.tag !== tag;
+        row.hidden = tag !== 'all' && row.dataset.tag !== tag;
         if (!row.hidden) shown++;
       });
       if (emptyState) emptyState.hidden = shown > 0;

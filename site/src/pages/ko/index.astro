@@ -25,6 +25,7 @@ import shot8 from '../../assets/images/appshots/parkinon8.png';
 import shotEtc from '../../assets/images/appshots/parkinon_etc.png';
 
 import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
+import { t, type DictKey } from '../../i18n';
 const locale = Astro.currentLocale ?? 'ko';
 
 const appShots = [
@@ -104,7 +105,7 @@ const newsRows = [
       <section>
         <div class="news-head">
           <h2>오늘의 파킨온 소식</h2>
-          <span class="today" id="todayLabel"></span>
+          <span class="today" id="todayLabel" data-template={t(locale, 'home.todayRecommend' as DictKey)}></span>
         </div>
         <div class="news-layout">
           <article class="feature-card">
@@ -116,9 +117,17 @@ const newsRows = [
             <p class="excerpt">
               혼자보다 둘, 셋이 걸을 때 보폭과 균형을 더 잘 챙기게 됩니다. 안전한 동행 산책을 위한 실전 팁을 정리했습니다.
             </p>
-            <p class="meta" id="featureDate"></p>
-            <button type="button" class="feature-toggle" id="featureToggle" aria-expanded="false" aria-controls="featureFull">
-              <span>내용 전체 보기</span>
+            <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
+            <button
+              type="button"
+              class="feature-toggle"
+              id="featureToggle"
+              aria-expanded="false"
+              aria-controls="featureFull"
+              data-expand-label={t(locale, 'home.featureExpand' as DictKey)}
+              data-collapse-label={t(locale, 'home.featureCollapse' as DictKey)}
+            >
+              <span>{t(locale, 'home.featureExpand' as DictKey)}</span>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
             </button>
             <div class="feature-full" id="featureFull">
@@ -726,21 +735,34 @@ const newsRows = [
   }
 </style>
 
+{/*
+  ⚠️ 날짜·토글 문구는 절대 여기서 새로 짓지 않는다 — 서버가 t()로 미리 번역해 data-*
+  속성에 심어둔 템플릿을 그대로 갖다 쓴다(2026-08-08 오너 전수조사 지시로, 예전엔
+  "~월 ~일의 추천"/"오늘 · ..."/"접기" 가 여기 한글로 직접 박혀 있었다 — src/pages는
+  check-i18n.mjs 검사에서 빠져 있어서 안 잡혔었고, 지금은 <script> 블록도 검사한다). */}
 <script>
   const today = new Date();
-  const label = `${today.getMonth() + 1}월 ${today.getDate()}일의 추천`;
-  document.getElementById('todayLabel')!.textContent = label;
-
   const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
-  document.getElementById('featureDate')!.textContent =
-    `오늘 · ${today.getFullYear()}.${pad(today.getMonth() + 1)}.${pad(today.getDate())}`;
+
+  const todayLabelEl = document.getElementById('todayLabel')!;
+  todayLabelEl.textContent = (todayLabelEl.dataset.template ?? '')
+    .replace('{m}', String(today.getMonth() + 1))
+    .replace('{d}', String(today.getDate()));
+
+  const featureDateEl = document.getElementById('featureDate')!;
+  featureDateEl.textContent = (featureDateEl.dataset.template ?? '')
+    .replace('{y}', String(today.getFullYear()))
+    .replace('{m}', pad(today.getMonth() + 1))
+    .replace('{d}', pad(today.getDate()));
 
   const featureToggle = document.getElementById('featureToggle')!;
   const featureFull = document.getElementById('featureFull')!;
   featureToggle.addEventListener('click', () => {
     const open = featureFull.classList.toggle('open');
     featureToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    featureToggle.querySelector('span')!.textContent = open ? '접기' : '내용 전체 보기';
+    featureToggle.querySelector('span')!.textContent = open
+      ? (featureToggle.dataset.collapseLabel ?? '')
+      : (featureToggle.dataset.expandLabel ?? '');
   });
 
   const appPreviewToggle = document.getElementById('appPreviewToggle')!;

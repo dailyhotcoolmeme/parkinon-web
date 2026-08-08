@@ -65,7 +65,10 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
       <ExerciseSourceNote source={EXERCISE_SOURCE} />
 
       <div class="hub-tabs" id="diffTabs">
-        <button class="tab active" data-diff="전체">전체</button>
+        {/* data-diff="all" — 고정 식별자다. 화면에 보이는 "전체" 글자와 분리해 둔다 —
+            비교 로직(아래 <script>)이 화면 문구를 그대로 비교하면 문구가 바뀌거나 다른
+            언어판이 생기는 순간 깨진다(2026-08-08 오너 지시로 전수조사해서 발견). */}
+        <button class="tab active" data-diff="all">전체</button>
         {DIFFICULTIES.map((d) => <button class="tab" data-diff={d}>{d}</button>)}
       </div>
 
@@ -264,7 +267,7 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
       tab.classList.add('active');
       const diff = tab.dataset.diff;
       cards.forEach((card) => {
-        card.hidden = diff !== '전체' && card.dataset.diff !== diff;
+        card.hidden = diff !== 'all' && card.dataset.diff !== diff;
       });
     });
   });

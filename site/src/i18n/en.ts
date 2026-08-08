@@ -108,14 +108,19 @@ const en = {
   'search.clear': 'Clear',
   'search.loadMore': 'Load more',
   'search.noResults': 'No results found.',
+  'search.resultCount': '{n} results',
+  'search.resultCountForQuery': '{n} results for "{q}"',
   'search.filter.anyPhase': 'Any phase',
-  'search.filter.startDate': 'Start date',
+  'search.filter.startDate': 'Period',
   'search.filter.sponsor': 'Sponsor',
   'search.filter.anyPubtype': 'Any study type',
   'search.filter.anyJournal': 'Any journal',
   'search.filter.year': 'Published year',
   'search.filter.yearFrom': 'From year',
   'search.filter.yearTo': 'To year',
+
+  'date.yearMonth': '{m} {y}',
+  'date.yearOnly': '{y}',
 
   // 카테고리 라벨 — 빵부스러기와 사이드 패널 제목에 쓴다.
   // 메뉴 라벨과 일부러 분리해 뒀다: 메뉴는 짧게, 카테고리는 설명적으로 갈 수 있다.
@@ -138,10 +143,17 @@ const en = {
   'source.contact': 'Contact',
   'source.notice': 'If you find anything out of date, please let us know at admin@ourmine.co.kr.',
 
+  'home.todayRecommend': "Today's pick, {m}/{d}",
+  'home.todayDate': 'Today · {y}.{m}.{d}',
+  'home.featureExpand': 'View full content',
+  'home.featureCollapse': 'Collapse',
+
   'app.promoTitle': 'Manage your medication with the app',
   'app.promoBody':
     'Parkinon reminds you when to take your medication and keeps a record. Your family can follow along too.',
   'app.shotAlt': 'The Parkinon app showing today’s medication status',
+
+  'medSchedule.deleteMed': 'Delete {name}',
 
   'footer.quickLinks': 'Quick links',
   'footer.support': 'Support',

@@ -107,7 +107,13 @@ function parseArticle(block) {
   const year = matchOne(block, /<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/);
   const monthRaw = matchOne(block, /<PubDate>[\s\S]*?<Month>(\w+)<\/Month>/);
   const month = monthRaw ? (MONTH_NUMBER[monthRaw] ?? Number(monthRaw)) || null : null;
-  const pubTypes = [...block.matchAll(/<PublicationType[^>]*>([\s\S]*?)<\/PublicationType>/g)].map((m) => decodeEntities(m[1]));
+  // ⚠️ \b(단어 경계) 필수 — PubMed XML은 각 <PublicationType>을 <PublicationTypeList>로
+  // 감싸는데, \b 없이는 "PublicationType"이 "PublicationTypeList"의 앞부분과도 매칭돼서
+  // 첫 <PublicationType> 태그 전체가 그대로 안으로 삼켜졌다(2026-08-08 발견 — DB 전체
+  // 11,641건 연구 논문의 pubtype에 "<PublicationType UI=\"...\">실제값" 형태로 태그가
+  // 그대로 저장돼 있었다. 배지 매칭이 그 값을 못 찾아서 거의 모든 논문이 배지가 적게
+  // 나오고 있었다).
+  const pubTypes = [...block.matchAll(/<PublicationType\b[^>]*>([\s\S]*?)<\/PublicationType>/g)].map((m) => decodeEntities(m[1]));
   const abstractBlock = matchOne(block, /<Abstract>([\s\S]*?)<\/Abstract>/) ?? '';
   const abstract = [...abstractBlock.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)].map((m) => ({
     label: matchOne(m[1], /Label="([^"]*)"/),

@@ -1,6 +1,7 @@
 ---
 // 도구 메뉴는 내비게이션에서 숨겨져 있다 — tools/index.astro 상단 주석 참고.
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { t, type DictKey } from '../../../i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
@@ -46,15 +47,18 @@ const locale = Astro.currentLocale ?? 'ko';
           <div class="field">
             <label>복용 시간</label>
             <div class="time-checks">
-              <label class="time-check"><input type="checkbox" value="아침" /><span>아침</span></label>
-              <label class="time-check"><input type="checkbox" value="점심" /><span>점심</span></label>
-              <label class="time-check"><input type="checkbox" value="저녁" /><span>저녁</span></label>
-              <label class="time-check"><input type="checkbox" value="취침전" /><span>취침 전</span></label>
+              {/* value = 고정 식별자(영문). 화면 글자(아침/점심/저녁/취침 전)와 분리해 둔다 —
+                  아래 <script>가 값을 그대로 비교하므로 문구가 바뀌거나 다른 언어판이
+                  생겨도 안 깨진다(2026-08-08 오너 지시로 전수조사해서 발견). */}
+              <label class="time-check"><input type="checkbox" value="morning" /><span>아침</span></label>
+              <label class="time-check"><input type="checkbox" value="lunch" /><span>점심</span></label>
+              <label class="time-check"><input type="checkbox" value="dinner" /><span>저녁</span></label>
+              <label class="time-check"><input type="checkbox" value="before-bed" /><span>취침 전</span></label>
             </div>
           </div>
           <button type="button" class="add-btn" id="addMedBtn">+ 약 추가하기</button>
 
-          <div class="med-list" id="medList"></div>
+          <div class="med-list" id="medList" data-delete-template={t(locale, 'medSchedule.deleteMed' as DictKey)}></div>
         </div>
 
         <div class="tool-panel preview-panel">
@@ -331,7 +335,13 @@ const locale = Astro.currentLocale ?? 'ko';
 </style>
 
 <script>
-  const TIMES = ['아침', '점심', '저녁', '취침전'];
+  const TIMES = ['morning', 'lunch', 'dinner', 'before-bed'];
+  /* value(고정 식별자) → 화면 글자 매핑을 새로 짓지 않고 체크박스의 <span> 에서 그대로
+     읽어온다 — 여기 한글을 다시 하드코딩하면 방금 고친 문제가 되돌아온다. */
+  const TIME_LABELS: Record<string, string> = {};
+  document.querySelectorAll<HTMLInputElement>('.time-check input[type="checkbox"]').forEach((cb) => {
+    TIME_LABELS[cb.value] = cb.parentElement?.querySelector('span')?.textContent ?? cb.value;
+  });
   interface Med {
     name: string;
     times: string[];
@@ -351,10 +361,10 @@ const locale = Astro.currentLocale ?? 'ko';
       const row = document.createElement('div');
       row.className = 'med-item';
       const info = document.createElement('div');
-      info.innerHTML = `<div class="name">${m.name}</div><div class="times">${m.times.join(' · ')}</div>`;
+      info.innerHTML = `<div class="name">${m.name}</div><div class="times">${m.times.map((v) => TIME_LABELS[v] ?? v).join(' · ')}</div>`;
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.setAttribute('aria-label', `${m.name} 삭제`);
+      btn.setAttribute('aria-label', (medList.dataset.deleteTemplate ?? '').replace('{name}', m.name));
       btn.textContent = '×';
       btn.addEventListener('click', () => {
         meds.splice(i, 1);

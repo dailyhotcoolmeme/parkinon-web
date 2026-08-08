@@ -22,6 +22,44 @@ const HANGUL = /[가-힣]/;
    `src/pages/ko/**` 와 `src/content/**` 는 애초에 한국어판 전용이라 검사 대상이 아니다. */
 const SHARED_DIRS = ['src/components', 'src/layouts', 'src/lib'];
 
+/*
+ * ⚠️ 위 예외("src/pages는 한국어판 전용이라 괜찮다")는 서버가 그리는 마크업에는 맞는
+ * 말이지만, <script> 블록 안의 클라이언트 JS에는 안 맞는다 — 실행 로직이라 "이 파일은
+ * 한국어판이니까 한글이어도 된다"는 근거가 성립하지 않는다(다른 언어판이 이 파일을
+ * 재사용하거나 locale로 분기하는 순간 그대로 샌다). 2026-08-08 실제로 clinical
+ * 페이지의 pubDateTextClient에 "년"/"월"이 직접 박혀 있었는데, src/pages 전체 제외
+ * 규칙 때문에 이 검사가 못 잡았다 — 그래서 <script> 블록만 따로, 페이지 안이라도 검사한다.
+ */
+const PAGE_SCRIPT_DIRS = ['src/pages'];
+
+/* <script>...</script> 중 실행되는 JS만 뽑는다 — type="application/json" 같은 데이터
+   블롭(사전에서 이미 번역된 값을 실어 나르는 것)은 한글이 있어도 정상이라 제외한다. */
+/* 설명 주석 안에 "<script>" 같은 문자열을 그대로 적어 놓으면 태그로 오인해서 그 다음에
+   나오는 진짜 </script>까지 엉뚱하게 통째로 삼킨다(check-style-collisions.mjs에서 이미
+   한 번 겪은 것과 같은 함정, 2026-08-08). 줄바꿈은 남기고 주석 내용만 공백으로 지워서
+   태그 탐지에서 안 보이게 하되, 줄 번호 계산은 그대로 맞게 둔다. */
+function maskBlockComments(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
+}
+
+function extractPageScriptBlocks(text) {
+  const masked = maskBlockComments(text);
+  const blocks = [];
+  // /d(hasIndices) 로 캡처 그룹의 원문 내 위치를 받아서, 주석을 지운 masked 텍스트로
+  // 태그만 찾고, 실제 내용은 원문(text)에서 그 위치 그대로 잘라낸다 — 줄 번호·주석
+  // 처리(scanFile 자체 로직)가 원문 기준으로 정확히 맞게.
+  const re = /<script([^>]*)>([\s\S]*?)<\/script>/gd;
+  let m;
+  while ((m = re.exec(masked))) {
+    const attrs = m[1];
+    if (/type\s*=\s*["'](?!module)[^"']*json/i.test(attrs)) continue; // application/json 등 데이터 블롭 제외
+    const [start, end] = m.indices[2];
+    const startLine = text.slice(0, start).split('\n').length;
+    blocks.push({ startLine, content: text.slice(start, end) });
+  }
+  return blocks;
+}
+
 async function walk(dir, match = /\.(astro|ts|tsx|js|mjs)$/) {
   const out = [];
   for (const name of await readdir(dir)) {
@@ -100,6 +138,30 @@ if (leaks.length) {
   console.error('\n✗ 공용 코드에 한글이 직접 박혀 있다 — 사전(src/i18n)으로 옮길 것');
   console.error('  (정말 번역 대상이 아니면 i18n-exempt:start / i18n-exempt:end 로 감싸고 이유를 적을 것)');
   for (const { file, hits } of leaks) {
+    for (const h of hits) console.error(`  ${file}:${h.line}  ${h.text.slice(0, 90)}`);
+  }
+}
+
+/* ── 1b) 페이지의 <script> 블록(클라이언트 JS)에 박힌 한글 ──── */
+const scriptLeaks = [];
+for (const dir of PAGE_SCRIPT_DIRS) {
+  const full = path.join(ROOT, dir);
+  if (!existsSync(full)) continue;
+  for (const file of await walk(full)) {
+    const text = await readFile(file, 'utf8');
+    for (const block of extractPageScriptBlocks(text)) {
+      const hits = scanFile(block.content).map((h) => ({ ...h, line: h.line + block.startLine - 1 }));
+      if (hits.length) scriptLeaks.push({ file: path.relative(ROOT, file), hits });
+    }
+  }
+}
+if (scriptLeaks.length) {
+  failed = true;
+  console.error('\n✗ 페이지 <script> 블록(클라이언트 JS)에 한글이 직접 박혀 있다 — 사전으로 옮길 것');
+  console.error('  (서버에서 t()/tv()로 값을 미리 번역해 #clientLabels 같은 JSON 블롭으로 내려주고,');
+  console.error('   <script>에서는 그 값을 참조할 것 — locale 분기가 있는 스크립트는 "이 페이지는');
+  console.error('   한국어판이라 괜찮다"는 예외가 성립하지 않는다.)');
+  for (const { file, hits } of scriptLeaks) {
     for (const h of hits) console.error(`  ${file}:${h.line}  ${h.text.slice(0, 90)}`);
   }
 }

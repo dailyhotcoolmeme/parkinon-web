@@ -15,6 +15,10 @@ dist-ssr
 # Astro (site/)
 .astro
 
+# 배포 전 화면 검사(scripts/check-viewport.mjs)가 매번 새로 찍는 스크린샷 —
+# 리뷰용 산출물이라 매번 바뀌는 게 정상, 커밋할 필요 없다.
+site/docs/ui-screenshots
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

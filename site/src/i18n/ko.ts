@@ -18,6 +18,7 @@ const ko: Dict = {
   'nav.institutions': '제도·지원',
   'nav.tools': '도구',
 
+  'country.all': '전체',
   'country.kr': '한국',
   'country.us': '미국',
   'country.jp': '일본',

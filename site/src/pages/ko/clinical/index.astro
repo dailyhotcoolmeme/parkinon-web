@@ -22,9 +22,9 @@ import AdBox from '../../../components/AdBox.astro';
 import labImg from '../../../assets/images/lab.jpg';
 import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
-import { fetchAllRecruitingTrials, trialsForCountry, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
+import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import koTitles from '../../../data/clinicalTrialTitles.ko.json';
-import { fetchResearchPapersForCountry } from '../../../lib/pubmed';
+import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
 import koResearch from '../../../data/pubmedTranslations.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
@@ -61,9 +61,9 @@ const allTrials = await fetchAllRecruitingTrials();
  * (2026-08-08 실측). Promise.all 로 한꺼번에 부르지 말고 순서대로, 사이에 살짝 쉬어가며 부른다.
  */
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const byCountry = [];
+const countryEntries = [];
 for (const c of TRIAL_COUNTRIES) {
-  byCountry.push({
+  countryEntries.push({
     ...c,
     label: t(locale, `country.${c.code}` as DictKey),
     data: trialsForCountry(allTrials, c.apiName),
@@ -71,6 +71,23 @@ for (const c of TRIAL_COUNTRIES) {
   });
   await sleep(400);
 }
+
+/*
+ * 나라 순서(오너 확정 2026-08-08): "전체"는 항상 맨 앞, 그 뒤로는 임상시험+연구 건수가
+ * 많은 나라부터. "접속한 사람의 국가를 맨 앞에" 부분은 방문자 위치를 서버에서 알아내는
+ * 별도 기술(Cloudflare 지오로케이션 등)이 필요해서 오너에게 확인 후 넣는다 — 지금은
+ * 건수 정렬까지만 반영.
+ */
+countryEntries.sort((a, b) => b.data.total + b.research.total - (a.data.total + a.research.total));
+
+const allEntry = {
+  code: 'all' as const,
+  apiName: '',
+  label: t(locale, 'country.all' as DictKey),
+  data: trialsForAll(allTrials),
+  research: await fetchResearchPapers(),
+};
+const byCountry = [allEntry, ...countryEntries];
 
 const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
 

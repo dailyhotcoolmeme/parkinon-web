@@ -146,12 +146,12 @@ export async function fetchAllRecruitingTrials(): Promise<Trial[]> {
 export const MAX_PER_COUNTRY = 30;
 
 /** 그 나라·조건으로 ClinicalTrials.gov 검색 결과 전체를 보는 링크(자른 나머지를 위해). */
-function searchUrl(countryApiName: string) {
+function searchUrl(countryApiName?: string) {
   const params = new URLSearchParams({
     cond: 'Parkinson Disease',
-    country: countryApiName,
     aggFilters: 'status:rec',
   });
+  if (countryApiName) params.set('country', countryApiName);
   return `https://clinicaltrials.gov/search?${params}`;
 }
 
@@ -175,6 +175,19 @@ export function trialsForCountry(all: Trial[], countryApiName: string): CountryT
     shown: matched.slice(0, MAX_PER_COUNTRY),
     total: matched.length,
     overflowUrl: matched.length > MAX_PER_COUNTRY ? searchUrl(countryApiName) : null,
+  };
+}
+
+/** "전체" 탭용 — 나라로 거르지 않고 전체 목록에서 최근 갱신 순으로 자른다(오너 지시 2026-08-08). */
+export function trialsForAll(all: Trial[]): CountryTrials {
+  const sorted = [...all]
+    .map((t) => ({ ...t, locations: t.allLocations }))
+    .sort((a, b) => b.lastUpdate.localeCompare(a.lastUpdate));
+
+  return {
+    shown: sorted.slice(0, MAX_PER_COUNTRY),
+    total: sorted.length,
+    overflowUrl: sorted.length > MAX_PER_COUNTRY ? searchUrl() : null,
   };
 }
 

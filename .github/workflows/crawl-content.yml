@@ -1,0 +1,36 @@
+name: 임상시험·연구 매일 크롤
+
+# 매일 새벽(UTC 18:00 = 한국시간 03:00)에 ClinicalTrials.gov·PubMed 신규분만 받아서
+# Supabase에 채운다. 초벌 적재(625건 임상시험, 11,641건 연구)는 2026-08-08에 이미
+# 수동으로 끝냈다 — 이 워크플로는 그 이후 신규 항목만 담당한다.
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+
+      - name: 임상시험 크롤(ClinicalTrials.gov)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/crawl/crawl-trials.mjs
+
+      - name: 연구 크롤(PubMed) — 신규분만
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/crawl/crawl-pubmed.mjs

@@ -1,0 +1,201 @@
+#!/usr/bin/env node
+/*
+ * PubMed 매일 크롤 — **신규 논문만** Supabase(research_papers 등)에 추가.
+ * 깃허브 액션에서 매일 돈다(`.github/workflows/crawl-content.yml`).
+ *
+ * 선별 기준(website-plan.md "3. 임상시험" 절, 오너 확정): 3상 이상 또는 메타분석,
+ * 또는 주요 저널 5곳. 저널명은 PubMed [Journal] 필드에서 ISO 축약명으로만 걸린다
+ * (Movement Disorders → "Mov Disord", Lancet Neurology → "Lancet Neurol" — 정식
+ * 명칭으로 넣으면 조용히 0건, 2026-08-08 실측).
+ *
+ * ⚠️ PubMed esearch 는 retstart 가 9,998을 넘으면 페이지네이션이 막힌다(WebEnv/history를
+ * 써도 동일) — 연도별로 나눠서 긁는다(연도 하나가 이 캡을 넘을 일은 없다).
+ *
+ * 국가 태깅은 저자 소속기관([Affiliation]) 텍스트에 나라 이름이 있는지로 추정한다 —
+ * 저자 소속 국가일 뿐이라 국제 공동연구는 여러 나라에 동시에 걸릴 수 있다. 표기 변형은
+ * 실측해서 확인한 것만 쓴다("United States"만 25건, "USA"까지 더하면 2,786건로 실측 확인,
+ * 2026-08-08) — "표기가 다양해서 못 잡는다"고 넘기지 말고 실제 변형을 조사해서 목록에 넣을 것.
+ *
+ * 매일 도는 이유: 전체를 다시 받지 않는다. esearch로 전체 PMID만 가볍게 받아서(초록·전문
+ * 없음) 이미 있는 pmid와 대조 → **새 pmid만** efetch(초록 포함) 해서 채운다.
+ */
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (!SUPABASE_URL || !SERVICE_KEY) {
+  console.error('Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY env vars');
+  process.exit(1);
+}
+const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
+
+const API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
+const SEARCH_TERM =
+  '("Parkinson Disease"[MeSH]) AND (' +
+  '("Mov Disord"[Journal]) OR ("Lancet Neurol"[Journal]) OR ("Brain"[Journal]) OR ' +
+  '("JAMA Neurol"[Journal]) OR ("Neurology"[Journal]) OR ' +
+  '("Meta-Analysis"[Publication Type]) OR ' +
+  '("Clinical Trial, Phase III"[Publication Type]) OR ("Clinical Trial, Phase IV"[Publication Type])' +
+  ')';
+
+const COUNTRY_AFFILIATION = {
+  kr: ['South Korea', 'Republic of Korea'],
+  us: ['United States', 'USA'],
+  jp: ['Japan'],
+  fr: ['France'],
+  de: ['Germany'],
+  it: ['Italy'],
+  au: ['Australia'],
+};
+
+const MONTH_NUMBER = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function ncbiFetch(url, attempt = 1) {
+  const res = await fetch(url);
+  if (res.status === 429 && attempt <= 4) {
+    await sleep(2500 * attempt);
+    return ncbiFetch(url, attempt + 1);
+  }
+  if (!res.ok) throw new Error(`NCBI request failed: ${res.status} ${url}`);
+  return res;
+}
+
+/** 연도별로 나눠서 전체 PMID를 받는다 — retstart 9,998 캡 회피. */
+async function fetchAllPmids() {
+  const currentYear = new Date().getFullYear();
+  const allIds = [];
+  for (let year = 1970; year <= currentYear + 1; year++) {
+    const term = `${SEARCH_TERM} AND ("${year}"[Date - Publication])`;
+    let retstart = 0;
+    const retmax = 500;
+    for (;;) {
+      const params = new URLSearchParams({ db: 'pubmed', retmode: 'json', term, retstart: String(retstart), retmax: String(retmax) });
+      const res = await ncbiFetch(`${API_BASE}/esearch.fcgi?${params}`);
+      const json = await res.json();
+      const ids = json.esearchresult?.idlist ?? [];
+      allIds.push(...ids);
+      const total = Number(json.esearchresult?.count ?? 0);
+      retstart += retmax;
+      await sleep(400);
+      if (retstart >= total || ids.length === 0) break;
+    }
+  }
+  return [...new Set(allIds)];
+}
+
+function decodeEntities(s) {
+  return s
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
+function matchOne(text, re) {
+  return text.match(re)?.[1] ?? null;
+}
+
+function parseArticle(block) {
+  const pmid = matchOne(block, /<PMID[^>]*>(\d+)<\/PMID>/);
+  const title = decodeEntities(matchOne(block, /<ArticleTitle[^>]*>([\s\S]*?)<\/ArticleTitle>/) ?? '').replace(/<[^>]+>/g, '');
+  const journal = decodeEntities(matchOne(block, /<Journal>[\s\S]*?<Title>([\s\S]*?)<\/Title>/) ?? '');
+  const year = matchOne(block, /<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/);
+  const monthRaw = matchOne(block, /<PubDate>[\s\S]*?<Month>(\w+)<\/Month>/);
+  const month = monthRaw ? (MONTH_NUMBER[monthRaw] ?? Number(monthRaw)) || null : null;
+  const pubTypes = [...block.matchAll(/<PublicationType[^>]*>([\s\S]*?)<\/PublicationType>/g)].map((m) => decodeEntities(m[1]));
+  const abstractBlock = matchOne(block, /<Abstract>([\s\S]*?)<\/Abstract>/) ?? '';
+  const abstract = [...abstractBlock.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)].map((m) => ({
+    label: matchOne(m[1], /Label="([^"]*)"/),
+    text: decodeEntities(m[2]).replace(/<[^>]+>/g, ''),
+  }));
+  const doi = matchOne(block, /<ArticleId IdType="doi">([\s\S]*?)<\/ArticleId>/);
+  const affiliations = [...block.matchAll(/<Affiliation>([\s\S]*?)<\/Affiliation>/g)].map((m) => decodeEntities(m[1]));
+
+  const countries = Object.entries(COUNTRY_AFFILIATION)
+    .filter(([, aliases]) => aliases.some((alias) => affiliations.some((aff) => aff.includes(alias))))
+    .map(([code]) => code);
+
+  return {
+    pmid,
+    title,
+    journal,
+    pubYear: year,
+    pubMonth: month,
+    pubTypes,
+    abstract,
+    doi,
+    countries,
+    pubmedUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
+    fullTextUrl: doi ? `https://doi.org/${doi}` : null,
+  };
+}
+
+async function fetchAndUpsert(pmids) {
+  const BATCH = 200;
+  let inserted = 0;
+  for (let i = 0; i < pmids.length; i += BATCH) {
+    const batch = pmids.slice(i, i + BATCH);
+    const params = new URLSearchParams({ db: 'pubmed', retmode: 'xml', id: batch.join(',') });
+    const res = await ncbiFetch(`${API_BASE}/efetch.fcgi?${params}`);
+    const xml = await res.text();
+    const articles = xml.split('<PubmedArticle>').slice(1).map(parseArticle).filter((a) => a.pmid);
+
+    const { error: papersError } = await supabase.from('research_papers').upsert(
+      articles.map((a) => ({
+        pmid: a.pmid,
+        title_en: a.title,
+        journal: a.journal,
+        pub_year: a.pubYear,
+        pub_month: a.pubMonth,
+        doi: a.doi,
+        abstract_en: a.abstract,
+        pubmed_url: a.pubmedUrl,
+        full_text_url: a.fullTextUrl,
+        updated_at: new Date().toISOString(),
+      })),
+      { onConflict: 'pmid' }
+    );
+    if (papersError) throw new Error(`research_papers upsert failed: ${papersError.message}`);
+
+    const pubtypeRows = articles.flatMap((a) => a.pubTypes.map((pubtype) => ({ pmid: a.pmid, pubtype })));
+    const countryRows = articles.flatMap((a) => a.countries.map((country_code) => ({ pmid: a.pmid, country_code })));
+    if (pubtypeRows.length) await supabase.from('paper_pubtypes').insert(pubtypeRows);
+    if (countryRows.length) await supabase.from('paper_countries').insert(countryRows);
+
+    inserted += articles.length;
+    console.log(`  ...${inserted}/${pmids.length}`);
+    await sleep(400);
+  }
+  return inserted;
+}
+
+async function main() {
+  console.log('Collecting current PMIDs matching criteria (year-bucketed)...');
+  const allPmids = await fetchAllPmids();
+  console.log(`Found ${allPmids.length} matching PMIDs total.`);
+
+  const { data: existingRows, error: existingError } = await supabase.from('research_papers').select('pmid');
+  if (existingError) throw new Error(`research_papers select failed: ${existingError.message}`);
+  const existing = new Set((existingRows ?? []).map((r) => r.pmid));
+
+  const newPmids = allPmids.filter((id) => !existing.has(id));
+  console.log(`${newPmids.length} new PMIDs to fetch (already have ${existing.size}).`);
+
+  if (newPmids.length === 0) {
+    console.log('Nothing new. Done.');
+    return;
+  }
+
+  const inserted = await fetchAndUpsert(newPmids);
+  console.log(`Done. Inserted/updated ${inserted} papers.`);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

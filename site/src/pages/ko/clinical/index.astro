@@ -1,14 +1,15 @@
 ---
 /*
- * 임상시험 허브 (할 일 0-6, 2026-08-08).
+ * 임상시험 허브 (할 일 0-6, 2026-08-08 시작 → 2026-08-08 Supabase 전환).
  *
- * 데이터는 ClinicalTrials.gov API v2 — **빌드 타임에 한 번만** 받는다(런타임 호출 없음,
- * 정적 페이지). 로직은 `src/lib/clinicalTrials.ts` — 그 파일 상단 주석에 오염 원인과
- * 이유가 있다. 여기서는 그 결과만 화면에 그린다.
+ * 데이터는 Supabase(`clinical_trials`류, `research_papers`류) — **빌드 타임에 한 번만** 읽는다
+ * (런타임 호출 없음, 정적 페이지). 원문은 ClinicalTrials.gov·PubMed API를 직접 부르지 않는다 —
+ * `scripts/crawl-trials.mjs`/`scripts/crawl-pubmed.mjs`(매일 도는 깃허브 액션)가 미리 받아서
+ * Supabase에 채워둔다. 오염 제거·저널 축약명 함정·국가 태깅 로직은 그 두 스크립트에 있다.
+ * 여기서는 이미 정리된 데이터를 읽어서 화면에 그리기만 한다.
  *
- * 기본은 이 언어판의 나라(한국어판=한국)를 보여주고, 국가 버튼으로 다른 나라도 볼 수
- * 있게 한다(오너 확정 2026-08-08: "기본은 한국 임상시험 나오는데 해외꺼도 볼 수 있게
- * 하라고"). 국가 목록은 제도 1급 7개국과 같다.
+ * 기본은 "전체"를 보여주고, 국가 버튼으로 특정 나라만 볼 수 있게 한다. 국가 목록은 제도
+ * 1급 7개국과 같다.
  *
  * ⚠️ 사실 항목만 정형화하고 해석하지 않는다(계획서 "신설 축도 의학 정보는 다루지 않는다
  * 안에 있다"). 제목·상·주관·위치·연락처·원문 링크만 보여준다. "이 시험이 좋다/맞다"는
@@ -23,9 +24,7 @@ import labImg from '../../../assets/images/lab.jpg';
 import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
-import koTitles from '../../../data/clinicalTrialTitles.ko.json';
 import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
-import koResearch from '../../../data/pubmedTranslations.ko.json';
 
 const locale = Astro.currentLocale ?? 'ko';
 
@@ -40,15 +39,6 @@ const locale = Astro.currentLocale ?? 'ko';
 const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#임상시험-1상2상3상-무슨-뜻인가요';
 
 /*
- * 임상시험 제목 번역 — 시범 1건(2026-08-08, 오너 확인 요청: "너가 또 이상하게 보여줄게
- * 뻔해서 미리 체크해둬야겠다"). NCT 번호로 찾아서 있으면 번역, 없으면 원문(영어) 그대로.
- * 앞으로 언어를 늘리면 `clinicalTrialTitles.<언어>.json` 을 그 언어 파일로 추가하고
- * 아래 TRANSLATED_TITLES 에 한 줄만 더한다 — exerciseVideos.<언어>.ts 와 같은 패턴.
- */
-const TRANSLATED_TITLES: Record<string, Record<string, string>> = { ko: koTitles };
-const titleFor = (nctId: string, original: string) => TRANSLATED_TITLES[locale]?.[nctId] ?? original;
-
-/*
  * 기본 국가 = "전체"(오너 확정 2026-08-08: "한국이 메인이 아니다" — 여러 번 반복된 지적).
  * 방문자 위치를 알아내면(아래 지오로케이션 스크립트) 그 나라로 바꾸고, 못 알아내거나
  * 목록에 없는 나라면 "전체"에 그대로 둔다. ⚠️ "전체" 옵션이 없는 다른 화면을 만들 때는
@@ -56,31 +46,25 @@ const titleFor = (nctId: string, original: string) => TRANSLATED_TITLES[locale]?
  */
 const defaultCountry = 'all';
 
-const allTrials = await fetchAllRecruitingTrials();
 /*
- * 연구도 국가별로 나눈다(오너 지시 2026-08-08: "제대로 국가별로 분류해"). 나라마다
- * 따로 PubMed 를 부른다 — `src/lib/pubmed.ts` 상단 주석에 저자 소속기관 기반 분류의
- * 한계(국제 공동연구는 여러 나라에 동시에 걸림)를 적어뒀다.
- * ⚠️ 7개국을 동시에 부르면 NCBI 비인증 요청 한도(3건/초)에 걸려 429가 난다
- * (2026-08-08 실측). Promise.all 로 한꺼번에 부르지 말고 순서대로, 사이에 살짝 쉬어가며 부른다.
+ * Supabase 조회라 NCBI 비인증 요청 한도(3건/초, ClinicalTrials.gov 직접 호출 시절에 429를
+ * 겪었던 문제)와 무관하다 — 전부 Promise.all 로 동시에 부른다.
  */
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-const countryEntries = [];
-for (const c of TRIAL_COUNTRIES) {
-  countryEntries.push({
+const allTrials = await fetchAllRecruitingTrials(locale);
+const countryEntries = await Promise.all(
+  TRIAL_COUNTRIES.map(async (c) => ({
     ...c,
     label: t(locale, `country.${c.code}` as DictKey),
     data: trialsForCountry(allTrials, c.apiName),
-    research: await fetchResearchPapersForCountry(c.code),
-  });
-  await sleep(400);
-}
+    research: await fetchResearchPapersForCountry(c.code, locale),
+  }))
+);
 
 /*
  * 나라 순서(오너 확정 2026-08-08): "전체"는 항상 맨 앞, 그 뒤로는 임상시험+연구 건수가
- * 많은 나라부터. "접속한 사람의 국가를 맨 앞에" 부분은 방문자 위치를 서버에서 알아내는
- * 별도 기술(Cloudflare 지오로케이션 등)이 필요해서 오너에게 확인 후 넣는다 — 지금은
- * 건수 정렬까지만 반영.
+ * 많은 나라부터. "접속한 사람의 국가를 맨 앞에" 부분은 방문자 위치를 알아내는 별도
+ * 기술(Cloudflare 지오로케이션, `functions/api/geo.js`)로 클라이언트에서 처리한다
+ * (아래 <script> 참고) — 여기 서버 쪽 정렬은 건수 기준까지만.
  */
 countryEntries.sort((a, b) => b.data.total + b.research.total - (a.data.total + a.research.total));
 
@@ -89,24 +73,11 @@ const allEntry = {
   apiName: '',
   label: t(locale, 'country.all' as DictKey),
   data: trialsForAll(allTrials),
-  research: await fetchResearchPapers(),
+  research: await fetchResearchPapers(locale),
 };
 const byCountry = [allEntry, ...countryEntries];
 
 const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
-
-/*
- * 연구 카드 — PubMed E-utilities (`src/lib/pubmed.ts`). 선별 기준·저널 축약명 함정은 그 파일
- * 상단 주석 참고. 제목·초록 번역은 클리니컬 시험 제목과 같은 패턴
- * (`src/data/pubmedTranslations.<언어>.json`, NCT 대신 PMID로 찾는다) — 없으면 원문(영어) +
- * "번역 준비 중" 안내.
- *
- * ⚠️ 오너 지적(2026-08-08): "환자·보호자는 저런 연구를 무조건 찾아본다" — 그래서 제목만
- * 번역하지 않고 **초록 전체**를 문단·숫자까지 빠짐없이 옮긴다(요약·축약 금지).
- */
-type ResearchTranslation = { title: string; abstract: { label: string | null; text: string }[] };
-const RESEARCH_TRANSLATIONS: Record<string, Record<string, ResearchTranslation>> = { ko: koResearch as Record<string, ResearchTranslation> };
-const researchTrFor = (pmid: string) => RESEARCH_TRANSLATIONS[locale]?.[pmid];
 
 /* PubMed 발행유형(pubTypes) 원문 문자열 → 뱃지 사전 키. 여기 없는 유형(예: "Journal Article")은 뱃지를 안 단다. */
 const PUBTYPE_BADGE: Record<string, DictKey> = {
@@ -230,7 +201,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                     <details class="trial-card">
                       <summary>
                         <span class="badge"><Tr k="clinical.recruiting" /></span>
-                        <h3>{titleFor(trial.nctId, trial.title)}</h3>
+                        <h3>{trial.titleTranslated ?? trial.title}</h3>
                       </summary>
                       <a class="view-link" href={trial.url} target="_blank" rel="noopener">
                         <Tr k="clinical.viewOriginal" /> ({trial.nctId})
@@ -320,7 +291,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                 ) : (
                   <div class="research-list">
                     {c.research.shown.map((paper) => {
-                      const tr = researchTrFor(paper.pmid);
                       const badges = badgesFor(paper.pubTypes);
                       return (
                         <details class="research-card">
@@ -328,14 +298,14 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                             <div class="badges">
                               {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
                             </div>
-                            <h3>{tr?.title ?? paper.title}</h3>
+                            <h3>{paper.titleTranslated ?? paper.title}</h3>
                             <p class="research-meta">
                               <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {pubDateText(paper)}
                             </p>
                           </summary>
-                          {tr ? (
+                          {paper.abstractTranslated ? (
                             <div class="research-abstract">
-                              {tr.abstract.map((sec) => (
+                              {paper.abstractTranslated.map((sec) => (
                                 <div class="abstract-section">
                                   {sec.label && <p class="abstract-label">{sec.label}</p>}
                                   <p class="abstract-text">{sec.text}</p>

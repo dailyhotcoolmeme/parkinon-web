@@ -1,142 +1,85 @@
 /*
- * ClinicalTrials.gov API v2 — 모집 중인 파킨슨병 임상시험.
+ * 임상시험 데이터 — Supabase(`clinical_trials`/`trial_locations`/`trial_contacts`/
+ * `trial_translations`)에서 읽는다. ClinicalTrials.gov 를 여기서 직접 부르지 않는다
+ * (2026-08-08 이후) — 원문 API 호출·오염 제거·페이지네이션은 `scripts/crawl-trials.mjs`
+ * (매일 도는 깃허브 액션)의 몫이고, 이 파일은 **빌드 타임에 Supabase 를 읽기만** 한다.
  *
- * ⚠️ API 의 `query.locn`(국가) 파라미터로 걸러내지 않는다. 실제로 써보니 오염이 심하다
- * (2026-08-08 실측, website-plan.md "3. 임상시험" 절 참고):
- *   1) "PD" 약어 충돌 — 암 면역치료 시험의 "PD-1"·"PD-L1" 키워드가 파킨슨병과 겹쳐
- *      매칭된다. 모집 중 673건 중 47건(7%)이 이 오염이었다.
- *   2) 국가명 표기가 흔히 쓰는 이름과 다르다 — 한국은 `Korea, Republic of` 가 아니라
- *      `South Korea` 로 저장돼 있다.
- *
- * 그래서 `query.cond` 로만 전체를 받고(페이지네이션), **우리 코드에서** conditions·
- * locations 필드를 직접 검사한다. 나라별로 API 를 다시 부르지 않는다 — **한 번만 받아서
- * 메모리에서 나라별로 나눈다.**
+ * ⚠️ 오염 제거("PD-1"·"PD-L1" 키워드 충돌)와 국가명 표기 문제(South Korea 등)는 크롤러
+ * 쪽에서 이미 걸러서 저장한 데이터라 여기서는 신경 쓸 필요 없다 — 자세한 내용은
+ * `scripts/crawl-trials.mjs` 상단 주석 참고.
  */
-
-const API_BASE = 'https://clinicaltrials.gov/api/v2/studies';
-const FIELDS = [
-  'NCTId',
-  'BriefTitle',
-  'OverallStatus',
-  'Phase',
-  'LeadSponsorName',
-  'Condition',
-  'LocationFacility',
-  'LocationCity',
-  'LocationCountry',
-  'CentralContactName',
-  'CentralContactPhone',
-  'CentralContactEMail',
-  'LastUpdatePostDate',
-  'StartDate',
-  'StartDateType',
-  'CompletionDate',
-  'CompletionDateType',
-].join(',');
-
-interface RawStudy {
-  protocolSection: {
-    identificationModule: { nctId: string; briefTitle: string };
-    statusModule?: {
-      lastUpdatePostDateStruct?: { date?: string };
-      startDateStruct?: { date?: string; type?: string };
-      completionDateStruct?: { date?: string; type?: string };
-    };
-    sponsorCollaboratorsModule?: { leadSponsor?: { name: string } };
-    conditionsModule?: { conditions?: string[] };
-    designModule?: { phases?: string[] };
-    contactsLocationsModule?: {
-      centralContacts?: { name: string; phone?: string; email?: string }[];
-      locations?: { facility?: string; city?: string; country?: string }[];
-    };
-  };
-}
+import { supabase } from './supabase';
 
 export interface Trial {
   nctId: string;
   title: string;
-  /** 원본 API 값("PHASE2" 등). 화면에서 t(locale, `phase.${phaseKey}`) 로 라벨을 가져올 것. */
+  /** 그 언어로 번역된 제목. 없으면 null(화면에서 원문+"번역 준비 중" 처리). */
+  titleTranslated: string | null;
+  /** 원본 값("PHASE2" 등). 화면에서 t(locale, `phase.${phaseKey}`) 로 라벨을 가져올 것. */
   phaseKey: string | null;
   sponsor: string;
   contacts: { name: string; phone?: string; email?: string }[];
   /** 원본 전체 위치. 나라별로 걸러 보여줄 때 이 배열에서 그 나라만 뽑는다. */
   allLocations: { facility: string; city: string; country: string }[];
-  /** ISO 날짜 문자열. 최근 갱신 순으로 정렬하고, 목록이 길 때 자를 기준으로 쓴다. */
   lastUpdate: string;
-  /** 시작일. 없는 시험도 있다(null). */
   startDate: string | null;
-  /** true 면 확정이 아니라 예정(ESTIMATED) 날짜다. */
   startDateEstimated: boolean;
   completionDate: string | null;
   completionDateEstimated: boolean;
   url: string;
 }
 
-/** MeSH 동의어("PD" 등) 오염을 걸러낸다 — conditions 배열에 실제로 "parkinson" 이 있는지 본다. */
-function isRealParkinsons(conditions: string[] | undefined): boolean {
-  return (conditions ?? []).some((c) => c.toLowerCase().includes('parkinson'));
-}
-
-function toTrial(raw: RawStudy): Trial | null {
-  const p = raw.protocolSection;
-  if (!isRealParkinsons(p.conditionsModule?.conditions)) return null;
-
-  const allLocations = (p.contactsLocationsModule?.locations ?? [])
-    .filter((l) => l.facility && l.country)
-    .map((l) => ({ facility: l.facility!, city: l.city ?? '', country: l.country! }));
-
-  return {
-    nctId: p.identificationModule.nctId,
-    title: p.identificationModule.briefTitle,
-    /* 상(phase) 키를 원본 그대로 둔다("PHASE2" 등) — 화면에 보일 라벨(2상/Phase 2)은
-       사전(`t(locale, 'phase.PHASE2')`)에서 나라별로 가져온다. 이 파일은 로직 공용이라
-       한국어 라벨을 여기 박으면 안 된다(2026-08-08, 위 파일 상단 경고 참고). */
-    phaseKey: p.designModule?.phases?.[0] ?? null,
-    sponsor: p.sponsorCollaboratorsModule?.leadSponsor?.name ?? '',
-    contacts: (p.contactsLocationsModule?.centralContacts ?? []).map((c) => ({
-      name: c.name,
-      phone: c.phone,
-      email: c.email,
-    })),
-    allLocations,
-    lastUpdate: p.statusModule?.lastUpdatePostDateStruct?.date ?? '',
-    startDate: p.statusModule?.startDateStruct?.date ?? null,
-    startDateEstimated: p.statusModule?.startDateStruct?.type === 'ESTIMATED',
-    completionDate: p.statusModule?.completionDateStruct?.date ?? null,
-    completionDateEstimated: p.statusModule?.completionDateStruct?.type === 'ESTIMATED',
-    url: `https://clinicaltrials.gov/study/${p.identificationModule.nctId}`,
-  };
+interface TrialRow {
+  nct_id: string;
+  title_en: string;
+  phase_key: string | null;
+  sponsor: string | null;
+  start_date: string | null;
+  start_date_estimated: boolean;
+  completion_date: string | null;
+  completion_date_estimated: boolean;
+  last_update: string | null;
+  url: string;
+  trial_locations: { facility: string; city: string | null; country: string }[];
+  trial_contacts: { name: string | null; phone: string | null; email: string | null }[];
+  trial_translations: { title: string }[];
 }
 
 /**
- * 모집 중인 파킨슨병 임상시험 전체를 받는다(국가 무관, 오염만 제거).
- * 빌드 타임에 한 번만 부른다 — Astro 정적 페이지라 런타임에는 안 돈다.
+ * 모집 중인 파킨슨병 임상시험 전체를 Supabase 에서 읽는다(국가 무관). 그 언어 번역이
+ * 있으면 `titleTranslated` 에 같이 채운다. 빌드 타임에 한 번만 부른다.
  */
-export async function fetchAllRecruitingTrials(): Promise<Trial[]> {
-  const trials: Trial[] = [];
-  let pageToken: string | undefined;
+export async function fetchAllRecruitingTrials(locale: string): Promise<Trial[]> {
+  const { data, error } = await supabase
+    .from('clinical_trials')
+    .select(
+      `nct_id, title_en, phase_key, sponsor, start_date, start_date_estimated,
+       completion_date, completion_date_estimated, last_update, url,
+       trial_locations(facility, city, country),
+       trial_contacts(name, phone, email),
+       trial_translations!left(title)`
+    )
+    // ⚠️ !left 를 안 붙이면 그 언어 번역이 없는 시험은 통째로 안 나온다(inner join 취급).
+    .eq('trial_translations.locale', locale)
+    .eq('status', 'RECRUITING');
 
-  do {
-    const params = new URLSearchParams({
-      'query.cond': 'Parkinson Disease',
-      'filter.overallStatus': 'RECRUITING',
-      pageSize: '100',
-      fields: FIELDS,
-    });
-    if (pageToken) params.set('pageToken', pageToken);
+  if (error) throw new Error(`Supabase clinical_trials query failed: ${error.message}`);
 
-    const res = await fetch(`${API_BASE}?${params}`);
-    if (!res.ok) throw new Error(`ClinicalTrials.gov API request failed: ${res.status}`);
-    const data = (await res.json()) as { studies: RawStudy[]; nextPageToken?: string };
-
-    for (const raw of data.studies) {
-      const trial = toTrial(raw);
-      if (trial) trials.push(trial);
-    }
-    pageToken = data.nextPageToken;
-  } while (pageToken);
-
-  return trials;
+  return ((data ?? []) as unknown as TrialRow[]).map((row) => ({
+    nctId: row.nct_id,
+    title: row.title_en,
+    titleTranslated: row.trial_translations[0]?.title ?? null,
+    phaseKey: row.phase_key,
+    sponsor: row.sponsor ?? '',
+    contacts: row.trial_contacts.map((c) => ({ name: c.name ?? '', phone: c.phone ?? undefined, email: c.email ?? undefined })),
+    allLocations: row.trial_locations.map((l) => ({ facility: l.facility, city: l.city ?? '', country: l.country })),
+    lastUpdate: row.last_update ?? '',
+    startDate: row.start_date,
+    startDateEstimated: row.start_date_estimated,
+    completionDate: row.completion_date,
+    completionDateEstimated: row.completion_date_estimated,
+    url: row.url,
+  }));
 }
 
 /**

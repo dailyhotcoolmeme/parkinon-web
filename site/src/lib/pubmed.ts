@@ -1,48 +1,14 @@
 /*
- * PubMed E-utilities — 파킨슨병 연구 카드(임상시험 페이지 두 번째 블록).
+ * 연구 카드 데이터 — Supabase(`research_papers`/`paper_pubtypes`/`paper_countries`/
+ * `paper_translations`)에서 읽는다. PubMed 를 여기서 직접 부르지 않는다(2026-08-08 이후) —
+ * 원문 수집·저널 축약명 함정·저자 소속기관 기반 국가 태깅은 `scripts/crawl-pubmed.mjs`
+ * (매일 도는 깃허브 액션)의 몫이고, 이 파일은 **빌드 타임에 Supabase 를 읽기만** 한다.
  *
- * ⚠️ 선별 기준(website-plan.md "3. 임상시험" 절, 오너 확정): **3상 이상 또는 메타분석,
- * 또는 주요 저널**(Lancet Neurology, Brain, Movement Disorders, JAMA Neurology, Neurology).
- * 개별 소규모 연구를 대서특필하면 오보가 된다.
- *
- * ⚠️ 저널명은 PubMed [Journal] 필드에서 **정식 명칭이 아니라 ISO 축약명**으로만 걸린다
- * (2026-08-08 실측). "Movement Disorders"·"Lancet Neurology"로 넣으면 0건 — 조용히
- * 다섯 저널 중 둘이 빠진다. 반드시 아래 축약명을 쓸 것: Mov Disord / Lancet Neurol.
- *
- * ⚠️ PubMed API 는 초록(저자가 쓴 요약)과 서지정보만 준다. **논문 전체 본문은 없다** —
- * 대부분 유료(예: Neurology 는 $39/24시간, 기관 인증 없이 개인 결제 가능, 2026-08-08 확인).
- * 그래서 화면에는 "원문 전체 보기(유료)" 링크를 DOI로 따로 건다.
- *
- * ⚠️ 국가별 분류(2026-08-08, 오너 지시: "제대로 국가별로 분류해") — PubMed 는
- * ClinicalTrials.gov 같은 깨끗한 국가 필드가 없다. 대신 저자 소속기관 주소
- * (`[Affiliation]`)에 나라 이름이 텍스트로 들어있어서 그걸로 검색한다.
- * "이건 저자 소속 국가일 뿐 그 나라 환자 대상 연구라는 뜻은 아니다" — 국제 공동연구는
- * 한 논문이 여러 나라에 동시에 걸릴 수 있다(임상시험처럼 한 나라에만 속하지 않음).
- * 표기 변형은 실측해서 확인한 것만 쓴다(2026-08-08) — "United States"만 쓰면 25건인데
- * "USA"까지 더하면 2,786건으로 뛴다. 표기가 몇 개 안 되는 걸 "일관성이 없다"고
- * 넘기지 말고 실제로 몇 개 쓰는지 확인해서 목록에 넣을 것.
+ * 선별 기준(3상 이상/메타분석/주요 저널 5곳)·저널 ISO 축약명 함정·저자 소속기관 기반
+ * 국가 태깅의 한계(국제 공동연구는 여러 나라에 동시에 걸림)는 크롤러 쪽 주석 참고.
  */
-const COUNTRY_AFFILIATION: Record<string, string[]> = {
-  kr: ['South Korea', 'Republic of Korea'],
-  us: ['United States', 'USA'],
-  jp: ['Japan'],
-  fr: ['France'],
-  de: ['Germany'],
-  it: ['Italy'],
-  au: ['Australia'],
-};
+import { supabase } from './supabase';
 
-const API_BASE = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils';
-
-const SEARCH_TERM =
-  '("Parkinson Disease"[MeSH]) AND (' +
-  '("Mov Disord"[Journal]) OR ("Lancet Neurol"[Journal]) OR ("Brain"[Journal]) OR ' +
-  '("JAMA Neurol"[Journal]) OR ("Neurology"[Journal]) OR ' +
-  '("Meta-Analysis"[Publication Type]) OR ' +
-  '("Clinical Trial, Phase III"[Publication Type]) OR ("Clinical Trial, Phase IV"[Publication Type])' +
-  ')';
-
-/** 화면에 보일 최대 개수. 나머지는 PubMed 검색 링크로 보낸다(임상시험 목록과 같은 자르기 방식). */
 export const MAX_PAPERS = 15;
 
 export interface AbstractSection {
@@ -53,30 +19,60 @@ export interface AbstractSection {
 export interface ResearchPaper {
   pmid: string;
   title: string;
+  titleTranslated: string | null;
+  abstract: AbstractSection[];
+  abstractTranslated: AbstractSection[] | null;
   journal: string;
-  /** 연·월을 숫자로 따로 둔다 — 화면에서 언어별로 "2026년 8월"/"Aug 2026" 형식을 고른다. */
   pubYear: string | null;
   pubMonth: number | null;
   pubTypes: string[];
-  abstract: AbstractSection[];
   doi: string | null;
   pubmedUrl: string;
-  /** DOI로 가는 출판사 원문 링크. 대부분 유료라 화면에서 "유료"임을 밝힐 것. doi 없으면 null. */
   fullTextUrl: string | null;
 }
 
-function countryClause(code: string): string {
-  const aliases = COUNTRY_AFFILIATION[code] ?? [];
-  return aliases.map((a) => `("${a}"[Affiliation])`).join(' OR ');
+interface PaperRow {
+  pmid: string;
+  title_en: string;
+  journal: string | null;
+  pub_year: string | null;
+  pub_month: number | null;
+  doi: string | null;
+  abstract_en: AbstractSection[] | null;
+  pubmed_url: string;
+  full_text_url: string | null;
+  paper_pubtypes: { pubtype: string }[];
+  paper_translations: { title: string; abstract: AbstractSection[] }[];
 }
 
-function termForCountry(code: string): string {
-  return `${SEARCH_TERM} AND (${countryClause(code)})`;
+const SELECT_COLUMNS = `
+  pmid, title_en, journal, pub_year, pub_month, doi, abstract_en, pubmed_url, full_text_url,
+  paper_pubtypes(pubtype),
+  paper_translations!left(title, abstract)
+`;
+
+function toPaper(row: PaperRow): ResearchPaper {
+  const tr = row.paper_translations[0];
+  return {
+    pmid: row.pmid,
+    title: row.title_en,
+    titleTranslated: tr?.title ?? null,
+    abstract: row.abstract_en ?? [],
+    abstractTranslated: tr?.abstract ?? null,
+    journal: row.journal ?? '',
+    pubYear: row.pub_year,
+    pubMonth: row.pub_month,
+    pubTypes: row.paper_pubtypes.map((p) => p.pubtype),
+    doi: row.doi,
+    pubmedUrl: row.pubmed_url,
+    fullTextUrl: row.full_text_url,
+  };
 }
 
-function searchUrl(term: string) {
-  const params = new URLSearchParams({ term });
-  return `https://pubmed.ncbi.nlm.nih.gov/?${params}`;
+function searchUrl(countryCode?: string) {
+  // 표시용 폴백 링크 — 정확한 원본 검색식은 scripts/crawl-pubmed.mjs 에 있다.
+  const base = 'https://pubmed.ncbi.nlm.nih.gov/?term=Parkinson+Disease';
+  return countryCode ? `${base}+AND+${countryCode}%5BAffiliation%5D` : base;
 }
 
 export interface ResearchPapers {
@@ -85,102 +81,54 @@ export interface ResearchPapers {
   overflowUrl: string | null;
 }
 
-async function runSearch(term: string): Promise<ResearchPapers> {
-  const searchParams = new URLSearchParams({
-    db: 'pubmed',
-    retmode: 'json',
-    retmax: String(MAX_PAPERS),
-    sort: 'pub date',
-    term,
-  });
-  const searchRes = await fetch(`${API_BASE}/esearch.fcgi?${searchParams}`);
-  if (!searchRes.ok) throw new Error(`PubMed esearch request failed: ${searchRes.status}`);
-  const searchData = (await searchRes.json()) as {
-    esearchresult: { idlist: string[]; count: string };
-  };
-  const ids = searchData.esearchresult.idlist;
-  const total = Number(searchData.esearchresult.count);
-  if (ids.length === 0) return { shown: [], total: 0, overflowUrl: null };
+/** 나라 무관 전체("전체" 탭용). */
+export async function fetchResearchPapers(locale: string): Promise<ResearchPapers> {
+  const { data, error, count } = await supabase
+    .from('research_papers')
+    .select(SELECT_COLUMNS, { count: 'exact' })
+    .eq('paper_translations.locale', locale)
+    .order('pub_year', { ascending: false })
+    .order('pub_month', { ascending: false })
+    .limit(MAX_PAPERS);
 
-  const fetchParams = new URLSearchParams({ db: 'pubmed', retmode: 'xml', id: ids.join(',') });
-  const fetchRes = await fetch(`${API_BASE}/efetch.fcgi?${fetchParams}`);
-  if (!fetchRes.ok) throw new Error(`PubMed efetch request failed: ${fetchRes.status}`);
-  const xml = await fetchRes.text();
+  if (error) throw new Error(`Supabase research_papers query failed: ${error.message}`);
 
-  const shown = parsePubmedXml(xml);
+  const total = count ?? 0;
   return {
-    shown,
+    shown: ((data ?? []) as unknown as PaperRow[]).map(toPaper),
     total,
-    overflowUrl: total > shown.length ? searchUrl(term) : null,
+    overflowUrl: total > MAX_PAPERS ? searchUrl() : null,
   };
 }
 
-/** 국가 무관 전체(현재는 화면에서 안 씀 — 국가별 조회로 대체했다. 필요해질 때를 위해 남긴다). */
-export async function fetchResearchPapers(): Promise<ResearchPapers> {
-  return runSearch(SEARCH_TERM);
-}
+/** 저자 소속기관이 그 나라로 태깅된 연구만("국가 탭 하위"). */
+export async function fetchResearchPapersForCountry(code: string, locale: string): Promise<ResearchPapers> {
+  // 1단계: 그 나라로 태깅된 pmid 목록부터 뽑는다(전체 개수 = 이 목록 길이).
+  const { data: countryRows, error: countryError } = await supabase
+    .from('paper_countries')
+    .select('pmid')
+    .eq('country_code', code);
 
-/** 그 나라 저자 소속기관이 걸린 연구만. code 는 clinicalTrials.ts 의 TRIAL_COUNTRIES 와 같다. */
-export async function fetchResearchPapersForCountry(code: string): Promise<ResearchPapers> {
-  return runSearch(termForCountry(code));
-}
+  if (countryError) throw new Error(`Supabase paper_countries query failed: ${countryError.message}`);
 
-/** PubMed XML의 <Month> 은 보통 영어 3글자 축약(Aug)이다 — 화면에서 언어별로 새로 조립한다. */
-const MONTH_NUMBER: Record<string, number> = {
-  Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6,
-  Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12,
-};
+  const pmids = (countryRows ?? []).map((r) => r.pmid as string);
+  if (pmids.length === 0) return { shown: [], total: 0, overflowUrl: null };
 
-/*
- * 가벼운 XML 파싱 — DOMParser 가 없는 빌드 환경(Node/Astro SSG)이라 정규식으로 뽑는다.
- * PubMedArticle 블록 단위로 잘라서 그 안에서만 찾기 때문에, 다른 논문의 값이
- * 섞여 들어가는 사고를 막는다.
- */
-function parsePubmedXml(xml: string): ResearchPaper[] {
-  const articles = xml.split('<PubmedArticle>').slice(1);
-  return articles.map((block) => {
-    const pmid = matchOne(block, /<PMID[^>]*>(\d+)<\/PMID>/);
-    const title = decodeEntities(matchOne(block, /<ArticleTitle[^>]*>([\s\S]*?)<\/ArticleTitle>/) ?? '').replace(/<[^>]+>/g, '');
-    const journal = decodeEntities(matchOne(block, /<Journal>[\s\S]*?<Title>([\s\S]*?)<\/Title>/) ?? '');
-    const year = matchOne(block, /<PubDate>[\s\S]*?<Year>(\d{4})<\/Year>/);
-    const monthRaw = matchOne(block, /<PubDate>[\s\S]*?<Month>(\w+)<\/Month>/);
-    const month = monthRaw ? (MONTH_NUMBER[monthRaw] ?? Number(monthRaw)) || null : null;
-    const pubTypes = [...block.matchAll(/<PublicationType[^>]*>([\s\S]*?)<\/PublicationType>/g)].map((m) =>
-      decodeEntities(m[1])
-    );
-    const abstractBlock = matchOne(block, /<Abstract>([\s\S]*?)<\/Abstract>/) ?? '';
-    const abstract = [...abstractBlock.matchAll(/<AbstractText([^>]*)>([\s\S]*?)<\/AbstractText>/g)].map((m) => ({
-      label: matchOne(m[1], /Label="([^"]*)"/) ?? null,
-      text: decodeEntities(m[2]).replace(/<[^>]+>/g, ''),
-    }));
-    const doi = matchOne(block, /<ArticleId IdType="doi">([\s\S]*?)<\/ArticleId>/);
+  // 2단계: 그 pmid들만 최근순으로 MAX_PAPERS 개.
+  const { data, error } = await supabase
+    .from('research_papers')
+    .select(SELECT_COLUMNS)
+    .eq('paper_translations.locale', locale)
+    .in('pmid', pmids)
+    .order('pub_year', { ascending: false })
+    .order('pub_month', { ascending: false })
+    .limit(MAX_PAPERS);
 
-    return {
-      pmid: pmid ?? '',
-      title,
-      journal,
-      pubYear: year,
-      pubMonth: month,
-      pubTypes,
-      abstract,
-      doi,
-      pubmedUrl: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/`,
-      fullTextUrl: doi ? `https://doi.org/${doi}` : null,
-    };
-  });
-}
+  if (error) throw new Error(`Supabase research_papers (per-country) query failed: ${error.message}`);
 
-function matchOne(text: string, re: RegExp): string | null {
-  return text.match(re)?.[1] ?? null;
-}
-
-function decodeEntities(s: string): string {
-  return s
-    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => String.fromCodePoint(parseInt(dec, 10)))
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'");
+  return {
+    shown: ((data ?? []) as unknown as PaperRow[]).map(toPaper),
+    total: pmids.length,
+    overflowUrl: pmids.length > MAX_PAPERS ? searchUrl(code) : null,
+  };
 }

@@ -56,7 +56,9 @@ const ko: Dict = {
   'clinical.overflowNote': '전체 {total}건 중 최근 갱신된 {shown}건을 보여줍니다.',
   'clinical.seeAll': 'ClinicalTrials.gov에서 전체 보기',
   'clinical.disclaimer': '이 목록은 정보 제공용입니다. 참여를 원하시면 먼저 담당 의사와 상의하고 연구팀에 직접 문의하세요.',
+  'clinical.feedTrials': '임상시험',
 
+  'research.feedLabel': '연구',
   'research.heading': '관련 연구',
   'research.tagline': '파킨슨병에 관한 주요 연구를 모았습니다. 선정 기준은 임상 3상 이상·메타분석·주요 의학저널(Lancet Neurology, Brain, Movement Disorders, JAMA Neurology, Neurology)입니다.',
   'research.journal': '게재지',

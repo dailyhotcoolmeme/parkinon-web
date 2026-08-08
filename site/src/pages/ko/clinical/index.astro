@@ -99,10 +99,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 ---
 
 <Layout
-  title="임상시험 — 파킨온"
+  title="임상시험·연구 — 파킨온"
   breadcrumbs={[
     { name: '홈', path: '/ko/' },
-    { name: '임상시험', path: '/ko/clinical/' },
+    { name: '임상시험·연구', path: '/ko/clinical/' },
   ]}
 >
   <Header active="clinical" />
@@ -115,13 +115,13 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     <main class="col">
       <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
         <div class="hub-hero-full-inner">
-          <h1>임상시험</h1>
+          <h1>임상시험·연구</h1>
           <p><Tr k="clinical.tagline" /></p>
         </div>
       </section>
 
       <nav class="breadcrumb">
-        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>임상시험</span>
+        <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>임상시험·연구</span>
       </nav>
 
       {/*
@@ -133,11 +133,30 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       <nav class="country-select" id="countryTabs">
         {
           byCountry.map((c) => (
-            <button class:list={['country-link', { active: c.code === defaultCountry }]} data-country={c.code}>
+            <button
+              class:list={['country-link', { active: c.code === defaultCountry }]}
+              data-country={c.code}
+              data-total={c.data.total}
+            >
               {c.label} <span class="n">{c.data.total}</span>
             </button>
           ))
         }
+      </nav>
+
+      {/*
+        국가 탭 밑에 "임상시험/연구" 중 뭘 볼지 고르는 두 번째 단계다(오너 확정 2026-08-08).
+        연구는 나라별로 나뉘지 않는 하나의 목록이라, 국가 패널마다 통째로 복제하지 않고
+        이 목록 하나를 공유한다 — 국가 탭은 임상시험 쪽 내용만 바꾼다.
+        이 단계는 "필터"라 알약 스타일을 써도 된다고 오너가 확인함(국가 탭과는 다른 성격).
+      */}
+      <nav class="feed-tabs" id="feedTabs">
+        <button class="pill active" data-feed="trials">
+          <Tr k="clinical.feedTrials" /> <span class="n" id="trialsFeedCount">{byCountry.find((c) => c.code === defaultCountry)?.data.total ?? 0}</span>
+        </button>
+        <button class="pill" data-feed="research">
+          <Tr k="research.feedLabel" /> <span class="n">{researchPapers.total}</span>
+        </button>
       </nav>
 
       {/*
@@ -151,6 +170,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
         사전(src/i18n)에 한 번만 넣어 모든 언어가 공유한다. 영어판(locale === 'en')
         에는 안 띄운다 — 그 페이지는 원문과 언어가 같아서 이 문제 자체가 없다.
       */}
+      <div id="trialsFeed">
       {locale !== 'en' && <p class="lang-notice"><Tr k="clinical.englishNotice" /></p>}
 
       <div id="countryPanels">
@@ -162,9 +182,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
               ) : (
                 <div class="trial-list">
                   {c.data.shown.map((trial) => (
-                    <div class="trial-card">
-                      <span class="badge"><Tr k="clinical.recruiting" /></span>
-                      <h3>{titleFor(trial.nctId, trial.title)}</h3>
+                    <details class="trial-card">
+                      <summary>
+                        <span class="badge"><Tr k="clinical.recruiting" /></span>
+                        <h3>{titleFor(trial.nctId, trial.title)}</h3>
+                      </summary>
                       <a class="view-link" href={trial.url} target="_blank" rel="noopener">
                         <Tr k="clinical.viewOriginal" /> ({trial.nctId})
                       </a>
@@ -223,7 +245,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                           </>
                         )}
                       </dl>
-                    </div>
+                    </details>
                   ))}
                 </div>
               )}
@@ -240,9 +262,9 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       </div>
 
       <p class="disclaimer"><Tr k="clinical.disclaimer" /></p>
+      </div>
 
-      <section class="research-section">
-        <h2><Tr k="research.heading" /></h2>
+      <div id="researchFeed" hidden>
         <p class="research-tagline"><Tr k="research.tagline" /></p>
 
         {researchPapers.shown.length === 0 ? (
@@ -253,11 +275,13 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
               const tr = researchTrFor(paper.pmid);
               const badges = badgesFor(paper.pubTypes);
               return (
-                <article class="research-card">
-                  <div class="badges">
-                    {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
-                  </div>
-                  <h3>{tr?.title ?? paper.title}</h3>
+                <details class="research-card">
+                  <summary>
+                    <div class="badges">
+                      {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
+                    </div>
+                    <h3>{tr?.title ?? paper.title}</h3>
+                  </summary>
                   <p class="research-meta">
                     <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {paper.pubDate}
                   </p>
@@ -277,7 +301,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                       <a href={paper.fullTextUrl} target="_blank" rel="noopener"><Tr k="research.readFullText" /></a>
                     )}
                   </div>
-                </article>
+                </details>
               );
             })}
           </div>
@@ -292,7 +316,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
         )}
 
         <p class="disclaimer"><Tr k="research.disclaimer" /></p>
-      </section>
+      </div>
     </main>
 
     <aside class="ad-rail right">
@@ -364,6 +388,35 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     background: var(--primary);
   }
 
+  /*
+   * 임상시험/연구 전환 — 국가 탭(완전히 다른 데이터로 전환)과 달리 이건 필터라서
+   * 알약 스타일을 쓴다(오너 확인 2026-08-08).
+   */
+  .feed-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0 26px;
+  }
+  .pill {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-sub);
+    background: var(--bg);
+    border: 1.5px solid var(--outline);
+    border-radius: 20px;
+    padding: 8px 16px;
+  }
+  .pill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    font-weight: 700;
+  }
+  .pill .n {
+    font-size: 12.5px;
+    opacity: 0.85;
+  }
+
   .lang-notice {
     margin: -8px 0 24px;
     font-size: 13px;
@@ -384,6 +437,31 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   }
   .trial-card:first-child {
     padding-top: 0;
+  }
+  /*
+   * 제목만 보이고 내용은 펼쳐야 보인다(오너 확정 2026-08-08). 네이티브 details/summary —
+   * 임상 단계 물음표 팝오버와 같은 방식, 새 토글 JS를 만들지 않는다.
+   * 아이콘만으로 상태를 표시하지 않는다(아이콘만 버튼 금지 규칙) — 글자로 "더 보기/접기"를 단다.
+   */
+  /* ⚠️ 전부 > (직계 자식)로 건다 — 안 그러면 요약 안의 임상 단계 물음표(phase-help)도
+     똑같이 summary라서 여기 걸려 "더 보기/접기" 글자가 새어 들어간다(2026-08-08 발견). */
+  .trial-card > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  .trial-card > summary::-webkit-details-marker {
+    display: none;
+  }
+  .trial-card > summary::after {
+    content: '더 보기 ▾';
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .trial-card[open] > summary::after {
+    content: '접기 ▴';
   }
   .badge {
     display: inline-block;
@@ -517,15 +595,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     color: var(--text-sub);
   }
 
-  .research-section {
-    margin-top: 48px;
-    padding-top: 28px;
-    border-top: 1px solid var(--outline);
-  }
-  .research-section > h2 {
-    font-size: 21px;
-    color: var(--text);
-  }
   .research-tagline {
     margin-top: 8px;
     font-size: 13.5px;
@@ -544,6 +613,24 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   }
   .research-card:first-child {
     padding-top: 0;
+  }
+  .research-card > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  .research-card > summary::-webkit-details-marker {
+    display: none;
+  }
+  .research-card > summary::after {
+    content: '더 보기 ▾';
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .research-card[open] > summary::after {
+    content: '접기 ▴';
   }
   .research-card .badges {
     display: flex;
@@ -611,6 +698,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 <script>
   const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .country-link');
   const panels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
+  const trialsFeedCount = document.querySelector<HTMLSpanElement>('#trialsFeedCount');
 
   tabs.forEach((tab) => {
     tab.addEventListener('click', () => {
@@ -620,6 +708,22 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       panels.forEach((panel) => {
         panel.hidden = panel.dataset.country !== country;
       });
+      if (trialsFeedCount) trialsFeedCount.textContent = tab.dataset.total ?? '0';
+    });
+  });
+
+  /* 임상시험/연구 전환 — 국가 탭과 별개 축. 연구 목록은 나라별로 나뉘지 않아 하나만 있다. */
+  const feedTabs = document.querySelectorAll<HTMLButtonElement>('#feedTabs .pill');
+  const trialsFeed = document.querySelector<HTMLDivElement>('#trialsFeed');
+  const researchFeed = document.querySelector<HTMLDivElement>('#researchFeed');
+
+  feedTabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      feedTabs.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const feed = btn.dataset.feed;
+      if (trialsFeed) trialsFeed.hidden = feed !== 'trials';
+      if (researchFeed) researchFeed.hidden = feed !== 'research';
     });
   });
 

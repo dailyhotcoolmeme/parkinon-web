@@ -80,7 +80,9 @@ const en = {
   'clinical.overflowNote': 'Showing the {shown} most recently updated of {total} trials.',
   'clinical.seeAll': 'See all on ClinicalTrials.gov',
   'clinical.disclaimer': 'This list is for information only. If you are interested in joining a trial, talk to your doctor first and contact the study team directly.',
+  'clinical.feedTrials': 'Trials',
 
+  'research.feedLabel': 'Research',
   'research.heading': 'Related Research',
   'research.tagline': "A collection of major Parkinson's disease research. Selection criteria: Phase III+ trials, meta-analyses, or major medical journals (Lancet Neurology, Brain, Movement Disorders, JAMA Neurology, Neurology).",
   'research.journal': 'Journal',

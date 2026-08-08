@@ -101,34 +101,41 @@ export async function fetchResearchPapers(locale: string): Promise<ResearchPaper
   };
 }
 
-/** 저자 소속기관이 그 나라로 태깅된 연구만("국가 탭 하위"). */
+/**
+ * 저자 소속기관이 그 나라로 태깅된 연구만("국가 탭 하위").
+ *
+ * ⚠️ 처음엔 "그 나라 pmid 목록을 먼저 뽑고 그 목록으로 다시 조회"하는 2단계로 짰다가 두 번
+ * 사고를 냈다(2026-08-08): (1) 1단계 조회에 `.range()`가 없어서 PostgREST 기본 1,000행
+ * 한도에 걸려 미국(2,786건)이 1,000건으로 잘렸다 — 크롤러 쪽 같은 함정이 실제 중복 삽입
+ * 사고로 번졌다. (2) 페이지네이션으로 고쳤더니 2단계의 `.in('pmid', 수천 개)`가 URL이 너무
+ * 길어져 400 Bad Request. **두 문제 다 원인이 같다 — "목록을 뽑아서 다시 필터링"하는
+ * 2단계 구조 자체가 문제였다.** `paper_countries!inner(...)`로 한 번에 조인·필터링하는
+ * 걸로 바꿔서 이 함정 자체를 없앴다 — 데이터가 얼마나 크든 상관없다.
+ */
 export async function fetchResearchPapersForCountry(code: string, locale: string): Promise<ResearchPapers> {
-  // 1단계: 그 나라로 태깅된 pmid 목록부터 뽑는다(전체 개수 = 이 목록 길이).
-  const { data: countryRows, error: countryError } = await supabase
-    .from('paper_countries')
-    .select('pmid')
-    .eq('country_code', code);
-
-  if (countryError) throw new Error(`Supabase paper_countries query failed: ${countryError.message}`);
-
-  const pmids = (countryRows ?? []).map((r) => r.pmid as string);
-  if (pmids.length === 0) return { shown: [], total: 0, overflowUrl: null };
-
-  // 2단계: 그 pmid들만 최근순으로 MAX_PAPERS 개.
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('research_papers')
-    .select(SELECT_COLUMNS)
+    .select(
+      `pmid, title_en, journal, pub_year, pub_month, doi, abstract_en, pubmed_url, full_text_url,
+       paper_pubtypes(pubtype),
+       paper_translations!left(title, abstract),
+       paper_countries!inner(country_code)`,
+      { count: 'exact' }
+    )
+    .eq('paper_countries.country_code', code)
     .eq('paper_translations.locale', locale)
-    .in('pmid', pmids)
     .order('pub_year', { ascending: false })
     .order('pub_month', { ascending: false })
     .limit(MAX_PAPERS);
 
   if (error) throw new Error(`Supabase research_papers (per-country) query failed: ${error.message}`);
 
+  const total = count ?? 0;
+  if (total === 0) return { shown: [], total: 0, overflowUrl: null };
+
   return {
     shown: ((data ?? []) as unknown as PaperRow[]).map(toPaper),
-    total: pmids.length,
-    overflowUrl: pmids.length > MAX_PAPERS ? searchUrl(code) : null,
+    total,
+    overflowUrl: total > MAX_PAPERS ? searchUrl(code) : null,
   };
 }

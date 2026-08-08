@@ -162,10 +162,18 @@ async function fetchAndUpsert(pmids) {
     );
     if (papersError) throw new Error(`research_papers upsert failed: ${papersError.message}`);
 
+    // upsert(ignoreDuplicates) — 유니크 제약(pmid, pubtype)/(pmid, country_code) 덕분에
+    // 이 배치를 다시 돌려도(재실행·부분 재시도) 중복이 쌓이지 않는다(2026-08-08 사고 이후 추가).
     const pubtypeRows = articles.flatMap((a) => a.pubTypes.map((pubtype) => ({ pmid: a.pmid, pubtype })));
     const countryRows = articles.flatMap((a) => a.countries.map((country_code) => ({ pmid: a.pmid, country_code })));
-    if (pubtypeRows.length) await supabase.from('paper_pubtypes').insert(pubtypeRows);
-    if (countryRows.length) await supabase.from('paper_countries').insert(countryRows);
+    if (pubtypeRows.length) {
+      const { error } = await supabase.from('paper_pubtypes').upsert(pubtypeRows, { onConflict: 'pmid,pubtype', ignoreDuplicates: true });
+      if (error) throw new Error(`paper_pubtypes upsert failed: ${error.message}`);
+    }
+    if (countryRows.length) {
+      const { error } = await supabase.from('paper_countries').upsert(countryRows, { onConflict: 'pmid,country_code', ignoreDuplicates: true });
+      if (error) throw new Error(`paper_countries upsert failed: ${error.message}`);
+    }
 
     inserted += articles.length;
     console.log(`  ...${inserted}/${pmids.length}`);
@@ -179,9 +187,20 @@ async function main() {
   const allPmids = await fetchAllPmids();
   console.log(`Found ${allPmids.length} matching PMIDs total.`);
 
-  const { data: existingRows, error: existingError } = await supabase.from('research_papers').select('pmid');
-  if (existingError) throw new Error(`research_papers select failed: ${existingError.message}`);
-  const existing = new Set((existingRows ?? []).map((r) => r.pmid));
+  // ⚠️ PostgREST는 .range() 없이 부르면 기본 1,000행만 준다(2026-08-08 실측 사고 —
+  // 11,641건 중 1,000건만 "있음"으로 잡혀 나머지 10,641건을 신규로 오판하고 다시 받았다).
+  // 반드시 끝까지 페이지네이션할 것.
+  const existing = new Set();
+  for (let from = 0; ; from += 1000) {
+    const { data: page, error: existingError } = await supabase
+      .from('research_papers')
+      .select('pmid')
+      .range(from, from + 999);
+    if (existingError) throw new Error(`research_papers select failed: ${existingError.message}`);
+    if (!page || page.length === 0) break;
+    for (const row of page) existing.add(row.pmid);
+    if (page.length < 1000) break;
+  }
 
   const newPmids = allPmids.filter((id) => !existing.has(id));
   console.log(`${newPmids.length} new PMIDs to fetch (already have ${existing.size}).`);

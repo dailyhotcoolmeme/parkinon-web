@@ -1998,6 +1998,7 @@ export default function Admin() {
                               {m.is_kakao ? '카카오' : '구글/애플'}
                               {m.birth_year ? ` · ${m.birth_year}년생` : ''}
                               {m.language ? ` · ${m.language}` : ''}
+                              {m.country ? ` (${m.country})` : ''}
                               {m.created_at ? ` · 가입 ${fmtTime(m.created_at)}` : ''}
                             </span>
                             <span className="adm-meta" style={{ marginLeft: 'auto' }}>

@@ -67,15 +67,19 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function mdxBodyToPlainMarkdown(raw) {
   let s = raw;
   s = s.replace(/^import .+$/gm, '');
-  // 웹의 "소식 N" 킥커 라벨(story-kicker)을 앱에도 그대로 옮긴다 — 오너 지적(2026-08-10):
-  // "웹에는 소식1·소식2 구분이 있는데 앱엔 왜 없냐". 첫 소재는 구분선 없이 라벨만,
+  // 웹의 "소식 N" 킥커 라벨(story-kicker, 녹색 작은 글씨)을 앱에도 그대로 옮긴다 — 오너
+  // 지적(2026-08-10): "웹에는 소식1·소식2 구분이 있는데 앱엔 왜 없냐". *기울임*(em) 문법을
+  // 빌려서 쓴다 — 본문에 실제 기울임체는 안 쓰므로 markdownStyles.em 을 이 라벨 전용으로
+  // 녹색·기울임 해제해서 씀(PostDetailScreen.tsx 참고). 다음 제목과 줄바꿈 한 번만 둬서
+  // (빈 줄 없이) 간격이 과하게 벌어지지 않게 한다 — ATX 헤딩(##)은 빈 줄 없이도 단락을
+  // 끊고 시작할 수 있다(CommonMark 규칙). 첫 소재는 구분선 없이 라벨만,
   // 이후 소재는 구분선(---) + 라벨.
   s = s.replace(/<StoryHead\s+([^/]*)\/>\s*\n*/g, (_m, attrs) => {
     const idxMatch = attrs.match(/index=\{(\d+)\}/);
     const idx = idxMatch ? idxMatch[1] : '';
     const isFirst = /\bfirst\b/.test(attrs);
-    const kicker = `**소식 ${idx}**`;
-    return isFirst ? `${kicker}\n\n` : `\n---\n\n${kicker}\n\n`;
+    const kicker = `*소식 ${idx}*`;
+    return isFirst ? `${kicker}\n` : `\n---\n\n${kicker}\n`;
   });
   s = s.replace(
     /<SourceQuote\s+quote="((?:[^"\\]|\\.)*)"\s+attribution="((?:[^"\\]|\\.)*)"\s+name="((?:[^"\\]|\\.)*)"\s+url="((?:[^"\\]|\\.)*)"\s*\/>/gs,

@@ -78,7 +78,13 @@ function mdxBodyToPlainMarkdown(raw) {
     /<Callout\s+text="((?:[^"\\]|\\.)*)"\s*\/>/gs,
     (_m, text) => `\n> 💡 ${text}\n`,
   );
-  s = s.replace(/<Term\s+[^>]*>([\s\S]*?)<\/Term>/g, (_m, inner) => `**${inner.trim()}**`);
+  // Term의 툴팁(brief) 인터랙션은 앱에 없어서 못 옮기지만, href(용어사전 링크)는 살려서
+  // 웹으로 나가는 링크로 바꾼다 — 오너 지적(2026-08-10): "링크라도 걸어서 웹으로 보내던가".
+  s = s.replace(/<Term\s+([^>]*)>([\s\S]*?)<\/Term>/g, (_m, attrs, inner) => {
+    const hrefMatch = attrs.match(/href="((?:[^"\\]|\\.)*)"/);
+    const bold = `**${inner.trim()}**`;
+    return hrefMatch ? `[${bold}](${hrefMatch[1]})` : bold;
+  });
   s = s.replace(/<b>([\s\S]*?)<\/b>/g, (_m, inner) => `**${inner.trim()}**`);
   // 사이트 내부 상대링크([글자](/ko/...))는 앱 안에서 그대로 열 수 없다 — 절대 URL로 바꾼다.
   s = s.replace(/\]\((\/[^)]+)\)/g, (_m, relPath) => `](${SITE_ORIGIN}${relPath})`);

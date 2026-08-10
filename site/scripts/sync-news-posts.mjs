@@ -67,9 +67,16 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 function mdxBodyToPlainMarkdown(raw) {
   let s = raw;
   s = s.replace(/^import .+$/gm, '');
-  // 첫 소재(StoryHead first)는 구분선 없이 통째로 제거, 이후 소재는 --- 구분선으로.
-  s = s.replace(/<StoryHead\b[^/]*\bfirst\b[^/]*\/>\s*\n*/g, '');
-  s = s.replace(/<StoryHead\b[^/]*\/>\s*\n*/g, '\n---\n\n');
+  // 웹의 "소식 N" 킥커 라벨(story-kicker)을 앱에도 그대로 옮긴다 — 오너 지적(2026-08-10):
+  // "웹에는 소식1·소식2 구분이 있는데 앱엔 왜 없냐". 첫 소재는 구분선 없이 라벨만,
+  // 이후 소재는 구분선(---) + 라벨.
+  s = s.replace(/<StoryHead\s+([^/]*)\/>\s*\n*/g, (_m, attrs) => {
+    const idxMatch = attrs.match(/index=\{(\d+)\}/);
+    const idx = idxMatch ? idxMatch[1] : '';
+    const isFirst = /\bfirst\b/.test(attrs);
+    const kicker = `**소식 ${idx}**`;
+    return isFirst ? `${kicker}\n\n` : `\n---\n\n${kicker}\n\n`;
+  });
   s = s.replace(
     /<SourceQuote\s+quote="((?:[^"\\]|\\.)*)"\s+attribution="((?:[^"\\]|\\.)*)"\s+name="((?:[^"\\]|\\.)*)"\s+url="((?:[^"\\]|\\.)*)"\s*\/>/gs,
     (_m, quote, attribution, name, url) => `\n> "${quote}"\n> — ${attribution} ([${name}](${url}))\n`,

@@ -57,6 +57,8 @@ const locale = Astro.currentLocale ?? 'ko';
   :global(.story-head + h2) {
     margin-top: 6px !important;
     font-size: 23px !important;
-    color: var(--primary) !important; /* 오너 요청 2026-08-10: 소재별 제목이 눈에 띄게 구분되도록 */
+    /* 오너 요청 2026-08-10: 처음엔 녹색을 시도했으나 "더 정신없다"는 피드백 →
+       색은 본문 h2와 같게 두고, 두께만 900(Pretendard-Black, Layout.astro 기존 로드분)으로 키움. */
+    font-weight: 900 !important;
   }
 </style>

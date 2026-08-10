@@ -828,7 +828,11 @@ Parkinson's Foundation · 마이클 J. 폭스 재단도 재단 소속 의료진�
 (위 "발행 주기 근거" — 1호에 1건이면 "묶음 소식지"가 안 된다).
 
 ```
-frontmatter: title / description / tag("파킨온 소식 #N") / publishedAt / hero / heroAlt /
+frontmatter: title / description / tag("파킨온 소식 #N", ⚠️ 반드시 큰따옴표로 감쌀 것 —
+             안 감싸면 YAML이 " #N" 부분을 주석으로 먹어버려 번호가 통째로 사라진다
+             (2026-08-10 실제로 #12/#13 두 글자만 남기고 번호가 안 보였던 사고 원인.
+             질환 이해 시리즈("질환 이해 #6" 등)는 원래부터 감싸서 문제없었음)
+             / publishedAt / hero / heroAlt /
              summary(세 줄 요약) / sources(전체 출처 목록) / hashtags
 
 전체 인트로 — 이번 호에 묶은 소재들을 한 문단으로 미리 소개

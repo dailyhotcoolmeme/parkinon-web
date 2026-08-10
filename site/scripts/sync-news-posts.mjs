@@ -134,7 +134,7 @@ async function uploadHeroImage(localImagePath, slug, publishedAt) {
   return { key, publicUrl: invokeData.publicUrl };
 }
 
-async function upsertPost({ slug, title, content, newsUrl }) {
+async function upsertPost({ slug, title, content, newsUrl, newsTag }) {
   const { data: existing } = await supabase
     .from('posts')
     .select('id')
@@ -144,7 +144,7 @@ async function upsertPost({ slug, title, content, newsUrl }) {
   if (existing) {
     const { error } = await supabase
       .from('posts')
-      .update({ title, content, updated_at: new Date().toISOString() })
+      .update({ title, content, news_tag: newsTag, updated_at: new Date().toISOString() })
       .eq('id', existing.id);
     if (error) throw new Error(`posts update 실패(${slug}): ${error.message}`);
     return { id: existing.id, created: false };
@@ -159,6 +159,7 @@ async function upsertPost({ slug, title, content, newsUrl }) {
       content,
       is_news: true,
       news_url: newsUrl,
+      news_tag: newsTag,
       author_name_override: '파킨온',
       hidden: false,
       is_notice: false,
@@ -217,6 +218,7 @@ async function main() {
       title: fm.title,
       content: plainBody,
       newsUrl,
+      newsTag: fm.tag,
     });
 
     if (fm.hero) {

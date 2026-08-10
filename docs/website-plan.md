@@ -55,6 +55,19 @@ sitemap-index.xml·`<meta name="robots">` 세 가지를 직접 확인할 것 —
 그대로 들어가 있었다** — 오너가 공개 여부를 안 정한 페이지가 조용히 검색 대상이 되고
 있었다. `astro.config.mjs` sitemap filter와 robots.txt 양쪽에서 `/tools`를 뺐다.
 
+⚠️ **Google Search Console 사이트맵 오류 — 해결됨(2026-08-10)**: `/ko/` URL 접두어
+속성으로만 등록돼 있던 상태에서, 오너가 사이트맵 오류("Sitemap이 HTML입니다")를 직접
+발견해 재점검을 요청했다. 원인: `/ko/` 속성에 제출한 사이트맵은 자동으로
+`https://parkinon.com/ko/sitemap-index.xml`을 가리키는데, 실제 파일은 루트
+(`https://parkinon.com/sitemap-index.xml`)에 있어서 그 경로가 사이트 전체 fallback
+페이지(HTML)로 응답됐다. **해결**: Cloudflare API 토큰(오너가 DNS Edit 권한만으로 발급,
+1일 TTL)으로 `parkinon.com` 존에 `google-site-verification=lPNo9z49Q1kcJSg7R8GJNCPrx_b3qbvU-5r47uggVTQ`
+TXT 레코드를 추가 → Search Console에서 도메인(`sc-domain:parkinon.com`) 속성이 즉시
+자동 인증됨 → 루트 사이트맵을 그 속성에 새로 제출("성공" 확인) → 예전 `/ko/` 속성의
+오류난 사이트맵 항목은 삭제. `/ko/` URL 접두어 속성은 그대로 남겨둠(도메인 속성이
+상위 개념이라 중복돼도 무해). 앞으로 `/en/` 등 언어가 늘어도 이 도메인 속성이 전부
+커버한다.
+
 ### (아래는 오픈 전 작업 기록)
 
 **콘텐츠·SEO 준비는 끝났다.** 진짜 막힌 것은 인프라였다 — `parkinon.com`은 이미 살아 있는
@@ -338,13 +351,6 @@ PubMed ─────────────┼─→ 임상시험 (개별 카
 
 ### 미결
 
-- **Google Search Console = 지금 `https://parkinon.com/ko/` URL 접두어 속성으로만 등록됨(2026-08-10, 메타태그 인증).**
-  도메인(parkinon.com) 전체 속성으로 하는 게 맞는 방향(오너 지적: "해외는 어떡할건데" — `/en/`
-  등 해외 언어가 생기면 이 속성이 못 봄, 사이트맵도 루트에 있어서 지금 1건 오류 상태) —
-  DNS 인증이 필요한데 Cloudflare 대시보드 로그인이 이 세션에서 안 돼서 보류. **해외 콘텐츠
-  착수 시점에 반드시 도메인 속성으로 다시 등록할 것.** 인증 토큰(재사용 가능):
-  `google-site-verification=lPNo9z49Q1kcJSg7R8GJNCPrx_b3qbvU-5r47uggVTQ` — Layout.astro
-  head에 이미 메타태그로 들어가 있음, DNS TXT로도 추가하면 도메인 속성 인증됨.
 - **도구 메뉴를 열지 말지** (오너 "추후 고려")
 - 임상시험 원문은 영어 의학용어다. 사실 항목만 뽑아 정형화하기로 했으나 **화면은 미설계**
 - **톱바 검색 — 마지막에 넣기로 함(2026-08-08).** 지금 `Header.astro`의 돋보기는 패널만

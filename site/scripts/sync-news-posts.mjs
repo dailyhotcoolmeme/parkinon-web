@@ -201,7 +201,16 @@ async function main() {
     process.exit(1);
   }
 
+  // 파일명 알파벳 순서가 아니라 publishedAt(발행일) 오름차순으로 처리한다 — INSERT 시점의
+  // created_at(now())이 처리 순서를 그대로 따라가므로, 파일명이 알파벳상 뒤인 글을 먼저
+  // 처리해버리면 앱 피드(created_at desc)에서 최신 글이 아래로 가는 순서 뒤바뀜이 생긴다
+  // (오너가 실제로 발견: "소식#1이 더 나중으로 되어서 순서가 안 맞다", 2026-08-10).
   const files = fs.readdirSync(NEWS_DIR).filter((f) => f.endsWith('.mdx'));
+  files.sort((a, b) => {
+    const fmA = matter(fs.readFileSync(path.join(NEWS_DIR, a), 'utf8')).data;
+    const fmB = matter(fs.readFileSync(path.join(NEWS_DIR, b), 'utf8')).data;
+    return new Date(fmA.publishedAt) - new Date(fmB.publishedAt);
+  });
   console.log(`소식 글 ${files.length}건 동기화 시작`);
 
   for (const file of files) {

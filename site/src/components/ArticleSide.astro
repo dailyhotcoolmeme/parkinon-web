@@ -73,6 +73,7 @@ const { toc = [], links = [], linksTitle, tocTitle = t(locale, 'side.tocTitle') 
     display: flex;
     flex-direction: column;
     gap: 30px;
+    word-break: keep-all;
   }
   /* 본문과 사이드를 같이 넣기엔 본문이 눌리는 폭부터는 사이드를 감춘다.
      이 규칙은 반드시 위 기본 규칙 뒤에 와야 한다(앞에 두면 display:flex 에 덮인다). */

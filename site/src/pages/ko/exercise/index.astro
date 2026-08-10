@@ -19,7 +19,6 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
-import AdBox from '../../../components/AdBox.astro';
 import yogaImg from '../../../assets/images/yoga.jpg';
 import { VIDEO_DATA, DIFFICULTIES } from '../../../lib/exerciseVideos.ko';
 import { EXERCISE_SOURCE } from '../../../lib/exerciseSource.ko';
@@ -43,10 +42,6 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
   <Header active="exercise" />
 
   <div class="layout">
-    <aside class="ad-rail left">
-      <AdBox minHeight="600px" />
-    </aside>
-
     <main class="col">
       <section class="hub-hero-full" style={`background-image:url(${yogaImg.src});`}>
         <div class="hub-hero-full-inner">
@@ -97,10 +92,6 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
         }
       </div>
     </main>
-
-    <aside class="ad-rail right">
-      <AdBox minHeight="600px" />
-    </aside>
   </div>
 
   <Footer />
@@ -228,6 +219,7 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
     font-size: 16px;
     margin-top: 4px;
     line-height: 1.4;
+    word-break: keep-all;
     /* 제목 길이가 들쭉날쭉해도 카드 높이를 맞춘다 */
     display: -webkit-box;
     -webkit-box-orient: vertical;

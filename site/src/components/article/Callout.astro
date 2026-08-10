@@ -1,0 +1,37 @@
+---
+/*
+ * 본문 강조 박스 — 오너 지적(2026-08-10): "강조할 부분에 녹색 배경박스 추가하자."
+ * <strong>(인라인, 옅은 초록 배경)보다 한 단계 위, 문장·짧은 단락 단위 강조용.
+ *
+ * 슬롯 대신 text prop 을 쓴다 — MDX에서 <Callout>텍스트</Callout>처럼 슬롯으로 넘기면
+ * 안의 텍스트가 <p>로 감싸져 렌더되는데, 이 <p>는 본문(.article-body)의 전역 <p> 스타일
+ * 대상이 되어 새어 들어온다(Steps.astro 에서 겪은 것과 같은 원인, 2026-08-09).
+ * Steps·Checklist·CompareBar 처럼 prop 으로 받아 이 컴포넌트가 직접 렌더한다.
+ *
+ * 쓰는 법(MDX): <Callout text="강조할 문장. <b>부분 강조</b>도 가능." />
+ */
+interface Props {
+  text: string;
+}
+const { text } = Astro.props;
+---
+
+<div class="callout" set:html={text} />
+
+<style>
+  .callout {
+    margin-top: 18px;
+    padding: 16px 18px;
+    background: var(--secondary-container);
+    border-radius: 12px;
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text);
+    font-weight: 700;
+    word-break: keep-all;
+  }
+  .callout :global(b) {
+    text-decoration: underline;
+    text-decoration-color: var(--primary);
+  }
+</style>

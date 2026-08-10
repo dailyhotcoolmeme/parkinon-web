@@ -164,6 +164,15 @@ const indexable = Astro.site?.host === 'parkinon.com';
     font-weight: 800;
     font-display: swap;
   }
+  /* 로고 옆 브랜드 글자를 더 두껍게(오너 지시 2026-08-10) — 800(Bold)까지만 있던 걸
+     실제 900(Black) 파일을 새로 받아 추가했다. font-weight:900 만 주는 건 로드된
+     굵기가 없어 800과 똑같이 렌더된다 — 진짜 굵기 파일이 있어야 차이가 난다. */
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/Pretendard-Black.otf') format('opentype');
+    font-weight: 900;
+    font-display: swap;
+  }
 
   /*
    * 디자인 토큰 — 앱 실제 브랜드 컬러 재사용 (website-plan.md "디자인" 확정 사항,
@@ -239,6 +248,17 @@ const indexable = Astro.site?.host === 'parkinon.com';
     color: var(--text);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    /*
+     * 근본 원인(2026-08-09, 오너 지적): 브라우저 기본값(word-break: normal)은 한글
+     * 음절 사이를 "아무 데서나 끊어도 되는 지점"으로 취급해서(한자·가나와 같은 취급),
+     * 좁은 화면에서 "발병" 같은 단어가 "발/병"으로 쪼개진다. 지금까지 이 문제를
+     * 발견할 때마다 컴포넌트 하나씩 word-break:keep-all을 따로 붙여왔는데(AppPromo,
+     * index.astro, clinical 페이지, 이번 article 템플릿...), 새 컴포넌트를 만들 때마다
+     * 또 잊어버리고 반복될 수밖에 없는 방식이었다. word-break는 상속되는 속성이라
+     * body에 한 번만 지정하면 이후 새로 만드는 화면까지 전부 자동으로 적용된다 —
+     * 컴포넌트별 개별 지정은 이제 중복이지만 지워도 되고 안 지워도 무해하다.
+     */
+    word-break: keep-all;
   }
   h1,
   h2,
@@ -247,7 +267,14 @@ const indexable = Astro.site?.host === 'parkinon.com';
     font-family: var(--font-head);
     font-weight: 800;
     margin: 0;
-    text-wrap: balance;
+    /*
+     * ⚠️ 2026-08-09 — 예전엔 text-wrap: balance가 있었다. 이게 진짜 원인이었다:
+     * 여러 줄 제목의 줄 길이를 비슷하게 맞추려고, 줄이 다 안 찼는데도 브라우저가
+     * 일부러 일찍 끊어버린다("반드시" 다음에 152px가 남았는데도 거기서 끊긴 것).
+     * word-break: keep-all과 별개 문제였다 — keep-all은 "단어 중간에서 끊지 않는다"만
+     * 보장하고, balance는 "줄을 다 안 채우고 끊는다"를 강제로 만든다. 오너가 원하는
+     * 동작(그냥 꽉 채우고 남는 것만 다음 줄로)과 정반대라 지운다.
+     */
   }
   p {
     margin: 0;

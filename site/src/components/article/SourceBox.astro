@@ -34,7 +34,6 @@ const locale = Astro.currentLocale ?? 'ko';
     )
   }
   {contact && <p>{t(locale, 'source.contact')} · {contact}</p>}
-  <p class="report">{t(locale, 'source.notice')}</p>
 </div>
 
 <style>
@@ -49,6 +48,7 @@ const locale = Astro.currentLocale ?? 'ko';
     font-size: 13px;
     color: var(--text-sub);
     line-height: 1.8;
+    word-break: keep-all;
   }
   b {
     color: var(--text);
@@ -62,8 +62,5 @@ const locale = Astro.currentLocale ?? 'ko';
   }
   a:hover {
     color: var(--primary);
-  }
-  .report {
-    margin-top: 8px;
   }
 </style>

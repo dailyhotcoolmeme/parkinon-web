@@ -36,7 +36,7 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/app">
       <LocaleProvider>
       <RangeProvider>
         <Routes>

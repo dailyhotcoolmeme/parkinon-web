@@ -19,7 +19,6 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
-import AdBox from '../../../components/AdBox.astro';
 import labImg from '../../../assets/images/lab.jpg';
 import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
@@ -132,10 +131,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   <Header active="clinical" />
 
   <div class="layout">
-    <aside class="ad-rail left">
-      <AdBox minHeight="600px" />
-    </aside>
-
     <main class="col">
       <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
         <div class="hub-hero-full-inner">
@@ -413,10 +408,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
         <button class="load-more" id="searchLoadMore" hidden><Tr k="search.loadMore" /></button>
       </div>
     </main>
-
-    <aside class="ad-rail right">
-      <AdBox minHeight="600px" />
-    </aside>
   </div>
 
   <Footer />

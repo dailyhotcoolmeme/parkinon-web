@@ -1,0 +1,61 @@
+---
+/*
+ * 소식(뉴스) 묶음 글에서 여러 소재를 나눠 보여주는 구분선 + 소재 번호 라벨.
+ * 쓰는 법(MDX): <StoryHead index={1} first />  ← 첫 소재는 first(위 구분선 뺌)
+ *              바로 다음 줄에 진짜 마크다운 `## 제목`을 쓴다.
+ *
+ * ⚠️ 2026-08-10 오너 발견: 이전 버전은 제목까지 이 컴포넌트가 <div>로 직접 렌더했다
+ * (전역 h2 스타일 충돌을 피하려고, Steps.astro 와 같은 이유). 그런데 그 바람에 이
+ * 제목이 **진짜 마크다운 `##` 헤딩이 아니게 돼서, 본문 `##`에서 자동으로 만드는
+ * 우측 목차(TOC)에서 소재 제목이 통째로 빠지는 사고**가 났다("지금 할 수 있는 것"
+ * 하나만 목차에 남음). 그래서 이번엔 제목은 반드시 진짜 `## 제목`으로 쓰게 하고,
+ * 이 컴포넌트는 번호 라벨 + 구분선만 담당한다 — 그 다음에 오는 h2 하나만
+ * `:global(.story-kicker + h2)`로 지목해서 크기만 키운다(!important 필요 — 본문
+ * 전역 h2 규칙과 클래스 개수가 같아서 순서에 의존하지 않고 확실히 이기려면 이 방법뿐).
+ */
+import { tv } from '../../i18n';
+
+interface Props {
+  index: number;
+  first?: boolean;
+}
+const { index, first = false } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+---
+
+<div class:list={['story-head', { first }]}>
+  <span class="story-kicker">{tv(locale, 'news.storyLabel', { index: String(index) })}</span>
+</div>
+
+<style>
+  .story-head {
+    margin-top: 48px;
+    padding-top: 32px;
+    border-top: 2px solid var(--outline);
+  }
+  .story-head.first {
+    margin-top: 30px;
+    padding-top: 0;
+    border-top: none;
+  }
+  .story-kicker {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  /*
+   * 바로 다음에 오는 진짜 `## 제목`만 지목해 키운다. `.story-kicker`는 `.story-head`
+   * 안쪽 자식이라 형제(sibling)가 아니다 — 실제 형제는 바깥쪽 `.story-head` 쪽이라
+   * 그걸 지목해야 한다(2026-08-10 1차 시도에서 이걸 놓쳐서 안 먹혔음, 실측으로 확인).
+   * 본문(.article-body)의 전역 h2 규칙(font-size:21px, margin-top:44px)과 특이도가
+   * 똑같은 클래스+태그 조합이라 !important 없이는 순서에 의존하게 된다 — 여기서만
+   * 예외적으로 쓴다(다른 곳에 함부로 따라 쓰지 말 것).
+   */
+  :global(.story-head + h2) {
+    margin-top: 6px !important;
+    font-size: 23px !important;
+  }
+</style>

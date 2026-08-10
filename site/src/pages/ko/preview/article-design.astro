@@ -15,7 +15,6 @@ import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
-import AdBox from '../../../components/AdBox.astro';
 import heroImg from '../../../assets/images/path.jpg';
 import bodyImg from '../../../assets/images/lab.jpg';
 import appShot from '../../../assets/images/appshots/parkinon1.png';
@@ -45,8 +44,6 @@ const sideLinks = [
   <Header active="institutions" />
 
   <div class="layout">
-    <aside class="ad-rail left"><AdBox minHeight="600px" /></aside>
-
     <main class="col">
       <div class="preview-note">
         <b>디자인 시안</b> · 확정 아닙니다. 블록별로 <b>뺄 것 / 더할 것</b>을 말씀해 주세요.
@@ -59,7 +56,7 @@ const sideLinks = [
           <span class="a-tag">산정특례</span>
           <h1>파킨슨병 산정특례, 신청 자격과 혜택 총정리</h1>
           <div class="a-meta">
-            <span>2026.07.28 작성</span><span class="dot">·</span><span class="basis">2026년 7월 기준</span>
+            <span>2026.07.28</span><span class="dot">·</span><span class="basis">2026년 7월 기준</span>
           </div>
         </div>
       </section>
@@ -165,8 +162,6 @@ const sideLinks = [
               감기나 다른 질환으로 병원에 갈 때는 일반 부담률이 그대로 적용됩니다. 산정특례는
               <b>등록한 질환의 진료</b>에만 붙습니다.
             </p>
-
-            <div class="article-ad"><AdBox minHeight="120px" /></div>
 
             <h2 id="deadline">언제까지 신청해야 하나요</h2>
             <p>
@@ -323,8 +318,6 @@ const sideLinks = [
         <ArticleSide toc={toc} links={sideLinks} linksTitle="제도·지원 다른 글" />
       </div>
     </main>
-
-    <aside class="ad-rail right"><AdBox minHeight="600px" /></aside>
   </div>
 
   <Footer />
@@ -476,9 +469,6 @@ const sideLinks = [
     line-height: 1.85;
     color: var(--text);
     margin-top: 14px;
-  }
-  .article-ad {
-    margin: 36px 0;
   }
 
   /* ③ 막대 도식 */

@@ -1,18 +1,13 @@
 ---
+import { getCollection } from 'astro:content';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { Image } from 'astro:assets';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
-import AdBox from '../../components/AdBox.astro';
+import { inLocale, inCategory, sortByDateDesc, slugOf, categoryOf, categoryLabel, formatDate } from '../../lib/articles';
 
 import heroImg from '../../assets/images/hero.jpg';
-import pathImg from '../../assets/images/path.jpg';
-import foodImg from '../../assets/images/food.jpg';
-import yogaImg from '../../assets/images/yoga.jpg';
-import sleepImg from '../../assets/images/sleep.jpg';
-import familyImg from '../../assets/images/family.jpg';
-import labImg from '../../assets/images/lab.jpg';
 
 import shot1 from '../../assets/images/appshots/parkinon1.png';
 import shot2 from '../../assets/images/appshots/parkinon2.png';
@@ -73,12 +68,63 @@ const featureList = [
   },
 ];
 
-const newsRows = [
-  { img: foodImg, tag: '생활 요령 · 식사', title: '파킨슨병 환자를 위한 식단 관리 기본', alt: '비빔밥과 여러 반찬이 차려진 한 상' },
-  { img: yogaImg, tag: '생활 요령 · 운동', title: '보행 개선을 위한 하루 10분 스트레칭 습관', alt: '햇살 아래 돌돌 말아 세워둔 요가매트 두 개' },
-  { img: sleepImg, tag: '생활 요령 · 수면', title: '숙면을 방해하는 습관, 무엇을 바꿔야 할까요', alt: '아침 햇살이 비치는 정돈된 침구' },
-  { img: familyImg, tag: '생활 요령 · 보호자', title: '보호자의 번아웃, 혼자 견디지 마세요', alt: '담요와 머그컵 두 개가 놓인 아늑한 소파' },
-  { img: labImg, tag: '파킨온 소식', title: '[파킨온 소식] 최근 발표된 연구, 쉽게 정리했습니다', alt: '실험실 시험관 랙', altTag: true },
+/*
+ * 홈 "오늘의 파킨온 소식" — 예전엔 다섯 줄 다 손으로 지어낸 가짜 글이었다(제목도
+ * href="#"도 실제로 없는 글). 오너 지시(2026-08-10: "이미 세부 메뉴들 컨텐츠 있으니까
+ * 그걸로 갈아끼워야지") — 실제 글 컬렉션에서 가져온다.
+ *
+ * ⚠️ 메인 카드는 **무조건 소식(news) 카테고리**여야 한다 — 섹션 제목 자체가
+ * "오늘의 파킨온 소식"이다. 처음엔 전체 카테고리 중 최신 글을 그냥 가져와서 제도·지원
+ * 글이 메인에 뜨는 사고가 났다(오너 지적 2026-08-10: "왜 메인이 제도지원으로 바뀌었냐,
+ * 소식이 메인이 되어야 하는데"). 옆 5줄은 소식이 아니어도 되니 전체 최신 글로 채운다.
+ */
+const allArticles = sortByDateDesc(await getCollection('articles', inLocale(locale)));
+const newsArticles = sortByDateDesc(await getCollection('articles', inCategory(locale, 'news')));
+const featured = newsArticles[0];
+const newsRows = allArticles.filter((e) => e.id !== featured.id).slice(0, 5);
+
+const tagLabel = (e: (typeof allArticles)[number]) =>
+  categoryOf(e) === 'news' ? e.data.tag : `${categoryLabel(locale, categoryOf(e))} · ${e.data.tag}`;
+
+const articleHref = (e: (typeof allArticles)[number]) => getRelativeLocaleUrl(locale, `${categoryOf(e)}/${slugOf(e)}`);
+
+/*
+ * 홈 "둘러보기" — 예전엔 제도·지원/생활 요령 2개만 있었다. 지금은 5개 메뉴가 다 실제
+ * 콘텐츠를 갖췄으니 전부 보여준다(순서는 헤더·푸터와 같은 src/lib/nav.ts 기준).
+ * 아이콘은 기존 두 카드(제도=Feather "home", 생활=Feather "heart")와 같은 선 아이콘
+ * 세트(Feather Icons, MIT)에서 골라 통일했다.
+ */
+const axisCards = [
+  {
+    href: getRelativeLocaleUrl(locale, 'news'),
+    cat: '최신 소식',
+    desc: '국내외 파킨슨병 연구·치료 소식을 쉬운 말로 정리해 이틀에 한 번 전해드립니다.',
+    icon: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M16 13H8', 'M16 17H8'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'lifestyle'),
+    cat: '생활 요령',
+    desc: '낙상 예방, 식단·수면 관리부터 마음 건강, 보호자 번아웃 대처법까지 — 매일의 어려움을 덜어줄 실전 정보를 모았습니다.',
+    icon: ['M12 21s-7-4.35-9.5-8.5C1 9 2.5 5.5 6 5c2-.3 3.5.8 6 3.5C14.5 5.8 16 4.7 18 5c3.5.5 5 4 3.5 7.5C19 16.65 12 21 12 21z'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'clinical'),
+    cat: '임상시험·연구',
+    desc: '국내외에서 모집 중인 임상시험과 최신 연구 결과를 한 곳에서 확인하세요.',
+    icon: ['M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'M8 2h8v4H8z'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'exercise'),
+    cat: '운동 영상',
+    desc: '걷기·균형·스트레칭까지 — 공식 기관이 만든 파킨슨병 맞춤 운동 영상을 모았습니다.',
+    icon: ['M22 12h-4l-3 9L9 3l-3 9H2'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'institutions'),
+    cat: '제도·지원',
+    desc: '희귀질환 산정특례부터 장애등록, 장기요양등급, 의료비 세금공제까지 — 신청 자격과 절차를 항목별로 정리해뒀습니다.',
+    icon: ['M3 21h18', 'M5 21V9l7-5 7 5v12', 'M9 21v-6h6v6'],
+  },
 ];
 ---
 
@@ -90,71 +136,38 @@ const newsRows = [
       <h1>파킨슨병과 함께하는 하루하루, 조금 더 수월하게</h1>
       <p>약 복용 시간부터 낙상 예방, 제도 지원까지 — 환자와 가족에게 실제로 도움되는 정보만 정리했습니다.</p>
       <div class="actions">
-        <button class="btn btn-primary">오늘의 추천 글 보기</button>
+        <a class="btn btn-primary" href={articleHref(featured)}>오늘의 추천 글 보기</a>
         <a class="btn btn-ghost-light" href={getRelativeLocaleUrl(locale, 'lifestyle')}>생활 요령 둘러보기</a>
       </div>
     </div>
   </section>
 
   <div class="layout">
-    <aside class="ad-rail left">
-      <AdBox minHeight="600px" />
-    </aside>
-
     <main class="col">
       <section>
         <div class="news-head">
           <h2>오늘의 파킨온 소식</h2>
-          <span class="today" id="todayLabel" data-template={t(locale, 'home.todayRecommend' as DictKey)}></span>
         </div>
         <div class="news-layout">
-          <article class="feature-card">
+          <a class="feature-card" href={articleHref(featured)}>
             <div class="thumb">
-              <Image src={pathImg} alt="낙엽이 깔린 가을 산책로" />
-              <span class="tag">생활 요령 · 낙상 예방</span>
+              <Image src={featured.data.hero} alt={featured.data.heroAlt} />
+              <span class="tag">{tagLabel(featured)}</span>
             </div>
-            <h3>친구와 함께 걷는 것만으로도 낙상 위험이 줄어듭니다</h3>
-            <p class="excerpt">
-              혼자보다 둘, 셋이 걸을 때 보폭과 균형을 더 잘 챙기게 됩니다. 안전한 동행 산책을 위한 실전 팁을 정리했습니다.
-            </p>
+            <h3>{featured.data.title}</h3>
+            <p class="excerpt">{featured.data.description}</p>
             <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
-            <button
-              type="button"
-              class="feature-toggle"
-              id="featureToggle"
-              aria-expanded="false"
-              aria-controls="featureFull"
-              data-expand-label={t(locale, 'home.featureExpand' as DictKey)}
-              data-collapse-label={t(locale, 'home.featureCollapse' as DictKey)}
-            >
-              <span>{t(locale, 'home.featureExpand' as DictKey)}</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
-            </button>
-            <div class="feature-full" id="featureFull">
-              <p>
-                파킨슨병 환자는 혼자 걸을 때 보폭이 좁아지고 팔 흔들림이 줄어드는 경향이 있습니다. 반면 동행이 있으면
-                자연스럽게 속도를 맞추고 자세를 의식하게 되어 보행의 질이 개선된다는 보고가 있습니다.
-              </p>
-              <p>
-                동행 산책 시에는 환자보다 반걸음 뒤, 계단이나 턱이 있는 방향에서 걷는 것이 좋습니다. 갑자기 방향을 트는
-                대신 미리 말로 알려주면 예기치 못한 회전 동작으로 인한 낙상을 줄일 수 있습니다.
-              </p>
-              <p>
-                산책로는 평탄하고 조명이 밝은 길을 우선으로 고르고, 약효가 안정적인 시간대를 택하는 것이 안전합니다.
-                걷다가 어지러움이나 다리 힘 빠짐이 느껴지면 즉시 앉아서 쉬도록 서로 확인하는 습관을 들이세요.
-              </p>
-            </div>
-          </article>
+          </a>
           <div class="news-list">
             {
               newsRows.map((row) => (
-                <a class="news-row" href="#">
+                <a class="news-row" href={articleHref(row)}>
                   <div class="thumb">
-                    <Image src={row.img} alt={row.alt} />
+                    <Image src={row.data.thumbnail ?? row.data.hero} alt={row.data.heroAlt} />
                   </div>
                   <div>
-                    <span class:list={['tag', { alt: row.altTag }]}>{row.tag}</span>
-                    <h4>{row.title}</h4>
+                    <span class:list={['tag', { alt: categoryOf(row) === 'news' }]}>{tagLabel(row)}</span>
+                    <h4>{row.data.title}</h4>
                   </div>
                 </a>
               ))
@@ -168,43 +181,23 @@ const newsRows = [
           <h2>둘러보기</h2>
         </div>
         <div class="axes-grid">
-          <a class="axis-card" href={getRelativeLocaleUrl(locale, 'institutions')}>
-            <div class="axis-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-                ><path d="M3 21h18"></path><path d="M5 21V9l7-5 7 5v12"></path><path d="M9 21v-6h6v6"></path></svg
-              >
-            </div>
-            <div>
-              <div class="cat">제도·지원</div>
-              <p class="desc">
-                희귀질환 산정특례부터 장애등록, 장기요양등급, 의료비 세금공제까지 — 신청 자격과 절차를 항목별로
-                정리해뒀습니다.
-              </p>
-              <div class="go">자세히 보기 →</div>
-            </div>
-          </a>
-          <a class="axis-card" href={getRelativeLocaleUrl(locale, 'lifestyle')}>
-            <div class="axis-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"
-                ><path
-                  d="M12 21s-7-4.35-9.5-8.5C1 9 2.5 5.5 6 5c2-.3 3.5.8 6 3.5C14.5 5.8 16 4.7 18 5c3.5.5 5 4 3.5 7.5C19 16.65 12 21 12 21z"
-                ></path></svg
-              >
-            </div>
-            <div>
-              <div class="cat">생활 요령</div>
-              <p class="desc">
-                낙상 예방, 식단·수면 관리부터 마음 건강, 보호자 번아웃 대처법까지 — 매일의 어려움을 덜어줄 실전 정보를
-                모았습니다.
-              </p>
-              <div class="go">자세히 보기 →</div>
-            </div>
-          </a>
+          {
+            axisCards.map((c) => (
+              <a class="axis-card" href={c.href}>
+                <div class="axis-ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    {c.icon.map((d) => <path d={d} />)}
+                  </svg>
+                </div>
+                <div>
+                  <div class="cat">{c.cat}</div>
+                  <p class="desc">{c.desc}</p>
+                  <div class="go">자세히 보기 →</div>
+                </div>
+              </a>
+            ))
+          }
         </div>
-      </section>
-
-      <section class="home-ad">
-        <AdBox minHeight="110px" label="Advertisement · 광고 영역" />
       </section>
 
       <section class="cta">
@@ -257,10 +250,6 @@ const newsRows = [
         </div>
       </section>
     </main>
-
-    <aside class="ad-rail right">
-      <AdBox minHeight="600px" />
-    </aside>
   </div>
 
   <Footer />
@@ -354,19 +343,11 @@ const newsRows = [
   }
 
   .news-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
     margin-bottom: 20px;
   }
   .news-head h2 {
     font-size: 24px;
     color: var(--text);
-  }
-  .news-head .today {
-    font-size: 13px;
-    color: var(--text-sub);
-    font-weight: 600;
   }
   .news-layout {
     display: grid;
@@ -426,44 +407,6 @@ const newsRows = [
     color: var(--text-sub);
     opacity: 0.8;
   }
-  .feature-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 14px;
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--primary);
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-  }
-  .feature-toggle svg {
-    width: 14px;
-    height: 14px;
-    transition: transform 0.2s;
-  }
-  .feature-toggle[aria-expanded='true'] svg {
-    transform: rotate(180deg);
-  }
-  .feature-full {
-    overflow: hidden;
-    max-height: 0;
-    transition: max-height 0.35s ease;
-  }
-  .feature-full.open {
-    max-height: 640px;
-    margin-top: 2px;
-  }
-  .feature-full :global(p) {
-    margin-top: 12px;
-    font-size: 14.5px;
-    color: var(--text-sub);
-    line-height: 1.7;
-    max-width: 58ch;
-  }
-
   .news-list {
     display: flex;
     flex-direction: column;
@@ -517,11 +460,18 @@ const newsRows = [
   }
   .axes-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    /* 5개 카드라 2열은 마지막 줄이 1개만 남아 비대칭이 된다(2026-08-10, 5개로 늘어남) —
+       3열로 3+2 로 나눠 덜 어색하게 한다. */
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 56px;
   }
-  @media (max-width: 760px) {
+  @media (max-width: 1000px) {
+    .axes-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 640px) {
     .axes-grid {
       grid-template-columns: 1fr;
     }
@@ -568,17 +518,11 @@ const newsRows = [
     margin-top: 16px;
   }
 
-  .home-ad {
-    margin-bottom: 56px;
-  }
   @media (max-width: 760px) {
     .news-layout {
       margin-bottom: 64px;
     }
     .axes-grid {
-      margin-bottom: 64px;
-    }
-    .home-ad {
       margin-bottom: 64px;
     }
   }
@@ -744,26 +688,11 @@ const newsRows = [
   const today = new Date();
   const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
 
-  const todayLabelEl = document.getElementById('todayLabel')!;
-  todayLabelEl.textContent = (todayLabelEl.dataset.template ?? '')
-    .replace('{m}', String(today.getMonth() + 1))
-    .replace('{d}', String(today.getDate()));
-
   const featureDateEl = document.getElementById('featureDate')!;
   featureDateEl.textContent = (featureDateEl.dataset.template ?? '')
     .replace('{y}', String(today.getFullYear()))
     .replace('{m}', pad(today.getMonth() + 1))
     .replace('{d}', pad(today.getDate()));
-
-  const featureToggle = document.getElementById('featureToggle')!;
-  const featureFull = document.getElementById('featureFull')!;
-  featureToggle.addEventListener('click', () => {
-    const open = featureFull.classList.toggle('open');
-    featureToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-    featureToggle.querySelector('span')!.textContent = open
-      ? (featureToggle.dataset.collapseLabel ?? '')
-      : (featureToggle.dataset.expandLabel ?? '');
-  });
 
   const appPreviewToggle = document.getElementById('appPreviewToggle')!;
   const appPreviewPanel = document.getElementById('appPreviewPanel')!;

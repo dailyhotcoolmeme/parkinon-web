@@ -71,6 +71,7 @@ const en = {
   'phaseDesc.NA': 'A trial without a drug-development phase (for example, a device or behavioral study).',
   'clinical.phaseHelp': 'What does this phase mean?',
   'clinical.phaseMore': 'Learn more',
+  'term.readMore': 'Learn more',
   'clinical.duration': 'Duration',
   'clinical.estimated': 'estimated',
   'clinical.recruiting': 'Recruiting',
@@ -141,7 +142,9 @@ const en = {
 
   'source.title': 'Sources',
   'source.contact': 'Contact',
-  'source.notice': 'If you find anything out of date, please let us know at admin@ourmine.co.kr.',
+
+  'news.storyLabel': 'Story {index}',
+  'news.sourceLink': 'Read the original ({name})',
 
   'home.todayRecommend': "Today's pick, {m}/{d}",
   'home.todayDate': 'Today · {y}.{m}.{d}',
@@ -153,6 +156,39 @@ const en = {
     'Parkinon reminds you when to take your medication and keeps a record. Your family can follow along too.',
   'app.shotAlt': 'The Parkinon app showing today’s medication status',
 
+  'app.effectTracking.title': 'Track how you feel in the app, too',
+  'app.effectTracking.body':
+    'Logging your body and mood after each dose, matched to your medication schedule, builds a record you can use to track how well your medication is working.',
+  'app.effectTracking.alt': 'Parkinon app - body and mood tracking screen',
+  'app.exercise.title': 'Log today’s exercise in the app',
+  'app.exercise.body':
+    'Keeping an exercise log gives you motivation to keep going, and lets your caregiver see how much you’ve been moving too.',
+  'app.exercise.alt': 'Parkinon app - exercise log screen',
+  'app.record.title': 'Log your symptoms in the app, too',
+  'app.record.body':
+    'Keeping a record of your day-to-day symptoms makes it much easier to describe changes at your next appointment.',
+  'app.record.alt': 'Parkinon app - record and manage screen',
+  'app.medRegistration.title': 'Register your medications in the app',
+  'app.medRegistration.body':
+    'Registering what you take and when means you can see everything at a glance instead of tracking a separate list.',
+  'app.medRegistration.alt': 'Parkinon app - medication registration screen',
+  'app.family.title': 'Manage it together with family',
+  'app.family.body':
+    'When the patient logs an entry, caregivers get notified too — so you can check on each other even when you’re apart.',
+  'app.family.alt': 'Parkinon app - family linking screen',
+  'app.reminder.title': 'Let the app remind you when to take your medication',
+  'app.reminder.body':
+    'Get a notification at the time you set, and checking it off builds your record automatically.',
+  'app.reminder.alt': 'Parkinon app - medication time and reminder screen',
+  'app.familyDiary.title': 'Share your day with family',
+  'app.familyDiary.body':
+    'Keep a short daily entry that can later be collected into a book, with family able to join in too.',
+  'app.familyDiary.alt': 'Parkinon app - family diary screen',
+  'app.community.title': 'Talk with others in a similar situation',
+  'app.community.body':
+    'In the Parkinon app’s information and sharing community, patients and caregivers can share their experiences.',
+  'app.community.alt': 'Parkinon app - information and sharing community screen',
+
   'medSchedule.deleteMed': 'Delete {name}',
 
   'footer.quickLinks': 'Quick links',
@@ -161,8 +197,8 @@ const en = {
   'footer.termsApp': 'App terms of service',
   'footer.privacyApp': 'App privacy policy',
   'footer.contact': 'Contact us',
-  'footer.disclaimer':
-    'The information on this site does not replace medical advice. Always consult your doctor before making any medical decision.',
+  'footer.disclaimerLine1': 'The information on this site does not replace medical advice.',
+  'footer.disclaimerLine2': 'Always consult your doctor before making any medical decision.',
   'footer.company': 'OURMINE Inc.',
   'footer.bizInfo': 'Business information',
   'footer.bizCeo': 'Representatives',
@@ -171,6 +207,7 @@ const en = {
   'footer.bizAddress': 'Address',
   'footer.bizPhone': 'Phone',
   'footer.bizEmail': 'Email',
+  'footer.bizWebsite': 'Website',
 
   // 현재 언어 이름 — 각 사전이 **자기 언어 이름을 자기 언어로** 적는다.
   // 언어 전환 UI 는 목록을 보여줘야 하므로, 한국어 화면이라도 'Français' 처럼 그대로 쓴다.

@@ -9,24 +9,52 @@
  * 스토어 주소는 `src/lib/links.ts` 한 곳에서 관리한다(홈과 공용).
  */
 import { Image } from 'astro:assets';
-import appShot from '../../assets/images/appshots/parkinon1.png';
+import shot1 from '../../assets/images/appshots/parkinon1.png';
+import shot2 from '../../assets/images/appshots/parkinon2.png';
+import shot3 from '../../assets/images/appshots/parkinon3.png';
+import shot4 from '../../assets/images/appshots/parkinon4.png';
+import shot5 from '../../assets/images/appshots/parkinon5.png';
+import shot6 from '../../assets/images/appshots/parkinon6.png';
+import shot7 from '../../assets/images/appshots/parkinon7.png';
+import shot8 from '../../assets/images/appshots/parkinon8.png';
+import shotEtc from '../../assets/images/appshots/parkinon_etc.png';
 import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
-import { t } from '../../i18n';
+import { t, type DictKey } from '../../i18n';
+
+/*
+ * 글 주제에 맞는 앱 화면을 보여주기 위한 매핑(오너 지시 2026-08-09: "약복용 내용만 있는데
+ * 각 상세페이지 내용과 맞는 걸로 바꾸자"). 글 frontmatter의 `appFeature` 값으로 고른다.
+ * 기존 기본값(복약)은 그대로 사전(i18n) 값을 쓰고, 나머지는 여기서 직접 관리한다 —
+ * 이 사이트가 한국어 하나뿐이라 이 정도 문구는 새 사전 키를 늘리지 않고 여기 둔다.
+ */
+const FEATURE_SHOTS = {
+  effectTracking: shot2,
+  exercise: shot3,
+  record: shot4,
+  medRegistration: shot5,
+  family: shot6,
+  reminder: shot7,
+  familyDiary: shot8,
+  community: shotEtc,
+} as const;
 
 interface Props {
+  feature?: keyof typeof FEATURE_SHOTS;
   title?: string;
   body?: string;
 }
 const locale = Astro.currentLocale ?? 'ko';
-const {
-  title = t(locale, 'app.promoTitle'),
-  body = t(locale, 'app.promoBody'),
-} = Astro.props;
+const { feature, title: titleProp, body: bodyProp } = Astro.props;
+
+const appShot = feature ? FEATURE_SHOTS[feature] : shot1;
+const shotAlt = feature ? t(locale, `app.${feature}.alt` as DictKey) : t(locale, 'app.shotAlt');
+const title = titleProp ?? (feature ? t(locale, `app.${feature}.title` as DictKey) : t(locale, 'app.promoTitle'));
+const body = bodyProp ?? (feature ? t(locale, `app.${feature}.body` as DictKey) : t(locale, 'app.promoBody'));
 ---
 
 <aside class="app">
   <div class="shot">
-    <Image src={appShot} alt={t(locale, 'app.shotAlt')} widths={[200, 300, 420]} sizes="(max-width: 640px) 132px, 210px" />
+    <Image src={appShot} alt={shotAlt} widths={[200, 300, 420]} sizes="(max-width: 640px) 132px, 210px" />
   </div>
 
   <div class="text">

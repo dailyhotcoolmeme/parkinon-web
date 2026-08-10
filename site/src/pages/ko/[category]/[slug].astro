@@ -12,11 +12,10 @@ import { Image } from 'astro:assets';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
-import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import SourceBox from '../../../components/article/SourceBox.astro';
 import AppPromo from '../../../components/article/AppPromo.astro';
-import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale } from '../../../lib/articles';
+import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale, findRelatedArticles } from '../../../lib/articles';
 import { tv } from '../../../i18n';
 
 export async function getStaticPaths() {
@@ -47,7 +46,7 @@ const sideLinks = siblings.slice(0, 6).map((e) => ({
   date: formatDate(e.data.publishedAt),
   href: getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`),
 }));
-const related = siblings.slice(0, 2);
+const related = findRelatedArticles(entry, siblings);
 
 const catHref = getRelativeLocaleUrl(locale, category);
 ---
@@ -70,15 +69,13 @@ const catHref = getRelativeLocaleUrl(locale, category);
   <Header active={category} />
 
   <div class="layout">
-    <aside class="ad-rail left"><AdBox minHeight="600px" /></aside>
-
     <main class="col">
       <section class="a-hero" style={`background-image:url(${entry.data.hero.src});`}>
         <div class="a-hero-inner">
           <span class="a-tag">{entry.data.tag}</span>
           <h1>{entry.data.title}</h1>
           <div class="a-meta">
-            <span>{formatDate(entry.data.publishedAt)} 작성</span>
+            <span>{formatDate(entry.data.publishedAt)}</span>
             {entry.data.basisDate && <span class="basis">{entry.data.basisDate}</span>}
           </div>
         </div>
@@ -109,7 +106,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
             contact={entry.data.contact}
           />
 
-          <AppPromo />
+          {!entry.data.hideAppPromo && <AppPromo feature={entry.data.appFeature} />}
 
           {
             related.length > 0 && (
@@ -118,7 +115,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
                 <div class="a-related-grid">
                   {related.map((e) => (
                     <a href={getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`)}>
-                      <Image src={e.data.hero} alt="" widths={[240, 360]} sizes="240px" />
+                      <Image src={e.data.thumbnail ?? e.data.hero} alt="" widths={[240, 360]} sizes="240px" />
                       <span class="t">{e.data.title}</span>
                       <span class="d">{formatDate(e.data.publishedAt)}</span>
                     </a>
@@ -132,19 +129,22 @@ const catHref = getRelativeLocaleUrl(locale, category);
         <ArticleSide toc={toc} links={sideLinks} linksTitle={tv(locale, 'side.moreIn', { category: catLabel })} />
       </div>
     </main>
-
-    <aside class="ad-rail right"><AdBox minHeight="600px" /></aside>
   </div>
 
   <Footer />
 </Layout>
 
 <style>
-  /* 히어로 — 작업 영역(main.col) 안쪽에서만 edge-to-edge. 화면 전체로 뻗지 않는다 */
+  /*
+   * 히어로 — 작업 영역(main.col) 안쪽에서만 edge-to-edge. 화면 전체로 뻗지 않는다.
+   * 위쪽 마진 -28px 는 main.col의 top padding(28px)을 상쇄해 톱바에 바로 붙인다 —
+   * 허브 히어로(.hub-hero-full)는 이미 이렇게 되어 있었는데 상세 페이지만 빠져 있었다
+   * (2026-08-09 오너 지적: 히어로 위에 흰 여백이 떠 있었다).
+   */
   .a-hero {
     position: relative;
     width: auto;
-    margin: 0 calc(-1 * var(--gutter)) 28px;
+    margin: -28px calc(-1 * var(--gutter)) 28px;
     min-height: 300px;
     display: flex;
     align-items: flex-end;
@@ -224,6 +224,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
     background: var(--secondary-container);
     border-radius: 14px;
     padding: 20px 22px;
+    word-break: keep-all;
   }
   .a-summary h2 {
     font-size: 14px;
@@ -261,6 +262,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
    */
   .article-body {
     margin-top: 34px;
+    word-break: keep-all;
   }
   .article-body :global(h2) {
     font-size: 21px;
@@ -311,6 +313,30 @@ const catHref = getRelativeLocaleUrl(locale, category);
     border-radius: 4px;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
+  }
+
+  /*
+   * 면책 문구(`> ...` 블록쿼트) — 지금까지 정의된 스타일이 없어서 브라우저 기본
+   * blockquote(기울임+왼쪽 여백만)로 나가고 있었다(2026-08-08 오너 지적: "이거 문구는
+   * 도대체 어떤 레이어로 들어가는거냐? 좀 규칙을 정할것들은 정하라고"). .a-summary와
+   * 같은 박스 언어(배경색+둥근 모서리, 왼쪽 색상바 없음 — feedback_no_left_accent_bar)를
+   * 따르되, 더 조용한 느낌으로 옅게 둔다 — 강조 박스가 아니라 마지막에 조용히 붙는
+   * 안내문이라서.
+   */
+  .article-body :global(blockquote) {
+    margin: 24px 0 0;
+    padding: 14px 16px;
+    background: var(--surface-low);
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text-sub);
+  }
+  .article-body :global(blockquote p) {
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
   }
 
   /* 표 — 색 박스 콜아웃 대신 표로 정리한다(오너 지적 2026-08-06) */

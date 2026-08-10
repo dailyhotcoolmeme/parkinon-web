@@ -4,7 +4,6 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
-import AdBox from '../../../components/AdBox.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
 import labImg from '../../../assets/images/lab.jpg';
@@ -19,14 +18,6 @@ const locale = Astro.currentLocale ?? 'ko';
 const posts = sortByDateDesc(
   await getCollection('articles', inCategory(locale, 'news'))
 );
-
-// 광고: 글 6개마다 한 줄(광고 상세 확정 사항). 글이 적으면 자연히 안 나온다.
-type Row = { ad: true } | { ad?: false; post: (typeof posts)[number] };
-const rows: Row[] = [];
-posts.forEach((post, i) => {
-  if (i > 0 && i % 6 === 0) rows.push({ ad: true });
-  rows.push({ post });
-});
 
 const sideLinks = posts.slice(0, 6).map((e) => ({
   title: e.data.title,
@@ -46,10 +37,6 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
   <Header active="news" />
 
   <div class="layout">
-    <aside class="ad-rail left">
-      <AdBox minHeight="600px" />
-    </aside>
-
     <main class="col">
       <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
         <div class="hub-hero-full-inner">
@@ -68,24 +55,17 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       <div class="content-body">
         <div class="hub-list">
           {
-            rows.map((row) =>
-              row.ad ? (
-                <div class="native-ad-row">
-                  <span class="ad-label">광고</span>
-                  <AdBox minHeight="90px" />
+            posts.map((post) => (
+              <a class="hub-row" href={getRelativeLocaleUrl(locale, `news/${slugOf(post)}`)}>
+                <span class="tag">{post.data.tag}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <div class="hashtags">
+                  {post.data.hashtags.map((h) => <span>{h}</span>)}
                 </div>
-              ) : (
-                <a class="hub-row" href={getRelativeLocaleUrl(locale, `news/${slugOf(row.post)}`)}>
-                  <span class="tag">{row.post.data.tag}</span>
-                  <h3>{row.post.data.title}</h3>
-                  <p>{row.post.data.description}</p>
-                  <div class="hashtags">
-                    {row.post.data.hashtags.map((h) => <span>{h}</span>)}
-                  </div>
-                  <p class="meta">{formatDate(row.post.data.publishedAt)}</p>
-                </a>
-              )
-            )
+                <p class="meta">{formatDate(post.data.publishedAt)}</p>
+              </a>
+            ))
           }
         </div>
 
@@ -93,10 +73,6 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       </div>
 
     </main>
-
-    <aside class="ad-rail right">
-      <AdBox minHeight="600px" />
-    </aside>
   </div>
 
   <Footer />
@@ -141,6 +117,7 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
     margin-top: 10px;
     color: var(--text);
     line-height: 1.4;
+    word-break: keep-all;
   }
   .hub-row p {
     margin-top: 6px;
@@ -158,25 +135,10 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
   .hashtags {
     margin-top: 8px;
     font-size: 12px;
-    color: var(--text-sub);
-    opacity: 0.7;
+    color: var(--primary);
   }
   .hashtags span {
     margin-right: 7px;
-  }
-  .native-ad-row {
-    padding: 24px 0;
-    border-bottom: 1px solid var(--outline);
-  }
-  .native-ad-row .ad-label {
-    font-size: 11px;
-    font-weight: 800;
-    color: var(--text-sub);
-    background: var(--surface-high);
-    padding: 3px 11px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-bottom: 10px;
   }
   .hub-more {
     display: flex;

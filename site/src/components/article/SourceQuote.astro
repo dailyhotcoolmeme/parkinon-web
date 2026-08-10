@@ -1,0 +1,70 @@
+---
+/*
+ * 소식(뉴스) 글에서 "우리가 지어낸 말이 아니라 실제로 이렇게 나왔다"를 보여주는 인용+원문
+ * 링크 블록. 오너 지적(2026-08-10): "원문이 있어야 신뢰감이 들거잖아." 기사 전문을
+ * 복사·번역하는 대신(저작권·SEO 중복 콘텐츠 문제, 2026-08-06 콘텐츠 원칙), 짧은 직접
+ * 인용 + 눈에 잘 보이는 원문 링크로 대신한다(오너 승인 2026-08-10).
+ *
+ * 쓰는 법(MDX): <SourceQuote quote="원문 그대로의 짧은 인용문" attribution="말한 사람·소속"
+ *   name="출처명" url="원문 링크" />
+ */
+import { tv } from '../../i18n';
+
+interface Props {
+  quote: string;
+  attribution: string;
+  name: string;
+  url: string;
+}
+const { quote, attribution, name, url } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+---
+
+<div class="source-quote">
+  <div class="quote-text">“{quote}”</div>
+  <div class="quote-attribution">— {attribution}</div>
+  <a class="quote-link" href={url} target="_blank" rel="noopener">
+    {tv(locale, 'news.sourceLink', { name })}
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M7 17L17 7M17 7H8M17 7V16" />
+    </svg>
+  </a>
+</div>
+
+<style>
+  .source-quote {
+    margin-top: 20px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 12px;
+  }
+  .quote-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text);
+    font-style: italic;
+  }
+  .quote-attribution {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  /*
+   * .quote-link 만으로 쓰면 본문(.article-body)의 전역 <a> 스타일(밑줄)과 우선순위가
+   * 같아져 문서 순서에 따라 밑줄이 새어 들어올 수 있다(Steps.astro 에서 겪은 문제와
+   * 같은 종류, 2026-08-09). 조상 클래스까지 같이 써서 확실히 이긴다.
+   */
+  .source-quote .quote-link {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14.5px;
+    font-weight: 800;
+    color: var(--primary);
+    text-decoration: none;
+  }
+  .quote-link svg {
+    flex-shrink: 0;
+  }
+</style>

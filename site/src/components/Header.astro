@@ -1,6 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import logo from '../assets/images/logo.png';
+import symbolWhite from '../assets/images/logo-symbol-white.png';
 import { navItemsFor, type NavKey } from '../lib/nav';
 import { t } from '../i18n';
 import Tr from '../i18n/Tr.astro';
@@ -25,7 +25,10 @@ const homeHref = getRelativeLocaleUrl(locale, '');
 
 <header class="site">
   <div class="wrap nav">
-    <a class="brand" href={homeHref}><img src={logo.src} alt="" /><Tr k="brand.name" /></a>
+    <a class="brand" href={homeHref}>
+      <span class="brand-badge"><img src={symbolWhite.src} alt="" /></span>
+      <Tr k="brand.name" />
+    </a>
     <nav class="nav-links" id="navLinks">
       {
         navLinks.map((link) => (
@@ -126,18 +129,57 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   }
   .brand {
     font-family: var(--font-head);
-    font-weight: 800;
+    font-weight: 900;
     font-size: 22px;
-    color: var(--primary);
+    /*
+     * 아이콘 실제 색(로고 PNG 픽셀 실측 #4caf50)과 맞춘다 — 오너 지시 2026-08-10.
+     * var(--primary)는 다크모드에서 밝은 초록(#66bb6a)으로 바뀌는데, 로고 PNG 자체는
+     * 이미지라 색이 안 바뀐다. var(--secondary)는 라이트·다크 모두 #4caf50 고정이라
+     * 로고와 항상 같은 색으로 보인다.
+     */
+    color: var(--secondary);
     flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 8px;
   }
-  .brand img {
+  /*
+   * 앱 톱바(TopBar.tsx)와 같은 표현 — 초록 배지 안 흰 심볼이 천천히 한 바퀴 돌고
+   * 쉬었다가 다시 도는 것을 반복한다(오너 지시 2026-08-10: "아이폰 앱에서는 되는데
+   * 그거 여기에도 적용시키자. 회전하는 이미지"). 앱은 Animated.timing(6초 회전 +
+   * 3.5초 정지)을 코드로 구현했지만, 웹은 순수 CSS 애니메이션으로 같은 타이밍을 낸다.
+   */
+  .brand-badge {
     width: 30px;
     height: 30px;
+    border-radius: 6px;
+    background: var(--secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .brand-badge img {
+    width: 20px;
+    height: 20px;
     display: block;
+    animation: brand-spin 9.5s ease-in-out infinite;
+  }
+  @keyframes brand-spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    63% {
+      transform: rotate(360deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .brand-badge img {
+      animation: none;
+    }
   }
   .nav-links {
     display: flex;

@@ -8,7 +8,7 @@ const ko: Dict = {
   'brand.name': '파킨온',
   'site.description': 'ParkinON — 파킨슨병과 함께하는 하루하루, 조금 더 수월하게',
 
-  'nav.news': '소식',
+  'nav.news': '최신 소식', // 오너 지시 2026-08-10: "소식"이 너무 짧아서 뭘 다루는 메뉴인지 안 보임
   'nav.lifestyle': '생활 요령',
   'nav.clinical': '임상시험·연구',
   'nav.exercise': '운동 영상',
@@ -47,6 +47,7 @@ const ko: Dict = {
   'phaseDesc.NA': '약물 개발 단계 구분이 적용되지 않는 임상시험입니다(의료기기·행동요법 등).',
   'clinical.phaseHelp': '이 단계가 무슨 뜻인가요?',
   'clinical.phaseMore': '자세히 알아보기',
+  'term.readMore': '자세히 알아보기',
   'clinical.duration': '기간',
   'clinical.estimated': '예정',
   'clinical.recruiting': '모집 중',
@@ -118,7 +119,9 @@ const ko: Dict = {
 
   'source.title': '출처',
   'source.contact': '문의',
-  'source.notice': '내용이 바뀐 것을 발견하시면 admin@ourmine.co.kr 로 알려주세요.',
+
+  'news.storyLabel': '소식 {index}',
+  'news.sourceLink': '{name} 원문 보기',
 
   'home.todayRecommend': '{m}월 {d}일의 추천',
   'home.todayDate': '오늘 · {y}.{m}.{d}',
@@ -129,6 +132,31 @@ const ko: Dict = {
   'app.promoBody': '파킨온 앱은 복용 시간을 알려주고 기록을 남깁니다. 보호자와도 함께 볼 수 있습니다.',
   'app.shotAlt': '파킨온 앱의 오늘 복용 현황 화면',
 
+  'app.effectTracking.title': '몸상태·기분도 앱에 기록해 보세요',
+  'app.effectTracking.body': '복용 후 몸상태와 기분을 복용약 기준에 맞게 기록하면, 약효를 추적하는 자료로 쓸 수 있습니다.',
+  'app.effectTracking.alt': '파킨온 앱 - 몸상태·기분 기록 화면',
+  'app.exercise.title': '오늘 한 운동도 앱에 남겨보세요',
+  'app.exercise.body': '운동 기록을 남기면 꾸준히 이어갈 힘이 되고, 보호자도 얼마나 움직였는지 함께 확인할 수 있습니다.',
+  'app.exercise.alt': '파킨온 앱 - 운동 기록 화면',
+  'app.record.title': '증상도 앱에 기록해 두세요',
+  'app.record.body': '그날그날의 증상을 기록해 두면 다음 진료에서 변화를 설명하기 훨씬 쉬워집니다.',
+  'app.record.alt': '파킨온 앱 - 기록·관리 화면',
+  'app.medRegistration.title': '복용약은 앱에 등록해 관리하세요',
+  'app.medRegistration.body': '먹는 약과 시간을 앱에 등록해 두면 목록을 따로 챙기지 않아도 한눈에 확인할 수 있습니다.',
+  'app.medRegistration.alt': '파킨온 앱 - 복용약 등록·관리 화면',
+  'app.family.title': '가족과 함께 관리해 보세요',
+  'app.family.body': '환자가 기록하면 보호자에게도 알림이 가서, 떨어져 지내도 서로의 상태를 확인할 수 있습니다.',
+  'app.family.alt': '파킨온 앱 - 가족 연동 화면',
+  'app.reminder.title': '복약 시간은 앱이 알려드립니다',
+  'app.reminder.body': '정해둔 시간에 알림이 오고, 드셨는지 체크만 하면 자동으로 기록이 쌓입니다.',
+  'app.reminder.alt': '파킨온 앱 - 복용시간 설정·알림 화면',
+  'app.familyDiary.title': '가족과 하루를 나눠보세요',
+  'app.familyDiary.body': '짧은 일기를 남기면 나중에 모아 책으로 만들 수 있고, 가족도 함께 일기에 참여할 수 있습니다.',
+  'app.familyDiary.alt': '파킨온 앱 - 가족 일기 화면',
+  'app.community.title': '비슷한 상황의 사람들과 이야기해 보세요',
+  'app.community.body': '파킨온 앱의 정보·나눔 커뮤니티에서 환자·보호자들과 경험을 나눌 수 있습니다.',
+  'app.community.alt': '파킨온 앱 - 정보·나눔 커뮤니티 화면',
+
   'medSchedule.deleteMed': '{name} 삭제',
 
   'footer.quickLinks': '바로가기',
@@ -137,8 +165,11 @@ const ko: Dict = {
   'footer.termsApp': '앱 이용약관',
   'footer.privacyApp': '앱 개인정보처리방침',
   'footer.contact': '문의하기',
-  'footer.disclaimer':
-    '본 사이트의 정보는 의학적 자문을 대체하지 않습니다. 모든 의학적 결정은 반드시 전문의와 상의하시기 바랍니다.',
+  // PC에서 정확히 이 두 줄로 나뉘어야 한다(오너 지시 2026-08-10) — 그래서 한 문장씩
+  // 키를 나누고 Footer.astro 에서 <br/> 로 잇는다(Tr 컴포넌트는 순수 텍스트만 찍어서
+  // 문자열 안에 <br/> 를 넣어도 렌더 안 됨).
+  'footer.disclaimerLine1': '본 사이트의 정보는 의학적 자문을 대체하지 않습니다.',
+  'footer.disclaimerLine2': '모든 의학적 결정은 반드시 전문의와 상의하시기 바랍니다.',
   'footer.company': '주식회사 아워마인',
   'footer.bizInfo': '사업자 정보',
   'footer.bizCeo': '대표',
@@ -147,6 +178,7 @@ const ko: Dict = {
   'footer.bizAddress': '주소',
   'footer.bizPhone': '고객센터',
   'footer.bizEmail': '이메일',
+  'footer.bizWebsite': '홈페이지',
 
   'lang.self': '한국어',
 };

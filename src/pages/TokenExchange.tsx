@@ -46,7 +46,7 @@ export default function TokenExchange() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: 24, textAlign: 'center', color: '#fff',
     }}>
-      <img src="/parkinon-symbol.png" alt={t('common.appName')} style={{ width: 96, height: 96, marginBottom: 24 }} />
+      <img src={`${import.meta.env.BASE_URL}parkinon-symbol.png`} alt={t('common.appName')} style={{ width: 96, height: 96, marginBottom: 24 }} />
       <p style={{ fontSize: 17, whiteSpace: 'pre-line', opacity: 0.92, lineHeight: 1.55, margin: 0, maxWidth: 360 }}>
         {t(errorKey)}
       </p>

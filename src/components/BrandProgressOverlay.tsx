@@ -147,7 +147,7 @@ export default function BrandProgressOverlay({
           >
             {/* 배지는 정적, 내부 흰 심볼만 회전 (TopBar 브랜드 배지와 동일) */}
             <img
-              src="/parkinon-symbol.png"
+              src={`${import.meta.env.BASE_URL}parkinon-symbol.png`}
               alt=""
               aria-hidden
               style={{

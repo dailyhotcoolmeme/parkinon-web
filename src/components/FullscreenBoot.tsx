@@ -30,7 +30,7 @@ export default function FullscreenBoot({
       }}
     >
       <img
-        src="/parkinon-symbol.png"
+        src={`${import.meta.env.BASE_URL}parkinon-symbol.png`}
         alt={t('common.appName')}
         style={{ width: 96, height: 96, marginBottom: 24 }}
       />

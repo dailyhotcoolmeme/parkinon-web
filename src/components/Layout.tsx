@@ -49,7 +49,7 @@ export default function Layout() {
         <div className="app-header-inner brand-row">
             <div className="brand">
               <div className="brand-symbol-badge">
-                <img src="/parkinon-symbol.png" alt="" className="brand-symbol-spin" />
+                <img src={`${import.meta.env.BASE_URL}parkinon-symbol.png`} alt="" className="brand-symbol-spin" />
               </div>
               <span>{t('common.appName')}</span>
             </div>

@@ -57,7 +57,7 @@ export default function Landing() {
       padding: 24, textAlign: 'center', color: '#fff',
       overflowY: 'auto',
     }}>
-      <img src="/parkinon-symbol.png" alt={t('common.appName')} style={{ width: 88, height: 88, marginBottom: 20 }} />
+      <img src={`${import.meta.env.BASE_URL}parkinon-symbol.png`} alt={t('common.appName')} style={{ width: 88, height: 88, marginBottom: 20 }} />
 
       <p style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.5, margin: 0, maxWidth: 380 }}>
         {t('landing.title')}

@@ -27,6 +27,41 @@ const PRESETS_ROW2: { key: string; days: number }[] = [
 
 type Avg = { label: string; value: string };
 
+/**
+ * 네이티브 <input type="checkbox"> + accentColor 조합은 배경색만 초록으로 바뀌고
+ * 체크 표시 자체는 브라우저/OS가 그려서 흰색이 보장되지 않는다(오너 발견 2026-08-11,
+ * 실제로 검정 체크로 뜸). ExportPdf.tsx 의 커스텀 체크박스와 같은 방식(SVG 흰 체크
+ * 직접 그리기)으로 통일한다.
+ */
+function SmallCheck({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label
+      style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16, cursor: 'pointer', userSelect: 'none' }}
+      onClick={(e) => { e.preventDefault(); onChange(!checked); }}
+    >
+      <span
+        role="checkbox"
+        aria-checked={checked}
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onChange(!checked); } }}
+        style={{
+          width: 20, height: 20, flexShrink: 0, borderRadius: 5,
+          border: checked ? '2px solid #4CAF50' : '2px solid #C7CDD4',
+          background: checked ? '#4CAF50' : '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        {checked && (
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </span>
+      {label}
+    </label>
+  );
+}
+
 export default function RangePicker({
   title,
   downloadHref,
@@ -175,14 +210,8 @@ export default function RangePicker({
       )}
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 16 }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16 }}>
-          <input type="checkbox" checked={brushSync} onChange={(e) => setBrushSync(e.target.checked)} style={{ width: 20, height: 20, accentColor: '#4CAF50' }} />
-          {t('rangePicker.syncCharts')}
-        </label>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 16 }}>
-          <input type="checkbox" checked={showTrendline} onChange={(e) => setShowTrendline(e.target.checked)} style={{ width: 20, height: 20, accentColor: '#4CAF50' }} />
-          {t('rangePicker.showTrendline')}
-        </label>
+        <SmallCheck checked={brushSync} onChange={setBrushSync} label={t('rangePicker.syncCharts')} />
+        <SmallCheck checked={showTrendline} onChange={setShowTrendline} label={t('rangePicker.showTrendline')} />
       </div>
 
       {/* title/downloadHref는 사용처에서 헤더로 옮겨감 — 잔존 시 대비 */}

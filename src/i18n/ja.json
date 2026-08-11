@@ -232,6 +232,7 @@
   "pdf.reactionSeconds": "{{s}}秒（{{ms}}ms）",
   "pdf.avgValue": "平均 {{value}}",
   "pdf.avgTimes": "平均{{n}}回",
+  "pdf.avgPercent": "平均{{n}}%",
   "pdf.tapTitle": "コンディション測定：指タップ",
   "pdf.reactionTitle": "コンディション測定：反応速度"
 }

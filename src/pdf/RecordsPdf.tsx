@@ -13,7 +13,7 @@ import type { ScoreCounts, MedChange } from '../lib/queries';
 /** 동적 간격(track_interval) 1개의 PDF 메타: 차트 캡처 키 + 제목 + 점수 카운트 합산 */
 export type PdfIntervalSpec = { key: string; title: string; counts: ScoreCounts };
 /** 동적 복용 슬롯 1개의 PDF 메타: 차트 캡처 키 + 제목 */
-export type PdfMedSlotSpec = { key: string; title: string };
+export type PdfMedSlotSpec = { key: string; title: string; avgPct?: number | null };
 
 // 5점 색 팔레트 — 화면(BarTrendChart)과 동일 (범례/ON·OFF 비율바에서만 사용)
 const SCORE_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
@@ -286,6 +286,8 @@ export type RecordsPdfProps = {
   /** 동적 복용 슬롯 페이지들 (활성 dose_slot 별, 커스텀 포함) */
   medSlots: PdfMedSlotSpec[];
   medChanges: MedChange[];
+  /** 전체 약 복용률 평균(%). 화면 몸상태/기분과 같은 방식으로 차트 위에 표시. */
+  medicationAvgPct?: number | null;
   /**
    * 화면과 동일한 Recharts 차트를 오프스크린에서 캡처한 PNG dataURL 맵.
    * 키: 'medication' | 'bodyImmediate' | ... | 'sleep' | 'constipation' | 'exercise'
@@ -444,7 +446,7 @@ function SlotOnOffSummary({ counts }: { counts: ScoreCounts }) {
 export function RecordsPdf(props: RecordsPdfProps) {
   const {
     name, from, to, generatedAt, bodyIntervals, moodIntervals, medSlots, chartImages, selected,
-    averages, constipationAvgCycle, measurement,
+    averages, constipationAvgCycle, measurement, medicationAvgPct,
   } = props;
   const rangeStr = `${from} ~ ${to}`;
   // selected 미지정 시 전체 포함(하위호환·기존 결과 보장)
@@ -503,6 +505,7 @@ export function RecordsPdf(props: RecordsPdfProps) {
           subtitle={tr('pdf.dailyAdherenceRateDashedMarkersShowMedic')}
           name={name}
           rangeStr={rangeStr}
+          avgText={medicationAvgPct != null ? tr('pdf.avgPercent', { n: medicationAvgPct }) : undefined}
         >
           <ChartImage src={chartImages.medication} />
         </ChartPage>
@@ -513,6 +516,7 @@ export function RecordsPdf(props: RecordsPdfProps) {
           title={tr('pdf.adherenceForSlot', { slot: s.title })}
           name={name}
           rangeStr={rangeStr}
+          avgText={s.avgPct != null ? tr('pdf.avgPercent', { n: s.avgPct }) : undefined}
         >
           <ChartImage src={chartImages[s.key]} />
         </ChartPage>
@@ -600,19 +604,28 @@ export function RecordsPdf(props: RecordsPdfProps) {
 }
 
 function ChartPage({
-  title, subtitle, name, rangeStr, children,
+  title, subtitle, name, rangeStr, avgText, children,
 }: {
   title: string;
   subtitle?: string;
   name: string;
   rangeStr: string;
+  /** 화면 몸상태/기분과 동일한 녹색 칩 평균 배지("평균 96%" 등). 없으면 표시 안 함. */
+  avgText?: string;
   children: any;
 }) {
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <Text style={styles.pageTitle}>{title}</Text>
       {subtitle ? <Text style={styles.pageSubtitle}>{subtitle}</Text> : null}
-      <View style={styles.chartCard}>{children}</View>
+      <View style={styles.chartCard}>
+        {avgText ? (
+          <View style={meanBoxWrap}>
+            <Text style={meanBoxText}>{avgText}</Text>
+          </View>
+        ) : null}
+        {children}
+      </View>
       <Footer name={name} range={rangeStr} />
     </Page>
   );

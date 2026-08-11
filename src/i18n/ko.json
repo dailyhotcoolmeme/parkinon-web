@@ -232,6 +232,7 @@
   "pdf.reactionSeconds": "{{s}}초 ({{ms}}ms)",
   "pdf.avgValue": "평균 {{value}}",
   "pdf.avgTimes": "평균 {{n}}회",
+  "pdf.avgPercent": "평균 {{n}}%",
   "pdf.tapTitle": "컨디션 측정: 손가락 두드리기",
   "pdf.reactionTitle": "컨디션 측정: 반응속도"
 }

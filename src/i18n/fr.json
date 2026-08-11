@@ -232,6 +232,7 @@
   "pdf.reactionSeconds": "{{s}} s ({{ms}} ms)",
   "pdf.avgValue": "Moyenne {{value}}",
   "pdf.avgTimes": "Moyenne {{n}} taps",
+  "pdf.avgPercent": "Moyenne {{n}}%",
   "pdf.tapTitle": "Mesure : tapotement des doigts",
   "pdf.reactionTitle": "Mesure : temps de réaction"
 }

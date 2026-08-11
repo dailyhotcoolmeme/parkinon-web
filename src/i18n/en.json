@@ -232,6 +232,7 @@
   "pdf.reactionSeconds": "{{s}}s ({{ms}}ms)",
   "pdf.avgValue": "Avg. {{value}}",
   "pdf.avgTimes": "Avg. {{n}} taps",
+  "pdf.avgPercent": "Avg. {{n}}%",
   "pdf.tapTitle": "Condition check: finger tapping",
   "pdf.reactionTitle": "Condition check: reaction time"
 }

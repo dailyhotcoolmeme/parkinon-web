@@ -37,6 +37,13 @@ const SECTION_KEYS = MEASUREMENT_FEATURE_ENABLED
   ? PDF_SECTION_ORDER
   : PDF_SECTION_ORDER.filter((k) => k !== 'measurement');
 
+/** non-null 값 평균(정수 반올림). 화면 MedicationDetail.avgPct 와 동일 산식. */
+function avgPct(vals: (number | null | undefined)[]): number | null {
+  const nums = vals.filter((v): v is number => v != null);
+  if (!nums.length) return null;
+  return Math.round(nums.reduce((a, b) => a + b, 0) / nums.length);
+}
+
 /**
  * 차트 spec key → 어느 섹션에 속하는지 매핑 (onoff 는 차트 없음 → 캡처 불필요).
  * 동적 키 규칙: 'med:<slotId>' → medication, 'body|<min>' → body, 'mood|<min>' → mood.
@@ -84,6 +91,7 @@ type LoadedData = {
   moodIntervals: PdfIntervalSpec[];
   medSlots: PdfMedSlotSpec[];
   medChanges: MedChange[];
+  medicationAvgPct: number | null;
   specs: AnyCaptureSpec[];
   averages: AvgItem[];
   constipationAvgCycle: number | null;
@@ -257,7 +265,13 @@ export default function ExportPdf() {
         const constipationAvgCycle = computeConstipationAvgCycle(constipation as Record<string, any>[]);
 
         // ── 동적 복용 슬롯 / 약효추적 간격 메타 ──
-        const medSlots: PdfMedSlotSpec[] = medBySlot.slots.map((s) => ({ key: `med:${s.key}`, title: s.label }));
+        // 몸상태/기분 차트와 동일하게, 약 복용률 차트에도 평균(%) 배지를 붙인다(오너 지적 2026-08-11).
+        const medicationAvgPct = avgPct(medication.map((r) => r.adherence));
+        const medSlots: PdfMedSlotSpec[] = medBySlot.slots.map((s) => ({
+          key: `med:${s.key}`,
+          title: s.label,
+          avgPct: avgPct((medBySlot.bySlot[s.key] ?? []).map((p) => p.value)),
+        }));
         const bodyIntervals: PdfIntervalSpec[] = intervals.intervals.map((m) => ({
           key: intervalKey('body', m),
           title: intervalLabelFull('body', m),
@@ -370,6 +384,7 @@ export default function ExportPdf() {
           moodIntervals,
           medSlots,
           medChanges: ch as MedChange[],
+          medicationAvgPct,
           specs,
           averages,
           constipationAvgCycle,
@@ -412,6 +427,7 @@ export default function ExportPdf() {
         moodIntervals: data.moodIntervals,
         medSlots: data.medSlots,
         medChanges: data.medChanges,
+        medicationAvgPct: data.medicationAvgPct,
         chartImages: images,
         selected,
         averages: data.averages,

@@ -20,6 +20,19 @@ function avgPct(arr: DailyPoint[]): number | null {
   return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
 }
 
+/** 화면 SymptomDetail(RatioStrip ON 박스)와 동일한 녹색 칩 평균 배지. */
+const meanBoxStyle: React.CSSProperties = {
+  display: 'inline-block',
+  background: '#E8F5E9',
+  color: '#4CAF50',
+  fontWeight: 700,
+  fontSize: 13,
+  lineHeight: 'normal',
+  padding: '2px 8px',
+  borderRadius: 6,
+  marginBottom: 10,
+};
+
 export default function MedicationDetail() {
   const { t } = useT();
   const { range } = useRange();
@@ -43,6 +56,13 @@ export default function MedicationDetail() {
     })();
   }, [patientId, range.from, range.to]);
 
+  // 전체 복용률 평균(%) — 화면 몸상태/기분(RatioStrip ON 박스)과 동일하게 차트 위에 표시.
+  const overallAvg = useMemo(() => {
+    const vals = rows.map((r) => r.adherence).filter((v): v is number => v != null);
+    if (!vals.length) return null;
+    return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+  }, [rows]);
+
   // 복용 시점(활성 dose_slot)별 평균 복용률 — 커스텀 슬롯 포함, time 오름차순
   const averages = useMemo(() => {
     const fmt = (v: number | null) => (v == null ? '-' : `${v}%`);
@@ -58,6 +78,9 @@ export default function MedicationDetail() {
 
       <div className="section-title">{t('medicationDetail.overallRate')}</div>
       <div className="card">
+        {overallAvg != null && (
+          <div style={meanBoxStyle}>{t('pdf.avgPercent', { n: overallAvg })}</div>
+        )}
         <BarTrendChart
           mode="single"
           data={rows}
@@ -69,10 +92,15 @@ export default function MedicationDetail() {
         />
       </div>
 
-      {bySlot.slots.map((s) => (
+      {bySlot.slots.map((s) => {
+        const slotAvg = avgPct(bySlot.bySlot[s.key] ?? []);
+        return (
         <div key={s.key}>
           <div className="section-title">{t('records.medicationRateForSlot', { slot: s.label })}</div>
           <div className="card">
+            {slotAvg != null && (
+              <div style={meanBoxStyle}>{t('pdf.avgPercent', { n: slotAvg })}</div>
+            )}
             <BarTrendChart
               mode="single"
               data={(bySlot.bySlot[s.key] ?? []).map((p) => ({ date: p.date, adherence: p.value }))}
@@ -84,7 +112,8 @@ export default function MedicationDetail() {
             />
           </div>
         </div>
-      ))}
+        );
+      })}
 
       {changes.length > 0 && (
         <>

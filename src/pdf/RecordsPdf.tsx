@@ -26,11 +26,16 @@ const SCORE_COLORS: Record<1 | 2 | 3 | 4 | 5, string> = {
 
 
 // 한글 폰트 등록 — 자가호스팅 (same-origin, CORS 이슈 없음)
+// ⚠️ 절대경로("/fonts/...")는 SPA가 /app/ 서브패스로 옮겨진 뒤로는 사이트 루트(Astro)를
+// 가리켜 404가 난다(react-pdf가 그 HTML을 폰트로 파싱 시도 → "Unknown font format").
+// import.meta.env.BASE_URL로 실제 /app/fonts/... 경로를 가리키게 한다.
+const FONTS_BASE = `${import.meta.env.BASE_URL}fonts/`;
+
 Font.register({
   family: 'Pretendard',
   fonts: [
-    { src: '/fonts/Pretendard-Regular-v2.ttf', fontWeight: 400 },
-    { src: '/fonts/Pretendard-Bold-v2.ttf', fontWeight: 700 },
+    { src: `${FONTS_BASE}Pretendard-Regular-v2.ttf`, fontWeight: 400 },
+    { src: `${FONTS_BASE}Pretendard-Bold-v2.ttf`, fontWeight: 700 },
   ],
 });
 
@@ -40,7 +45,7 @@ Font.register({
 // 로케일이든 사용자가 입력한 이름·라벨에 한자가 섞여 있을 때를 대비한 폴백.
 Font.register({
   family: 'NotoSansJP',
-  fonts: [{ src: '/fonts/NotoSansJP-Variable-v1.ttf', fontWeight: 400 }],
+  fonts: [{ src: `${FONTS_BASE}NotoSansJP-Variable-v1.ttf`, fontWeight: 400 }],
 });
 
 const FONT: string[] = ['Pretendard', 'NotoSansJP'];

@@ -206,7 +206,6 @@ const en = {
   'footer.contact': 'Contact us',
   'footer.disclaimerLine1': 'The information on this site does not replace medical advice.',
   'footer.disclaimerLine2': 'Always consult your doctor before making any medical decision.',
-  'footer.company': 'OURMINE Inc.',
   'footer.bizInfo': 'Business information',
   'footer.bizCeo': 'Representatives',
   'footer.bizNumber': 'Business registration no.',

@@ -4,8 +4,16 @@ import symbolWhite from '../assets/images/logo-symbol-white.png';
 import { navItemsFor } from '../lib/nav';
 import { t } from '../i18n';
 import Tr from '../i18n/Tr.astro';
+import { business, mailOrderNo, supportTel, BIZ_NO, SUPPORT_EMAIL, COMPANY_SITE } from '../lib/business';
 
 const locale = Astro.currentLocale ?? 'ko';
+/*
+ * 사업자 정보는 값 자체가 로케일별로 다르다(상호·대표자·주소는 국문/영문 표기가 따로 있다).
+ * 예전엔 이 파일에 한국어 문자열을 직접 박아 두고 라벨만 사전을 거쳐서, 영어 페이지 아래에
+ * 한국어 대표자명·주소가 그대로 나왔다(오너 지적 2026-08-12). 값은 lib/business.ts 한 곳에서만 온다.
+ */
+const biz = business(locale);
+const tel = supportTel(locale);
 // "바로가기"는 헤더 메뉴와 **같은 목록·같은 순서**여야 한다 → src/lib/nav.ts 를 공용으로 쓴다.
 const navLinks = navItemsFor(locale);
 // 푸터 "개인정보처리방침" = 웹사이트용(/ko/privacy). 앱용은 별도 문서라 라벨에 "앱"을 붙여 구분한다.
@@ -40,20 +48,22 @@ const navLinks = navItemsFor(locale);
   <div class="footer-bottom">
     <div class="footer-divider"></div>
     <button type="button" class="biz-toggle" id="bizToggle" aria-expanded="false" aria-controls="bizInfo">
-      <span class="company"><Tr k="footer.company" /></span>
+      <span class="company">{biz.name}</span>
       <span><Tr k="footer.bizInfo" /></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
     </button>
-    {/* i18n-exempt:start — 아래 '값'들은 법인 등록 정보(대표자명·신고번호·주소)다. 번역 대상이 아니다.
-        라벨은 사전을 거친다. 해외판에서 로마자 표기로 바꿀지는 오너 결정 사항이라 계획서 미결에 적어 뒀다. */}
+    {/* 한국 전자상거래법상 통신판매업자 표시의무 항목 — 어느 언어에서도 숨기지 않는다.
+        값은 lib/business.ts 한 곳에서 온다(전화는 한국어에서만 나온다 — 그 파일 주석 참고). */}
     <div class="biz-info" id="bizInfo">
-      <p><span class="k">{t(locale, 'footer.bizCeo')}</span> 한민석, 최성철 · <span class="k">{t(locale, 'footer.bizNumber')}</span> 342-81-04379</p>
-      <p><span class="k">{t(locale, 'footer.bizMailOrder')}</span> 제2026-서울강동-1129호</p>
-      <p><span class="k">{t(locale, 'footer.bizAddress')}</span> 서울특별시 강동구 양재대로85길 23, E&J빌딩 4층 4590호(성내동)</p>
-      <p><span class="k">{t(locale, 'footer.bizPhone')}</span> 070-4513-1894 · <span class="k">{t(locale, 'footer.bizEmail')}</span> admin@ourmine.co.kr</p>
-      <p><span class="k">{t(locale, 'footer.bizWebsite')}</span> <a href="https://www.ourmine.co.kr" target="_blank" rel="noopener">https://www.ourmine.co.kr</a></p>
+      <p><span class="k">{t(locale, 'footer.bizCeo')}</span> {biz.reps} · <span class="k">{t(locale, 'footer.bizNumber')}</span> {BIZ_NO}</p>
+      <p><span class="k">{t(locale, 'footer.bizMailOrder')}</span> {mailOrderNo(locale)}</p>
+      <p><span class="k">{t(locale, 'footer.bizAddress')}</span> {biz.address}</p>
+      <p>
+        {tel && <><span class="k">{t(locale, 'footer.bizPhone')}</span> {tel} · </>}
+        <span class="k">{t(locale, 'footer.bizEmail')}</span> {SUPPORT_EMAIL}
+      </p>
+      <p><span class="k">{t(locale, 'footer.bizWebsite')}</span> <a href={COMPANY_SITE} target="_blank" rel="noopener">{COMPANY_SITE}</a></p>
     </div>
-    {/* i18n-exempt:end */}
     <p class="footer-copyright">© 2026 OURMINE. All rights reserved.</p>
   </div>
 </footer>

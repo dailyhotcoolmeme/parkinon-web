@@ -177,7 +177,6 @@ const ko: Dict = {
   // 문자열 안에 <br/> 를 넣어도 렌더 안 됨).
   'footer.disclaimerLine1': '본 사이트의 정보는 의학적 자문을 대체하지 않습니다.',
   'footer.disclaimerLine2': '모든 의학적 결정은 반드시 전문의와 상의하시기 바랍니다.',
-  'footer.company': '주식회사 아워마인',
   'footer.bizInfo': '사업자 정보',
   'footer.bizCeo': '대표',
   'footer.bizNumber': '사업자등록번호',

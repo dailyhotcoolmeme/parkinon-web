@@ -57,7 +57,7 @@ grep -roi "patient\|sufferer\|victim\|caregiver\|suffers from" .   # 0 이어야
 | `reminder` | `04_reminders` | 복용 알림·알림음·약효추적 시각 설정 |
 | `medRegistration` | `05_add_medication` | 처방전 촬영·약 직접 입력 |
 | `record` / `family` / `familyDiary` | `06_premium` | 내정보 — Family Diary · View my records · Medical visits |
-| `community` | (대응 화면 없음 → 기본) | 영어 커뮤니티 화면을 캡처하면 채울 것 |
+| `community` | **쓰지 말 것** | 해외 앱에는 커뮤니티(정보·나눔) 기능 자체가 없다 |
 
 ### 새 글을 번역할 때
 1. 한국어 원문에 `appFeature:` 가 있으면 **그대로 가져온다.**
@@ -70,3 +70,12 @@ grep -roi "patient\|sufferer\|victim\|caregiver\|suffers from" .   # 0 이어야
    - 가족·보호자 이야기 → `family`
 3. **억지로 붙이지 말 것.** 질환 개요·유전·용어집처럼 특정 기능과 무관한 글은
    기본 화면(지정 안 함)이 오히려 맞다. 안 맞는 화면을 붙이는 게 똑같은 화면보다 나쁘다.
+
+### ⚠️ `community` 는 영어판에서 쓰면 안 된다
+해외용 앱에는 커뮤니티(정보·나눔)가 **아예 없다** — 앱이 그 탭 자리에 다른 탭을 넣는다
+(`parkinon-app/src/navigation/MainNavigator.tsx:56-58`). 스크린샷이 없는 게 아니라
+기능이 없는 것이라, 그대로 두면 영어 독자에게 없는 기능을 소개하게 된다.
+
+한국어 글 「젊은 나이에 진단받았다면」이 이 값을 쓰고 있으니 번역할 때 빼야 한다.
+코드에도 가드를 넣어 뒀으므로(`AppPromo.astro` 의 `UNAVAILABLE_FEATURES`) 실수로 넣어도
+영어 페이지에는 기본 홍보가 나간다 — dev 에서 실제로 막히는 것 확인함.

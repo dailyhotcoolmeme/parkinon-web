@@ -36,3 +36,37 @@ told us it sounds negative" 라고 명시한다. 우리는 미국 관행상 첫 
 cd site/src/content/articles/en
 grep -roi "patient\|sufferer\|victim\|caregiver\|suffers from" .   # 0 이어야 한다
 ```
+
+---
+
+## 하단 앱 소개 블록(AppPromo) — 글마다 다른 화면이 나가야 한다
+
+**모든 글이 같은 화면을 쓰면 안 된다**(오너 지적 2026-08-12). 글 frontmatter 의
+`appFeature:` 값이 어떤 앱 스크린샷을 보여줄지 정한다. 값이 없으면 전부 기본 화면
+(01_medications)으로 폴백돼서 페이지들이 똑같아 보인다.
+
+### 영어판에서 쓸 수 있는 실제 화면은 6장뿐이다
+미국 App Store 에 게재된 것을 가져온 것이라 한국어판(9장)과 1:1 대응이 안 된다.
+아래는 **화면을 직접 열어보고** 정한 매핑이다(`src/components/article/AppPromo.astro`).
+
+| `appFeature` | 실제 나가는 화면 | 화면 내용 |
+|---|---|---|
+| (없음) | `01_medications` | 약복용 홈 — Record medication, 오늘의 복용 |
+| `effectTracking` | `02_tracking` | Record body & mood, 영상 기록 |
+| `exercise` | `03_exercise` | 운동 기록 |
+| `reminder` | `04_reminders` | 복용 알림·알림음·약효추적 시각 설정 |
+| `medRegistration` | `05_add_medication` | 처방전 촬영·약 직접 입력 |
+| `record` / `family` / `familyDiary` | `06_premium` | 내정보 — Family Diary · View my records · Medical visits |
+| `community` | (대응 화면 없음 → 기본) | 영어 커뮤니티 화면을 캡처하면 채울 것 |
+
+### 새 글을 번역할 때
+1. 한국어 원문에 `appFeature:` 가 있으면 **그대로 가져온다.**
+2. 없으면 **글 내용에 맞는 값을 새로 지정한다.** 예:
+   - 병원·치과 방문, 진료 기록 이야기 → `record` (06 에 "Medical visits" 가 보인다)
+   - 증상 기록·기분·수면 이야기 → `effectTracking`
+   - 운동 이야기 → `exercise`
+   - 복약 시간·알림 이야기 → `reminder`
+   - 약 등록·처방전 이야기 → `medRegistration`
+   - 가족·보호자 이야기 → `family`
+3. **억지로 붙이지 말 것.** 질환 개요·유전·용어집처럼 특정 기능과 무관한 글은
+   기본 화면(지정 안 함)이 오히려 맞다. 안 맞는 화면을 붙이는 게 똑같은 화면보다 나쁘다.

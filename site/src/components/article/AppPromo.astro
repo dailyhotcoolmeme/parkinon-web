@@ -28,6 +28,7 @@ import enShotTracking from '../../assets/images/appshots/en/02_tracking.png';
 import enShotExercise from '../../assets/images/appshots/en/03_exercise.png';
 import enShotReminders from '../../assets/images/appshots/en/04_reminders.png';
 import enShotAddMed from '../../assets/images/appshots/en/05_add_medication.png';
+import enShotMyInfo from '../../assets/images/appshots/en/06_premium.png';
 import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
 import { t, type DictKey } from '../../i18n';
 
@@ -48,13 +49,18 @@ const FEATURE_SHOTS = {
 
 /*
  * 언어별 앱 화면. 영어 페이지에 한국어 UI 스크린샷이 나가면 안 된다.
- *
- * ⚠️ 영어는 스토어에 올라간 5종만 있다(+premium, 이 매핑에는 안 쓴다). 그래서
- *    record·family·familyDiary·community 는 영어 스크린샷이 **없고**, 아래 폴백에 따라
- *    영어 기본 화면(01_medications)이 나간다. 해당 화면을 영어로 캡처하면 여기 채울 것.
  */
 const SHOTS_BY_LOCALE: Record<string, { default: ImageMetadata; features: Partial<Record<keyof typeof FEATURE_SHOTS, ImageMetadata>> }> = {
   ko: { default: shot1, features: FEATURE_SHOTS },
+  /*
+   * 영어판은 스토어에 게재된 6장만 있어서 한국어판(9장)과 1:1 대응이 안 된다.
+   * 그렇다고 전부 기본 화면으로 폴백시키면 42편 중 34편이 같은 그림이 된다(오너 지적 2026-08-12).
+   * → 없는 것은 **내용상 가장 가까운 실제 화면**에 붙인다. 매핑 근거는 화면을 직접 보고 정했다:
+   *   06_premium 은 결제 화면이 아니라 '내정보' 탭이라 Family Diary·View my records·
+   *   Medical visits 메뉴가 그대로 보인다 → record·family·familyDiary 에 쓸 수 있다.
+   * ⚠️ community(정보·나눔)만은 대응 화면이 정말 없어 기본값으로 둔다.
+   *   영어 커뮤니티/가족연동 화면을 캡처하면 여기부터 채울 것.
+   */
   en: {
     default: enShotMed,
     features: {
@@ -62,6 +68,9 @@ const SHOTS_BY_LOCALE: Record<string, { default: ImageMetadata; features: Partia
       exercise: enShotExercise,
       reminder: enShotReminders,
       medRegistration: enShotAddMed,
+      record: enShotMyInfo,
+      family: enShotMyInfo,
+      familyDiary: enShotMyInfo,
     },
   },
 };

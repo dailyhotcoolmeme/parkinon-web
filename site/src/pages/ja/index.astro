@@ -80,8 +80,14 @@ const featureList = [
  */
 const allArticles = sortByDateDesc(await getCollection('articles', inLocale(locale)));
 const newsArticles = sortByDateDesc(await getCollection('articles', inCategory(locale, 'news')));
-const featured = newsArticles[0];
-const newsRows = allArticles.filter((e) => e.id !== featured.id).slice(0, 5);
+/*
+ * ⚠️ 소식 글이 아직 하나도 없는 언어판도 있다(새 언어를 열면 처음엔 0편이다).
+ *    예전엔 newsArticles[0].id 를 그대로 읽어서 **빌드가 통째로 터졌다**(2026-08-12).
+ *    그렇다고 다른 카테고리 글로 대체하면 안 된다 — 위 주석의 오너 확정("메인 카드는
+ *    무조건 소식")을 어기게 된다. 그래서 없으면 그 블록만 그리지 않는다.
+ */
+const featured = newsArticles[0] ?? null;
+const newsRows = allArticles.filter((e) => e.id !== featured?.id).slice(0, 5);
 
 const tagLabel = (e: (typeof allArticles)[number]) =>
   categoryOf(e) === 'news' ? e.data.tag : `${categoryLabel(locale, categoryOf(e))} · ${e.data.tag}`;
@@ -131,7 +137,7 @@ const axisCards = [
       <h1>パーキンソン病とともに過ごす毎日を、もう少し楽に</h1>
       <p>お薬の時間から転倒の予防、利用できる支援まで &mdash; 患者さんとご家族に本当に役立つ情報だけをまとめました。</p>
       <div class="actions">
-        <a class="btn btn-primary" href={articleHref(featured)}>今日のおすすめ記事を読む</a>
+        {featured && <a class="btn btn-primary" href={articleHref(featured)}>今日のおすすめ記事を読む</a>}
         <a class="btn btn-ghost-light" href={getRelativeLocaleUrl(locale, 'lifestyle')}>暮らしの工夫を見る</a>
       </div>
     </div>
@@ -144,15 +150,17 @@ const axisCards = [
           <h2>今日のパーキンオン最新情報</h2>
         </div>
         <div class="news-layout">
-          <a class="feature-card" href={articleHref(featured)}>
-            <div class="thumb">
-              <Image src={featured.data.hero} alt={featured.data.heroAlt} />
-              <span class="tag">{tagLabel(featured)}</span>
-            </div>
-            <h3>{featured.data.title}</h3>
-            <p class="excerpt">{featured.data.description}</p>
-            <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
-          </a>
+          {featured && (
+            <a class="feature-card" href={articleHref(featured)}>
+              <div class="thumb">
+                <Image src={featured.data.hero} alt={featured.data.heroAlt} />
+                <span class="tag">{tagLabel(featured)}</span>
+              </div>
+              <h3>{featured.data.title}</h3>
+              <p class="excerpt">{featured.data.description}</p>
+              <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
+            </a>
+          )}
           <div class="news-list">
             {
               newsRows.map((row) => (

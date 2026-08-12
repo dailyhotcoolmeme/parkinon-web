@@ -54,7 +54,7 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
    * institutions : 일본 제도 글(難病医療費助成制度 등)이 아직 없어서 뺐다 —
    *   그 글을 쓰면 여기에 'institutions' 를 추가할 것.
    */
-  ja: ['news', 'lifestyle', 'clinical'],
+  ja: ['news', 'lifestyle', 'clinical', 'institutions'],
 };
 
 export interface NavItem {

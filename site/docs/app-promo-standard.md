@@ -14,25 +14,36 @@
 | 한국어 | 9종 | 기존 웹 자산 | 모든 기능에 전용 화면이 있다 |
 | 영어 | 6종 | **미국 App Store 게재분** | `06_premium` 은 결제 화면이 아니라 '내정보' 탭 |
 | 일본어 | 5종 | **일본 App Store 게재분** | `JA_04_overseas` 는 이름과 달리 '알림' 설정 화면 |
-| 프랑스어 | **0종** | — | 캐나다·호주 스토어도 영어 세트를 쓴다(2026-08-12 확인) |
+| 프랑스어 | 5종 | **캐나다 App Store 게재분(퀘벡용)** | `FR_04_overseas` 도 '알림(Rappels)' 화면 |
 
 스토어 게재분은 로그인 없이 아래로 확인·재취득할 수 있다.
+
+⚠️ **`lang` 파라미터를 반드시 붙일 것.** 안 붙이면 그 스토어의 *기본 언어* 세트만 나온다.
+실제로 이것 때문에 "프랑스어 화면은 없다"고 잘못 판단한 적이 있다 — 캐나다 스토어를
+`lang` 없이 조회해 영어 세트만 보고 내린 결론이었다(오너 지적 2026-08-12).
+
 ```
-curl -s "https://itunes.apple.com/lookup?id=6773573590&country=us" | python3 -m json.tool | grep screenshotUrls -A 10
+# 언어별 스크린샷 파일명 확인
+for L in "us:en_us" "jp:ja_jp" "ca:fr_ca"; do
+  C=${L%%:*}; LANG=${L##*:}
+  curl -s "https://itunes.apple.com/lookup?id=6773573590&country=$C&lang=$LANG" \
+    | python3 -c "import sys,json,re; r=json.load(sys.stdin)['results'][0]; \
+      [print(re.search(r'/([^/]+\.png)/',u).group(1)) for u in r['screenshotUrls']]"
+done
 ```
 가져올 때 **iOS 상태바를 잘라내고 360px 폭으로 맞춘다**(한국어 자산과 같은 규격).
-영어는 194px, 일본어는 199px 이었다(기기가 달라 값이 다르다 — 실측할 것).
+영어는 194px, 일본어·프랑스어는 199px 이었다(기기가 달라 값이 다르다 — 실측할 것).
 
 ## 기능 → 화면 매핑
 
 | `appFeature` | 한국어 | 영어 | 일본어 | 프랑스어 |
 |---|---|---|---|---|
-| (없음/기본) | 약복용 홈 | 01_medications | JA_01_home | 영어 것 |
-| `effectTracking` | 전용 | 02_tracking | JA_02_bodystate | 영어 것 |
-| `exercise` | 전용 | 03_exercise | JA_03_exercise | 영어 것 |
-| `reminder` | 전용 | 04_reminders | JA_04_overseas | 영어 것 |
-| `medRegistration` | 전용 | 05_add_medication | (없음→기본) | 영어 것 |
-| `record` · `family` · `familyDiary` | 각각 전용 | 06_premium(내정보) | JA_05_myinfo | 영어 것 |
+| (없음/기본) | 약복용 홈 | 01_medications | JA_01_home | FR_01_home |
+| `effectTracking` | 전용 | 02_tracking | JA_02_bodystate | FR_02_bodystate |
+| `exercise` | 전용 | 03_exercise | JA_03_exercise | FR_03_exercise |
+| `reminder` | 전용 | 04_reminders | JA_04_overseas | FR_04_overseas |
+| `medRegistration` | 전용 | 05_add_medication | (없음→기본) | (없음→기본) |
+| `record` · `family` · `familyDiary` | 각각 전용 | 06_premium(내정보) | JA_05_myinfo | FR_05_myinfo |
 | `community` | 전용 | **금지** | **금지** | **금지** |
 
 ### ⚠️ `community` 는 해외판에서 절대 쓰지 않는다
@@ -42,9 +53,9 @@ curl -s "https://itunes.apple.com/lookup?id=6773573590&country=us" | python3 -m 
 `appShots.ts` 의 `unavailable` 이 이미지와 문구를 통째로 막으므로, 실수로 값을 넣어도
 영어·일본어·프랑스어 페이지에는 기본 홍보가 나간다(dev 에서 실제로 막히는 것 확인함).
 
-### ⚠️ 프랑스어는 한국어 화면으로 폴백하지 않는다
-전용 화면이 없으므로 **영어 화면**을 쓴다. 최소한 같은 라틴 문자다.
-프랑스어 화면을 캡처하면 `appShots.ts` 에 `ja` 처럼 항목을 만들어 붙일 것.
+### 4개 언어 모두 전용 화면이 있다
+프랑스어는 **캐나다 스토어(퀘벡용)** 에 게재돼 있다. 프랑스 본토는 배포국이 아니다.
+`Journal familial`·`Voir mon suivi`·`Rendez-vous médicaux` 가 보이는 실제 프랑스어 화면이다.
 
 ---
 

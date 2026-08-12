@@ -48,6 +48,19 @@ import jaExercise from '../assets/images/appshots/ja/JA_03_exercise.png';
 import jaReminder from '../assets/images/appshots/ja/JA_04_overseas.png';
 import jaMyInfo from '../assets/images/appshots/ja/JA_05_myinfo.png';
 
+/*
+ * ── 프랑스어: 캐나다 App Store 게재분 5종 ───────────────────
+ * ⚠️ 처음에 "프랑스어 화면은 없다"고 잘못 판단했었다 — iTunes lookup 을 lang 파라미터
+ *    없이 불러서 캐나다 스토어의 기본 언어(영어) 세트만 봤기 때문이다(오너 지적 2026-08-12).
+ *    `?country=ca&lang=fr_ca` 로 부르면 프랑스어 세트가 나온다. 다른 언어를 찾을 때도 같다.
+ * FR_04_overseas 는 이름과 달리 '알림(Rappels)' 설정 화면이다(일본어판과 같은 구성).
+ */
+import frHome from '../assets/images/appshots/fr/FR_01_home.png';
+import frBodyState from '../assets/images/appshots/fr/FR_02_bodystate.png';
+import frExercise from '../assets/images/appshots/fr/FR_03_exercise.png';
+import frReminder from '../assets/images/appshots/fr/FR_04_overseas.png';
+import frMyInfo from '../assets/images/appshots/fr/FR_05_myinfo.png';
+
 /** 글 frontmatter 의 `appFeature` 로 쓸 수 있는 값. */
 export const APP_FEATURES = [
   'effectTracking',
@@ -121,16 +134,20 @@ export const SHOTS_BY_LOCALE: Record<string, LocaleShots> = {
   },
 
   /*
-   * 프랑스어: **전용 앱 화면이 없다.** 캐나다·호주 스토어도 영어 세트를 그대로 쓴다
-   * (2026-08-12 스토어 조회로 확인). 프랑스는 배포국이 아니고 프랑스어는 캐나다(퀘벡)용이다.
-   * 한국어 화면으로 폴백하면 안 되므로 영어 화면을 쓴다 — 최소한 같은 라틴 문자다.
-   * 프랑스어 화면을 캡처하면 여기에 ja 처럼 항목을 만들어 붙일 것.
+   * 프랑스어: 캐나다(퀘벡)용. 프랑스 본토는 배포국이 아니다.
+   * 구성은 일본어판과 같다 — medRegistration 전용 화면만 없어 기본 화면으로 나간다.
    */
   fr: {
-    default: enHome,
-    features: {},
+    default: frHome,
+    features: {
+      effectTracking: frBodyState,
+      exercise: frExercise,
+      reminder: frReminder,
+      record: frMyInfo,
+      family: frMyInfo,
+      familyDiary: frMyInfo,
+    },
     unavailable: ['community'],
-    fallbackLocale: 'en',
   },
 };
 

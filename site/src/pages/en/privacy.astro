@@ -1,0 +1,252 @@
+---
+/*
+ * 웹사이트(콘텐츠 사이트) 전용 개인정보처리방침.
+ *
+ * ⚠️ 앱 방침(`/privacy`, 다른 프로젝트가 서빙)과 **별개 문서다. 섞지 말 것.**
+ *    앱은 건강정보를 매일 수집하지만 웹은 회원가입도 없고 방문자에게서 받는 정보가 없다.
+ *    (parkinon-app/CLAUDE.md: "앱 기준을 웹에 가져다 붙이지 말 것")
+ *
+ * 사실관계 출처: 회사 정보는 Footer.astro 의 사업자 정보, 문의 이메일·표기 방식은 기존
+ * 앱 방침(public/privacy/index.html, 시행일 2026-07-15). 개인 보호책임자 이름은 앱 방침에도
+ * 없어서 넣지 않았다 — 지어내지 말 것.
+ *
+ * 내용은 오너 승인을 받은 초안 그대로다(2026-08-06). 문구 수정은 오너 확인 후.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { business, BIZ_NO, SUPPORT_EMAIL } from '../../lib/business';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleSide from '../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'en';
+
+const biz = business(locale);
+
+const toc = [
+  { id: 'collect', label: 'Article 1 — Personal data we collect' },
+  { id: 'cookie', label: 'Article 2 — Cookies and automatic collection' },
+  { id: 'access-log', label: 'Article 3 — Access data' },
+  { id: 'third-party', label: 'Article 4 — Disclosure and processors' },
+  { id: 'rights', label: 'Article 5 — Your rights' },
+  { id: 'change', label: 'Article 6 — Changes to this policy' },
+];
+---
+
+<Layout
+  title="Website Privacy Policy — Parkinon"
+  description="Privacy policy for the Parkinon website (content pages). The website has no sign-up and does not collect personal data from visitors."
+  breadcrumbs={[
+    { name: 'Home', path: '/en/' },
+    { name: 'Website Privacy Policy', path: '/en/privacy/' },
+  ]}
+>
+  <Header />
+
+  <div class="layout">
+    <aside class="ad-rail left"></aside>
+
+    <main class="col">
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>Home</a><span class="sep">/</span><span>Website Privacy Policy</span>
+        </nav>
+
+        <article>
+          <div class="article-head">
+            <h1>Website Privacy Policy</h1>
+            <div class="meta"><span>Effective 6 August 2026</span></div>
+          </div>
+
+          <div class="article-lead">
+            This policy applies to the Parkinon <b>website</b> (the content pages). The privacy policy for the
+            Parkinon <b>app</b> is a separate document, available <a href="/privacy/en">here</a>. The website has no
+            sign-up and collects no health data, so what it handles differs from the app.
+          </div>
+
+          <div class="article-body">
+            <h2 id="collect">Article 1 (Personal data we collect)</h2>
+            <p>
+              The website has no sign-up process, and we do not directly collect any personal data from visitors —
+              no names, no contact details, no health information. If you email us a question, we use what you send
+              only to answer it.
+            </p>
+
+            <h2 id="cookie">Article 2 (Cookies and other automatic collection)</h2>
+            <p>
+              <b>This website currently runs no advertising or analytics scripts and stores no cookies
+              (as of August 2026).</b>
+            </p>
+            <p>
+              If advertising is introduced later, an advertising provider's cookies may be used. We will update this
+              policy at that point. In regions where consent is required — the European Economic Area (EEA), the UK
+              and Switzerland — personalised advertising will only be served after consent is obtained through a
+              Google-certified consent management platform (CMP). You can block or delete cookies in your browser
+              settings.
+            </p>
+            {/*
+              ⚠️⚠️ WHEN ADSENSE IS APPROVED — before inserting any ad code, Article 2 above must be
+              rewritten to disclose cookies and behavioural data.
+
+              ⚠️ Do NOT translate the Korean version's prepared text literally. The Korean page
+              (src/pages/ko/privacy.astro) has a ready-made replacement in its comments, but it is
+              structured around Korean PIPC / KCC guidance for online behavioural advertising — the
+              legal-basis column, the 6-month retention figure and the table layout all come from
+              that. This site's English readers are in the US, Canada, Australia and New Zealand,
+              where the required disclosures differ.
+
+              What this English version needs at that point:
+                · what is collected via cookies (ad identifiers, browsing history on this site)
+                · who collects it (Google, as an AdSense provider) and for what purpose
+                · that sensitive categories (health, religion, political opinion) are not used
+                · how to opt out — Google Ads Settings (adssettings.google.com), plus browser and
+                  mobile OS controls
+                · that EEA / UK / Switzerland visitors are only shown personalised ads after
+                  consent via a Google-certified CMP
+              Check the current AdSense publisher requirements before writing it, and add Google
+              to the processor table in Article 4 (see the note there).
+            */}
+
+            <h2 id="access-log">Article 3 (Access data processed in delivering the service)</h2>
+            <p>
+              The website is delivered through hosting and content-delivery services provided by Cloudflare, Inc.
+              (United States). In the course of this, technical information such as your access IP address may be
+              processed in order to deliver the service and to keep it secure (handling traffic, blocking attacks).
+              The Company does not store or analyse this information in a form that identifies individual visitors.
+            </p>
+
+            <h2 id="third-party">Article 4 (Disclosure to third parties and processors)</h2>
+            <p>The Company does not provide visitors' personal data to third parties.</p>
+            <table class="policy-table">
+              <thead>
+                <tr><th>Processor</th><th>Country</th><th>Work entrusted</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Cloudflare, Inc.</td><td>United States</td><td>Website hosting and content delivery</td></tr>
+              </tbody>
+            </table>
+            <p>If advertising is introduced, the advertising provider will be added to this table and this policy updated.</p>
+            {/*
+              ⚠️⚠️ WHEN ADSENSE IS APPROVED — add this row to the table above and delete the
+              sentence directly above this comment:
+                <tr><td>Google LLC (Google AdSense)</td><td>United States</td><td>Serving personalised advertising</td></tr>
+            */}
+
+            <h2 id="rights">Article 5 (Your rights)</h2>
+            <p>
+              You can block or delete cookies in your browser settings. For any question about personal data, write to
+              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and we will respond.
+            </p>
+
+            <h2 id="change">Article 6 (Changes to this policy)</h2>
+            <p>When this policy changes, we will post the change and its effective date on the website.</p>
+          </div>
+
+          {/* 사업자 정보는 lib/business.ts 가 정본이다 — 영어 화면에 국문 표기가 나가면 안 된다.
+              전화번호는 해외에 실효가 없어 넣지 않는다(그 파일 주석 참고). */}
+          <div class="article-source">
+            {biz.name} · Representatives: {biz.reps} · Business registration no. {BIZ_NO}<br />
+            {biz.address} · {SUPPORT_EMAIL}
+          </div>
+        </article>
+
+        <ArticleSide toc={toc} />
+      </div>
+    </main>
+
+    <aside class="ad-rail right"></aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  article {
+    max-width: 760px;
+  }
+  .article-head h1 {
+    font-size: 30px;
+    line-height: 1.42;
+    color: var(--text);
+  }
+  .article-head .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .article-lead {
+    margin-top: 20px;
+    border-left: 3px solid var(--primary);
+    padding: 14px 18px;
+    background: var(--secondary-container);
+    border-radius: 0 12px 12px 0;
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    line-height: 1.7;
+  }
+  .article-lead a {
+    text-decoration: underline;
+  }
+  .article-body {
+    margin-top: 32px;
+  }
+  .article-body h2 {
+    font-size: 19px;
+    color: var(--text);
+    margin-top: 36px;
+    margin-bottom: 12px;
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-body a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .policy-table {
+    margin-top: 16px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .policy-table th,
+  .policy-table td {
+    border: 1px solid var(--outline);
+    padding: 10px 12px;
+    text-align: left;
+    line-height: 1.6;
+  }
+  .policy-table th {
+    background: var(--surface-low);
+    font-weight: 700;
+  }
+  .article-source {
+    margin-top: 40px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+</style>

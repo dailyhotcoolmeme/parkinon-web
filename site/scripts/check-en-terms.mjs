@@ -38,6 +38,25 @@ const BANNED = [
   { re: /\bsuffers? from\b/i, fix: 'has / lives with' },
 ];
 
+/*
+ * 금지어가 들어간 **제도·기관의 공식 명칭**. 고유명사는 person-first 로 고치면 안 된다 —
+ * 이름을 바꾸면 독자가 실제 제도를 검색해도 찾지 못한다. 여기 있는 것만 예외로 통과시킨다.
+ *
+ * ⚠️ 추가할 때는 **공식 문서에서 그 표기를 실제로 확인하고** 출처를 주석에 남길 것.
+ *    "이건 고유명사 같다"는 짐작으로 넣으면 금지어 검사가 조용히 무력해진다.
+ */
+const PROPER_NOUNS = [
+  // PHARMAC(뉴질랜드)의 공식 제도명. 확인: pharmac.govt.nz/medicine-funding-and-supply/
+  //   make-an-application/nppa-applications (2026-08-13)
+  /Named Patient Pharmaceutical Assessment/g,
+  /\bNPPA\b/g,
+];
+
+/** 금지어를 찾기 전에 공식 명칭을 지운다. 지운 자리는 공백으로 둬서 단어 경계를 유지한다. */
+function stripProperNouns(text) {
+  return PROPER_NOUNS.reduce((t, re) => t.replace(re, (m) => ' '.repeat(m.length)), text);
+}
+
 /** 그 언어판 앱에 기능이 없어 쓰면 안 되는 appFeature — src/lib/appShots.ts 와 같아야 한다. */
 const UNAVAILABLE_FEATURE = { en: ['community'], fr: ['community'], ja: ['community'] };
 
@@ -152,8 +171,9 @@ for (const file of files) {
   const prose = proseOnly(raw);
 
   const banned = locale === 'ja' ? BANNED_JA : BANNED;
+  const hay = locale === 'ja' ? prose : stripProperNouns(prose);
   for (const { re, fix } of banned) {
-    const m = prose.match(re);
+    const m = hay.match(re);
     if (m) problems.push(`${rel}: 금지어 "${m[0]}" → ${fix} 로 바꿀 것`);
   }
 

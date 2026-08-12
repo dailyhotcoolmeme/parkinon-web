@@ -117,6 +117,9 @@ const ko: Dict = {
   'side.tocTitle': '이 글 순서',
   'side.moreIn': '{category} 다른 글',
 
+  'article.summaryTitle': '세 줄 요약',
+  'article.relatedTitle': '함께 보면 좋은 글',
+
   'source.title': '출처',
   'source.contact': '문의',
 

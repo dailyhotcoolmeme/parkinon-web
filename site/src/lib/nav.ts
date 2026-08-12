@@ -38,6 +38,14 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
   // exercise : 0-5 완료(2026-08-07) — 운동 영상 허브
   // clinical : 0-6 완료(2026-08-08) — 임상시험 허브
   ko: ['news', 'lifestyle', 'clinical', 'exercise', 'institutions'],
+  /*
+   * 영어판은 메뉴 3개다 (오너 확정 2026-08-12).
+   * - exercise     : 영상이 parkinson.co.kr 한국어 자료라 영어권에 의미가 없어 뺐다.
+   * - institutions : 5편 전부 한국 제도(장애등록·장기요양보험·의료비 세액공제 등)라 뺐다.
+   * 임상시험은 ClinicalTrials.gov 기반이고 TRIAL_COUNTRIES 에 us·jp·fr·de·it·au 가
+   * 이미 들어 있어 영어판에 그대로 맞는다.
+   */
+  en: ['news', 'lifestyle', 'clinical'],
 };
 
 export interface NavItem {

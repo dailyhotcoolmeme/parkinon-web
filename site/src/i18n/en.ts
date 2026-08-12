@@ -140,6 +140,9 @@ const en = {
   'side.tocTitle': 'On this page',
   'side.moreIn': 'More in {category}',
 
+  'article.summaryTitle': 'The short version',
+  'article.relatedTitle': 'Related reading',
+
   'source.title': 'Sources',
   'source.contact': 'Contact',
 

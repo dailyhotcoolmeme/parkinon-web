@@ -26,6 +26,8 @@ const ko: Dict = {
   'country.de': '독일',
   'country.it': '이탈리아',
   'country.au': '호주',
+  'country.ca': '캐나다',
+  'country.nz': '뉴질랜드',
   'phase.EARLY_PHASE1': '1상 전(초기)',
   'phase.PHASE1': '1상',
   'phase.PHASE2': '2상',

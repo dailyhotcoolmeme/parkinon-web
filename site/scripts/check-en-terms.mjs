@@ -184,6 +184,28 @@ for (const file of files) {
   // /ko/ 링크가 남아 있으면 다른 언어판으로 보내버린다.
   if (/\/ko\//.test(raw)) problems.push(`${rel}: "/ko/" 링크가 남아 있다`);
 
+  /*
+   * 글을 쓰는 도구의 마크업이 본문에 새어 들어온 것. 2026-08-13 에 실제로 10편에서
+   * `</content>` 가, 한 편에서는 `</invoke>` 까지 나왔다. MDX 는 이걸 열리지 않은 태그로
+   * 보고 **빌드를 통째로 실패**시킨다. 여기서 먼저 잡아 어느 파일인지 바로 알 수 있게 한다.
+   */
+  const stray = raw.match(/<\/?(content|invoke|parameter|function_calls|antml)[\s>]/);
+  if (stray) problems.push(`${rel}: 도구 마크업 "${stray[0].trim()}" 이 본문에 남아 있다 — 지울 것`);
+
+  /*
+   * frontmatter 의 summary 항목에 따옴표 없이 ": " 가 들어가면 YAML 이 그 줄을 문자열이
+   * 아니라 매핑으로 읽는다. 스키마 검사에서 "Expected string, received object" 로 뒤늦게
+   * 터지는데 원인이 한눈에 안 보인다(2026-08-13 에 4편). 작은따옴표로 감싸면 된다.
+   */
+  const fmBlock = raw.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+  const sum = fmBlock.match(/^summary:\s*\n((?:\s+-.*\n?)*)/m)?.[1] ?? '';
+  for (const line of sum.split('\n')) {
+    if (/^\s+-\s+(?!["'])[^\n]*:\s/.test(line)) {
+      problems.push(`${rel}: summary 항목에 따옴표 없는 ": " 가 있다 — 작은따옴표로 감쌀 것\n    ${line.trim().slice(0, 70)}`);
+      break;
+    }
+  }
+
   // 그 언어에 없는 기능을 소개하면 거짓 광고가 된다.
   const feat = raw.match(/^appFeature:\s*(\S+)/m)?.[1];
   if (feat && (UNAVAILABLE_FEATURE[locale] ?? []).includes(feat)) {

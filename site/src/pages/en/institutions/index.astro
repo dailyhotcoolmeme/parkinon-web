@@ -6,6 +6,8 @@ import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
+import { EN_COUNTRIES, countryOf, assertAllCountried } from '../../../lib/articleCountry';
+import { t, type DictKey } from '../../../i18n';
 import familyImg from '../../../assets/images/family.jpg';
 
 const locale = Astro.currentLocale ?? 'en';
@@ -19,11 +21,32 @@ const posts = sortByDateDesc(
   await getCollection('articles', inCategory(locale, 'institutions'))
 );
 
-const sideLinks = posts.slice(0, 6).map((e) => ({
-  title: e.data.title,
-  date: formatDate(e.data.publishedAt),
-  href: getRelativeLocaleUrl(locale, `institutions/${slugOf(e)}`),
+/* 나라를 못 가려낸 글이 있으면 여기서 빌드가 멈춘다 — 조용히 어느 탭에도 안 나오는 것보다 낫다. */
+assertAllCountried(posts);
+
+/*
+ * 국가 탭 (오너 지시 2026-08-13). **"전체" 탭은 두지 않는다** —
+ *   "어짜피 미국 사람이 뉴질랜드 제도 볼 일이 없을테니"
+ * 서버는 첫 번째 나라(미국)를 선택한 상태로 렌더하고, 접속 국가에 맞춰 **맨 앞으로 옮기고
+ * 선택**하는 것은 아래 <script> 가 한다(임상시험 페이지와 같은 방식, `/api/geo`).
+ * 자바스크립트가 없거나 지오를 못 알아내도 미국 탭이 열린 채로 정상 동작한다.
+ */
+const DEFAULT_COUNTRY = EN_COUNTRIES[0].code;
+const countryTabs = EN_COUNTRIES.map((c) => ({
+  code: c.code,
+  label: t(locale, c.labelKey as DictKey),
+  count: posts.filter((p) => countryOf(p) === c.code).length,
 }));
+
+/* 옆 패널도 기본 나라 것만 — 미국 사용자에게 뉴질랜드 글을 권하지 않는다. */
+const sideLinks = posts
+  .filter((e) => countryOf(e) === DEFAULT_COUNTRY)
+  .slice(0, 6)
+  .map((e) => ({
+    title: e.data.title,
+    date: formatDate(e.data.publishedAt),
+    href: getRelativeLocaleUrl(locale, `institutions/${slugOf(e)}`),
+  }));
 
 ---
 
@@ -54,16 +77,32 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       </nav>
 
       {/*
-       * 필터탭 없음(오너 지적 2026-08-09: "태그마다 글이 1개씩인데 나누는 이유가 뭐냐").
-       * 태그 하나에 글이 여러 편 쌓이기 전까지는 탭이 거를 게 없어 클릭만 늘린다.
-       * 각 줄의 태그 라벨은 그대로 남겨 분류는 보이게 하고, 목록만 한 번에 쭉 보여준다.
+       * 태그 필터탭은 두지 않는다(오너 지적 2026-08-09: "태그마다 글이 1개씩인데 나누는 이유가
+       * 뭐냐"). 대신 **나라**로 가른다 — 나라마다 글이 6~13편씩 쌓여서 거를 것이 생겼고,
+       * 다른 나라 제도는 읽을 이유가 없다.
        */}
+      <nav class="hub-tabs" id="countryTabs" aria-label="Country">
+        {
+          countryTabs.map((c) => (
+            <button
+              class:list={['tab', { active: c.code === DEFAULT_COUNTRY }]}
+              data-country={c.code}
+              aria-pressed={c.code === DEFAULT_COUNTRY ? 'true' : 'false'}
+            >
+              {c.label} <span class="n">{c.count}</span>
+            </button>
+          ))
+        }
+      </nav>
+
       <div class="content-body">
         <div class="hub-list" id="hubList">
           {
             posts.map((post) => (
               <a
                 class="hub-row"
+                data-country={countryOf(post)}
+                hidden={countryOf(post) !== DEFAULT_COUNTRY}
                 href={getRelativeLocaleUrl(locale, `institutions/${slugOf(post)}`)}
               >
                 <span class="tag">{post.data.tag}</span>
@@ -101,6 +140,53 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
     opacity: 0.6;
   }
 
+  /* 탭은 생활 요령 허브와 같은 모양이다 — 같은 허브인데 다르게 보이면 안 된다. */
+  .hub-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex-shrink: 0;
+    position: relative;
+    font: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--primary);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
+    background: var(--primary);
+  }
+  .tab .n {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.65;
+    margin-left: 2px;
+  }
+
   .hub-list {
     display: flex;
     flex-direction: column;
@@ -110,7 +196,15 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
     padding: 24px 0;
     border-bottom: 1px solid var(--outline);
   }
-  .hub-row:first-child {
+  .hub-row[hidden] {
+    display: none;
+  }
+  /*
+   * 위쪽 여백은 **보이는 첫 줄**에서만 없앤다. CSS 로는 "앞에 보이는 형제가 없는 요소"를
+   * 고를 수 없어서(:first-child 는 숨김 여부를 보지 않는다) 스크립트가 .is-first 를 붙인다.
+   * 이걸 안 하면 탭을 바꿀 때마다 목록 맨 위 여백이 들쭉날쭉해진다.
+   */
+  .hub-row.is-first {
     padding-top: 0;
   }
   .hub-row .tag {
@@ -168,3 +262,58 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
   }
 </style>
 
+
+<script>
+  /*
+   * 국가 탭 (오너 지시 2026-08-13).
+   *   "사용자가 접속한 국가 기준으로 탭이 앞에 나오고 선택되게 해라.
+   *    어짜피 미국 사람이 뉴질랜드 제도 볼 일이 없을테니"
+   *
+   * 서버는 미국 탭을 선택한 채로 렌더한다. 여기서 두 가지를 한다.
+   *   1) 탭 클릭 → 그 나라 글만 보인다
+   *   2) `/api/geo`(Cloudflare CF-IPCountry, 쿠키 없음)로 접속 국가를 알아내
+   *      **그 탭을 맨 앞으로 옮기고 선택**한다
+   *
+   * 못 알아내거나 우리가 다루지 않는 나라면 아무것도 하지 않는다 — 미국 탭이 열린 채로
+   * 정상 동작한다. 자바스크립트가 꺼져 있어도 마찬가지다(글이 사라지지 않는다).
+   */
+  const tabsEl = document.getElementById('countryTabs');
+  const listEl = document.getElementById('hubList');
+  if (tabsEl && listEl) {
+    const tabs = Array.from(tabsEl.querySelectorAll<HTMLButtonElement>('.tab'));
+    const rows = Array.from(listEl.querySelectorAll<HTMLAnchorElement>('.hub-row'));
+
+    const show = (code: string) => {
+      tabs.forEach((t) => {
+        const on = t.dataset.country === code;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      let first = true;
+      rows.forEach((r) => {
+        const on = r.dataset.country === code;
+        r.hidden = !on;
+        // 보이는 첫 줄에만 위 여백을 없앤다(CSS 로는 고를 수 없다 — style 주석 참고).
+        r.classList.toggle('is-first', on && first);
+        if (on) first = false;
+      });
+    };
+
+    tabs.forEach((t) => t.addEventListener('click', () => show(t.dataset.country!)));
+    show(tabs.find((t) => t.classList.contains('active'))?.dataset.country ?? tabs[0].dataset.country!);
+
+    (async () => {
+      try {
+        const res = await fetch('/api/geo');
+        const { country } = (await res.json()) as { country: string | null };
+        const code = country?.toLowerCase();
+        const tab = tabs.find((t) => t.dataset.country === code);
+        if (!tab) return; // 모르는 나라 → 기본값 유지
+        tabsEl.prepend(tab); // 자기 나라를 맨 앞으로
+        show(tab.dataset.country!);
+      } catch {
+        /* 지오를 못 부르면 기본값 그대로 둔다 */
+      }
+    })();
+  }
+</script>

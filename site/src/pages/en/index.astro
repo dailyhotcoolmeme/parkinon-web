@@ -6,6 +6,7 @@ import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
 import { inLocale, inCategory, sortByDateDesc, slugOf, categoryOf, categoryLabel, formatDate } from '../../lib/articles';
+import { EN_COUNTRIES, visibleIn } from '../../lib/articleCountry';
 
 import heroImg from '../../assets/images/hero.jpg';
 
@@ -80,7 +81,26 @@ const featureList = [
 const allArticles = sortByDateDesc(await getCollection('articles', inLocale(locale)));
 const newsArticles = sortByDateDesc(await getCollection('articles', inCategory(locale, 'news')));
 const featured = newsArticles[0];
-const newsRows = allArticles.filter((e) => e.id !== featured.id).slice(0, 5);
+
+/*
+ * 옆 5줄은 **접속한 나라에 맞춰** 달라진다 (오너 지시 2026-08-13).
+ *   "뉴질랜드 사람인데 홈화면에 미국 정보가 나오면 안된다. 물론 전세계 공통된 정보는 괜찮다"
+ *
+ * 실제로 이걸 넣기 전 영어판 홈의 최신 8건이 전부 미국 제도 글이었다 — 뉴질랜드에서
+ * 접속하면 자기와 상관없는 목록만 보이는 상태였다.
+ *
+ * 정적 사이트라 서버는 나라를 모른다. 그래서 **나라 수만큼 목록을 미리 렌더해 두고**
+ * 아래 <script> 가 `/api/geo` 로 알아낸 나라의 것만 남긴다. 지오를 못 알아내면
+ * 첫 번째 나라(미국) 목록이 그대로 보인다 — 자바스크립트가 꺼져 있어도 빈 화면이 되지 않는다.
+ *
+ * 나라를 타지 않는 글(증상·생활 요령·연구 소식)은 `visibleIn` 이 항상 통과시키므로
+ * 어느 목록에나 들어간다. 그게 "전세계 공통된 정보"다.
+ */
+const DEFAULT_COUNTRY = EN_COUNTRIES[0].code;
+const rowsByCountry = EN_COUNTRIES.map((c) => ({
+  code: c.code,
+  rows: allArticles.filter((e) => e.id !== featured.id && visibleIn(e, c.code)).slice(0, 5),
+}));
 
 const tagLabel = (e: (typeof allArticles)[number]) =>
   categoryOf(e) === 'news' ? e.data.tag : `${categoryLabel(locale, categoryOf(e))} · ${e.data.tag}`;
@@ -95,8 +115,10 @@ const articleHref = (e: (typeof allArticles)[number]) => getRelativeLocaleUrl(lo
  */
 /*
  * "둘러보기" 카드는 **그 언어판에 실제로 열려 있는 메뉴만** 보여야 한다.
- * 영어 메뉴는 3개다(src/lib/nav.ts 의 AVAILABLE.en) — 운동 영상은 국내 영상 기반이라,
- * 제도·지원은 5편 전부 한국 제도라 영어판에 없다. 카드를 그대로 옮기면 404 로 이어진다.
+ * 영어 메뉴는 4개다(src/lib/nav.ts 의 AVAILABLE.en) — 운동 영상만 빠진다(영상이 국내
+ * 자료라 영어권에 의미가 없다). 카드를 메뉴에 없는 것까지 옮기면 404 로 이어진다.
+ * ⚠️ 제도·지원은 2026-08-13 에 4개국 39편이 갖춰져 카드를 추가했다. 그전까지는
+ *   한국 제도뿐이라 빼 두었는데, 메뉴는 열렸는데 카드만 없는 상태가 한동안 남아 있었다.
  */
 const axisCards = [
   {
@@ -116,6 +138,13 @@ const axisCards = [
     cat: 'Clinical Trials & Research',
     desc: 'Trials currently recruiting, by country, alongside the latest research — all in one place.',
     icon: ['M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'M8 2h8v4H8z'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'institutions'),
+    cat: 'Benefits & support',
+    // 아이콘은 기존 카드와 같은 Feather 세트(MIT)의 "home".
+    desc: 'What you can claim where you live — disability payments, medicine costs, home care and equipment, country by country.',
+    icon: ['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'M9 22V12h6v10'],
   },
 ];
 ---
@@ -150,21 +179,23 @@ const axisCards = [
             <p class="excerpt">{featured.data.description}</p>
             <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
           </a>
-          <div class="news-list">
-            {
-              newsRows.map((row) => (
-                <a class="news-row" href={articleHref(row)}>
-                  <div class="thumb">
-                    <Image src={row.data.thumbnail ?? row.data.hero} alt={row.data.heroAlt} />
-                  </div>
-                  <div>
-                    <span class:list={['tag', { alt: categoryOf(row) === 'news' }]}>{tagLabel(row)}</span>
-                    <h4>{row.data.title}</h4>
-                  </div>
-                </a>
-              ))
-            }
-          </div>
+          {
+            rowsByCountry.map(({ code, rows }) => (
+              <div class="news-list" data-country={code} hidden={code !== DEFAULT_COUNTRY}>
+                {rows.map((row) => (
+                  <a class="news-row" href={articleHref(row)}>
+                    <div class="thumb">
+                      <Image src={row.data.thumbnail ?? row.data.hero} alt={row.data.heroAlt} />
+                    </div>
+                    <div>
+                      <span class:list={['tag', { alt: categoryOf(row) === 'news' }]}>{tagLabel(row)}</span>
+                      <h4>{row.data.title}</h4>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            ))
+          }
         </div>
       </section>
 
@@ -398,6 +429,9 @@ const axisCards = [
     font-size: 12.5px;
     color: var(--text-sub);
     opacity: 0.8;
+  }
+  .news-list[hidden] {
+    display: none;
   }
   .news-list {
     display: flex;
@@ -692,4 +726,25 @@ const axisCards = [
     const open = appPreviewPanel.classList.toggle('open');
     appPreviewToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
+</script>
+
+<script>
+  /*
+   * 홈 옆 5줄을 **접속한 나라 것**으로 바꾼다 (오너 지시 2026-08-13).
+   * 나라별 목록은 이미 서버에서 다 렌더돼 있고, 여기서는 보일 것 하나만 고른다.
+   * 못 알아내거나 우리가 다루지 않는 나라면 손대지 않는다 — 기본(미국) 목록이 그대로 남는다.
+   */
+  (async () => {
+    const lists = Array.from(document.querySelectorAll<HTMLElement>('.news-list[data-country]'));
+    if (lists.length < 2) return;
+    try {
+      const res = await fetch('/api/geo');
+      const { country } = (await res.json()) as { country: string | null };
+      const code = country?.toLowerCase();
+      if (!code || !lists.some((l) => l.dataset.country === code)) return;
+      lists.forEach((l) => { l.hidden = l.dataset.country !== code; });
+    } catch {
+      /* 지오를 못 부르면 기본값 그대로 */
+    }
+  })();
 </script>

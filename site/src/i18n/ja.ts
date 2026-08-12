@@ -34,6 +34,8 @@ const ja: Dict = {
   'country.de': 'ドイツ',
   'country.it': 'イタリア',
   'country.au': 'オーストラリア',
+  'country.ca': 'カナダ',
+  'country.nz': 'ニュージーランド',
   'phase.EARLY_PHASE1': '早期第1相',
   'phase.PHASE1': '第1相',
   'phase.PHASE2': '第2相',

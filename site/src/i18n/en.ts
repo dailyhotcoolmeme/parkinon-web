@@ -47,6 +47,8 @@ const en = {
   'country.de': 'Germany',
   'country.it': 'Italy',
   'country.au': 'Australia',
+  'country.ca': 'Canada',
+  'country.nz': 'New Zealand',
   'phase.EARLY_PHASE1': 'Early Phase 1',
   'phase.PHASE1': 'Phase 1',
   'phase.PHASE2': 'Phase 2',

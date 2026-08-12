@@ -101,6 +101,23 @@ const args = process.argv.slice(2);
 const CHECK_ONLY = args.includes('--check');
 const ALL_CATEGORIES = args.includes('--all');
 
+/*
+ * ⚠️ `--all` 로 **쓰는** 것은 막는다. 검사(`--check --all`)만 허용한다.
+ *
+ * 왜: 소식 말고 생활 요령·제도 글은 이미 다 있고 오너가 검토를 마쳤다. 거기서
+ * `appFeature` 가 비어 있는 것은 빠뜨린 게 아니라 "기본 화면으로 둔다"는 결정이다.
+ * `--all` 로 쓰면 그 결정을 키워드 판정이 조용히 뒤집는다 — 실제로 한국어 3편
+ * (용어집·성 건강·산정특례)에 승인 없이 값이 붙어서 되돌렸다(2026-08-13).
+ *
+ * 그 글들에 값을 넣기로 한다면 오너에게 확인받고 손으로 넣는 것이 맞다.
+ */
+if (ALL_CATEGORIES && !CHECK_ONLY) {
+  console.error('✗ --all 은 --check 와 함께만 쓴다. 소식 외 글은 오너가 검토를 마쳤고,');
+  console.error('  비어 있는 것도 "기본 화면으로 둔다"는 결정이라 스크립트가 뒤집으면 안 된다.');
+  console.error('  검사만 하려면:  node scripts/set-news-app-feature.mjs --check --all');
+  process.exit(1);
+}
+
 async function walk(dir) {
   const out = [];
   for (const e of await readdir(dir, { withFileTypes: true })) {
@@ -162,7 +179,14 @@ function pick(text, locale) {
 
 /*
  * 한국어 원본에서 물려받는다. 같은 글의 판단이 언어마다 갈리지 않게 하는 것이 목적이다.
- * 원본이 비어 있으면 null 을 돌려주고, 그때만 키워드 판정으로 내려간다.
+ *
+ * ⚠️ **원본이 비어 있는 것도 결정이다.** "애매하면 안 넣는다"가 오너 기준이므로,
+ *    한국어판이 비어 있다는 건 기본 화면으로 두기로 한 것이다. 번역본이 키워드로
+ *    그걸 뒤집으면 안 된다 — 실제로 그렇게 해서 한국어판은 기본 화면인데 일본어판만
+ *    다른 화면이 붙는 일이 있었다(용어집·성 건강 글).
+ *    그래서 **원본 파일이 있으면 그 값을 그대로 따른다**(비었으면 비운 채로 둔다).
+ *    키워드 판정으로 내려가는 건 원본 파일 자체가 없는 그 언어 전용 글뿐이다.
+ *
  * 그 언어판 앱에 기능이 없으면(해외판 `community`) 물려받지 않는다 — 없는 기능을 광고하면 안 된다.
  */
 async function inherit(rel, locale) {
@@ -172,10 +196,10 @@ async function inherit(rel, locale) {
   try {
     koRaw = await readFile(koFile, 'utf8');
   } catch {
-    return null; // 그 언어 전용 글(일본 제도 글 등) — 원본이 없다
+    return null; // 그 언어 전용 글(일본 제도 글 등) — 원본이 없으니 키워드로 판정한다
   }
   const m = koRaw.match(/^appFeature:\s*(\S+)/m);
-  if (!m) return null;
+  if (!m) return { empty: true }; // 원본이 비어 있다 = 기본 화면으로 두기로 한 글
   const feature = m[1];
   if ((UNAVAILABLE[locale] ?? []).includes(feature)) {
     return { blocked: feature };
@@ -200,6 +224,12 @@ for (const file of files) {
   if (/^appFeature:/m.test(raw)) continue; // 이미 정해져 있으면 손대지 않는다
 
   const handed = await inherit(rel, locale);
+  if (handed?.empty) {
+    // 한국어판이 비어 있다 = 기본 화면으로 두기로 한 글. 번역본이 뒤집지 않는다.
+    skipped += 1;
+    missing.push(rel);
+    continue;
+  }
   if (handed?.blocked) {
     // 원본은 값이 있지만 이 언어판 앱에는 그 기능이 없다. 기본 화면으로 두는 게 맞다.
     console.log(`  · ${rel}: 원본의 ${handed.blocked} 은 이 언어판 앱에 없어 물려받지 않음 → 기본 화면`);

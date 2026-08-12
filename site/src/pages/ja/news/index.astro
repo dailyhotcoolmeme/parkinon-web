@@ -1,0 +1,160 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
+import labImg from '../../../assets/images/lab.jpg';
+
+const locale = Astro.currentLocale ?? 'ja';
+
+/*
+ * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
+ * 예전에는 글을 하나 추가할 때 글 페이지·허브 목록·사이드 패널 세 군데를 고쳐야 했고,
+ * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
+ */
+const posts = sortByDateDesc(
+  await getCollection('articles', inCategory(locale, 'news'))
+);
+
+const sideLinks = posts.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `news/${slugOf(e)}`),
+}));
+
+---
+
+<Layout
+  title="パーキンオン最新情報 — パーキンオン"
+  breadcrumbs={[
+    { name: 'ホーム', path: '/ja/' },
+    { name: 'パーキンオン最新情報', path: '/ja/news/' },
+  ]}
+>
+  <Header active="news" />
+
+  <div class="layout">
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>パーキンオン最新情報</h1>
+          <p>
+            パーキンソン病の最新の研究やニュースを、やさしい言葉に書き直してお届けします。
+            むずかしい論文が、患者さんとご家族が実際に使える情報になります。
+          </p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href={getRelativeLocaleUrl(locale, '')}>ホーム</a><span class="sep">/</span><span>パーキンオン最新情報</span>
+      </nav>
+
+      <div class="content-body">
+        <div class="hub-list">
+          {
+            posts.map((post) => (
+              <a class="hub-row" href={getRelativeLocaleUrl(locale, `news/${slugOf(post)}`)}>
+                <span class="tag">{post.data.tag}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <div class="hashtags">
+                  {post.data.hashtags.map((h) => <span>{h}</span>)}
+                </div>
+                <p class="meta">{formatDate(post.data.publishedAt)}</p>
+              </a>
+            ))
+          }
+        </div>
+
+        <ArticleSide links={sideLinks} linksTitle="最新情報の他の記事" />
+      </div>
+
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--primary);
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>

@@ -25,15 +25,21 @@ import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
 
-const locale = Astro.currentLocale ?? 'en';
+const locale = Astro.currentLocale ?? 'ja';
 
 /*
  * 임상 단계 물음표 팝오버의 "자세히 알아보기" 링크.
  * 항목마다 페이지를 따로 파지 않는다는 정책(website-plan.md "용어 설명" 절)에 따라
  * 독립 페이지가 아니라 생활 요령의 **모아보는 글 한 편**
- * (`src/content/articles/ko/lifestyle/glossary.mdx`)안의 그 항목으로 anchor 링크한다.
+ * (`src/content/articles/<locale>/lifestyle/glossary.mdx`)안의 그 항목으로 anchor 링크한다.
  * ⚠️ 앵커 id는 Astro가 그 글의 h2 텍스트로 자동 생성한 것이다 — 그 글의 해당 제목을
  * 바꾸면 이 문자열도 같이 고쳐야 한다.
+ *
+ * ⚠️⚠️ TODO(일본어판) — **일본어 용어 모아보기 글(ja/lifestyle/glossary.mdx)이 아직 없다.**
+ *   지금 이 링크는 영어판 앵커(`#what-do-phase-1-2-and-3-mean-in-clinical-trials`)를
+ *   그대로 쓰고 있어서, 일본어 글이 생기기 전까지는 목적지가 없다(404 또는 앵커 불일치).
+ *   일본어 앵커를 여기서 **지어내지 않는다** — 글의 h2 제목이 정해지면 Astro가 만드는
+ *   실제 id를 확인해서 이 문자열을 고칠 것.
  */
 const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#what-do-phase-1-2-and-3-mean-in-clinical-trials';
 
@@ -122,10 +128,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 ---
 
 <Layout
-  title="Clinical Trials & Research — Parkinon"
+  title="臨床試験・研究 — パーキンオン"
   breadcrumbs={[
-    { name: 'Home', path: '/en/' },
-    { name: 'Clinical Trials & Research', path: '/en/clinical/' },
+    { name: 'ホーム', path: '/ja/' },
+    { name: '臨床試験・研究', path: '/ja/clinical/' },
   ]}
 >
   <Header active="clinical" />
@@ -134,13 +140,13 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     <main class="col">
       <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
         <div class="hub-hero-full-inner">
-          <h1>Clinical Trials &amp; Research</h1>
+          <h1>臨床試験・研究</h1>
           <p><Tr k="clinical.tagline" /></p>
         </div>
       </section>
 
       <nav class="breadcrumb">
-        <a href={getRelativeLocaleUrl(locale, '')}>Home</a><span class="sep">/</span><span>Clinical Trials &amp; Research</span>
+        <a href={getRelativeLocaleUrl(locale, '')}>ホーム</a><span class="sep">/</span><span>臨床試験・研究</span>
       </nav>
 
       {/*
@@ -615,7 +621,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   .trial-card > summary::after {
     /* "자세히 보기"로 연구 카드와 통일(오너 지적 2026-08-08: "더보기"·"자세히 보기"로
        서로 다르게 부르고 있었다). margin-top 값도 아래 "간격 규칙" 참고 — 8px로 통일. */
-    content: 'See more ▾';
+    content: '詳しく見る ▾';
     display: inline-block;
     margin-top: 8px;
     font-size: 12.5px;
@@ -623,7 +629,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     color: var(--primary);
   }
   .trial-card[open] > summary::after {
-    content: 'Collapse ▴';
+    content: '閉じる ▴';
   }
   .badge {
     display: inline-block;
@@ -786,7 +792,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     display: none;
   }
   .research-card > summary::after {
-    content: 'See more ▾';
+    content: '詳しく見る ▾';
     display: inline-block;
     margin-top: 8px;
     font-size: 12.5px;
@@ -794,7 +800,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     color: var(--primary);
   }
   .research-card[open] > summary::after {
-    content: 'Collapse ▴';
+    content: '閉じる ▴';
   }
   .research-card .badges {
     display: flex;

@@ -40,7 +40,13 @@ import enMyInfo from '../assets/images/appshots/en/06_premium.png';
 
 /*
  * ── 일본어: 일본 App Store 게재분 5종 ────────────────────────
- * JA_04_overseas 는 이름과 달리 '알림(お知らせ)' 설정 화면이다(영어 04_reminders 와 같은 화면).
+ * 파일명을 믿지 말고 화면을 직접 열어 확인했다(2026-08-12):
+ *  · JA_01_home      = お薬 탭 "お薬を記録する" + 今日のお薬  → 기본 화면
+ *  · JA_02_bodystate = 体調 탭 "体調と気分を記録"            → effectTracking
+ *  · JA_03_exercise  = 運動 탭                              → exercise
+ *  · JA_04_overseas  = ⚠️ 이름과 달리 **お知らせ 설정 화면**  → reminder
+ *  · JA_05_myinfo    = マイページ(家族日記·記録を見る·通院の記録) → record·family·familyDiary
+ * medRegistration 만 전용 화면이 없어 기본 화면(お薬 홈)으로 나간다 — 같은 お薬 탭이라 무리 없다.
  */
 import jaHome from '../assets/images/appshots/ja/JA_01_home.png';
 import jaBodyState from '../assets/images/appshots/ja/JA_02_bodystate.png';

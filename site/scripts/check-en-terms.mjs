@@ -41,14 +41,21 @@ const BANNED = [
 /** 그 언어판 앱에 기능이 없어 쓰면 안 되는 appFeature — src/lib/appShots.ts 와 같아야 한다. */
 const UNAVAILABLE_FEATURE = { en: ['community'], fr: ['community'], ja: ['community'] };
 
-/** 생활 요령 허브의 필터탭이 문자열로 비교하는 값. 다르면 필터가 조용히 깨진다. */
-const EN_SECTIONS = [
-  'Understanding the disease',
-  'Getting started',
-  'What happens in the body',
-  'Everyday living',
-  'People and situations',
-];
+/*
+ * 생활 요령 허브의 필터탭이 문자열로 비교하는 값. 다르면 필터가 **조용히** 깨진다
+ * (그 글이 "전체" 탭에만 보이고 분류 탭에서 사라진다). 언어별로 따로 관리한다 —
+ * src/pages/<locale>/lifestyle/index.astro 의 SECTIONS 와 반드시 같아야 한다.
+ */
+const SECTIONS_BY_LOCALE = {
+  en: [
+    'Understanding the disease',
+    'Getting started',
+    'What happens in the body',
+    'Everyday living',
+    'People and situations',
+  ],
+  ja: ['病気を知る', 'はじめの一歩', '体に起こること', '一日の過ごし方', '人と場面'],
+};
 
 async function walk(dir) {
   const out = [];
@@ -93,7 +100,41 @@ function proseOnly(raw) {
   text = text.replace(/\.{0,2}\/[\w./-]+\.(png|jpe?g|webp|svg|astro|mdx?)/g, ' ');
   text = text.replace(/\/(en|fr|ja)\/[a-z0-9/-]+/g, ' ');   // 내부 링크 경로
   text = text.replace(/\b(quote|attribution|name|url)\s*=\s*"[^"]*"/gs, ' '); // 컴포넌트 인용 prop
+  text = text.replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ');                  // MDX 주석 — 지시문에 금지어를 설명할 수 있다
   return text;
+}
+
+/*
+ * ── 페이지(.astro) 검사 ─────────────────────────────────────
+ * 글만 검사하면 놓치는 자리가 있다. 실제로 en/clinical/index.astro 의 CSS 에
+ * `content: '자세히 보기 ▾'` 가 박혀 있어 **영어 사용자에게 한글이 보이고 있었다**
+ * (2026-08-12 발견). check-i18n 은 <style> 블록을 아예 건너뛰어서 못 잡았고,
+ * 이 스크립트도 글만 보고 있었다.
+ * CSS 주석은 렌더되지 않으므로, 화면에 나오는 `content:` 값만 본다.
+ */
+async function checkPages() {
+  const PAGES = path.join(ROOT, 'src/pages');
+  const out = [];
+  for (const loc of LOCALES) {
+    const dir = path.join(PAGES, loc);
+    let files;
+    try { files = await walk(dir); } catch { continue; }
+    for (const f of files.filter((x) => x.endsWith('.astro'))) {
+      const raw = await readFile(f, 'utf8');
+      const rel = path.relative(PAGES, f);
+      for (const m of raw.matchAll(/content:\s*(['"])([^'"]*)\1/g)) {
+        if (/[가-힣]/.test(m[2])) out.push(`${rel}: CSS content 에 한글 "${m[2]}" — 화면에 그대로 보인다`);
+      }
+      // 사전을 거치지 않은 한글 표시 문구(주석·CSS 주석 제외)
+      const noComments = raw
+        .replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ')
+        .replace(/\/\*[\s\S]*?\*\//g, ' ')
+        .replace(/^\s*\/\/.*$/gm, ' ');
+      const tag = noComments.match(/>([^<>{}]*[가-힣][^<>{}]*)</);
+      if (tag) out.push(`${rel}: 화면 문구에 한글 "${tag[1].trim().slice(0, 30)}"`);
+    }
+  }
+  return out;
 }
 
 const files = (await walk(ARTICLES)).filter((f) => {
@@ -131,10 +172,13 @@ for (const file of files) {
 
   // section 값은 허브 필터탭과 문자열이 정확히 같아야 한다.
   const section = raw.match(/^section:\s*(.+)$/m)?.[1]?.trim();
-  if (locale === 'en' && section && !EN_SECTIONS.includes(section)) {
-    problems.push(`${rel}: section "${section}" 은 허브 필터탭 값이 아니다 (${EN_SECTIONS.join(' / ')})`);
+  const allowed = SECTIONS_BY_LOCALE[locale];
+  if (allowed && section && !allowed.includes(section)) {
+    problems.push(`${rel}: section "${section}" 은 허브 필터탭 값이 아니다 (${allowed.join(' / ')})`);
   }
 }
+
+problems.push(...(await checkPages()));
 
 if (problems.length) {
   failed = true;

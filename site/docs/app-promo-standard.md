@@ -13,7 +13,7 @@
 |---|---|---|---|
 | 한국어 | 9종 | 기존 웹 자산 | 모든 기능에 전용 화면이 있다 |
 | 영어 | 6종 | **미국 App Store 게재분** | `06_premium` 은 결제 화면이 아니라 '내정보' 탭 |
-| 일본어 | 5종 | **일본 App Store 게재분** | `JA_04_overseas` 는 이름과 달리 '알림' 설정 화면 |
+| 일본어 | 5종 | **일본 App Store 게재분** | 5장 전부 화면을 직접 열어 확인함. `JA_04_overseas` 는 이름과 달리 '알림(お知らせ)' 설정 화면 |
 | 프랑스어 | 5종 | **캐나다 App Store 게재분(퀘벡용)** | `FR_04_overseas` 도 '알림(Rappels)' 화면 |
 
 스토어 게재분은 로그인 없이 아래로 확인·재취득할 수 있다.
@@ -42,7 +42,7 @@ done
 | `effectTracking` | 전용 | 02_tracking | JA_02_bodystate | FR_02_bodystate |
 | `exercise` | 전용 | 03_exercise | JA_03_exercise | FR_03_exercise |
 | `reminder` | 전용 | 04_reminders | JA_04_overseas | FR_04_overseas |
-| `medRegistration` | 전용 | 05_add_medication | (없음→기본) | (없음→기본) |
+| `medRegistration` | 전용 | 05_add_medication | (없음→기본, 같은 お薬 탭) | (없음→기본) |
 | `record` · `family` · `familyDiary` | 각각 전용 | 06_premium(내정보) | JA_05_myinfo | FR_05_myinfo |
 | `community` | 전용 | **금지** | **금지** | **금지** |
 

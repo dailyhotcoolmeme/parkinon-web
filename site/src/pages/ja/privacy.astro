@@ -1,0 +1,247 @@
+---
+/*
+ * 웹사이트(콘텐츠 사이트) 전용 개인정보처리방침.
+ *
+ * ⚠️ 앱 방침(`/privacy`, 다른 프로젝트가 서빙)과 **별개 문서다. 섞지 말 것.**
+ *    앱은 건강정보를 매일 수집하지만 웹은 회원가입도 없고 방문자에게서 받는 정보가 없다.
+ *    (parkinon-app/CLAUDE.md: "앱 기준을 웹에 가져다 붙이지 말 것")
+ *
+ * 사실관계 출처: 회사 정보는 Footer.astro 의 사업자 정보, 문의 이메일·표기 방식은 기존
+ * 앱 방침(public/privacy/index.html, 시행일 2026-07-15). 개인 보호책임자 이름은 앱 방침에도
+ * 없어서 넣지 않았다 — 지어내지 말 것.
+ *
+ * 내용은 오너 승인을 받은 초안 그대로다(2026-08-06). 문구 수정은 오너 확인 후.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { business, BIZ_NO, SUPPORT_EMAIL } from '../../lib/business';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleSide from '../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'ja';
+
+const biz = business(locale);
+
+const toc = [
+  { id: 'collect', label: '第1条 収集する個人情報' },
+  { id: 'cookie', label: '第2条 クッキーと自動的な収集' },
+  { id: 'access-log', label: '第3条 アクセス情報' },
+  { id: 'third-party', label: '第4条 第三者提供と委託' },
+  { id: 'rights', label: '第5条 ご本人の権利' },
+  { id: 'change', label: '第6条 このポリシーの変更' },
+];
+---
+
+<Layout
+  title="ウェブサイトのプライバシーポリシー — パーキンオン"
+  description="パーキンオンのウェブサイト(記事のページ)のプライバシーポリシーです。ウェブサイトには会員登録がなく、訪問された方から個人情報を収集することはありません。"
+  breadcrumbs={[
+    { name: 'ホーム', path: '/ja/' },
+    { name: 'ウェブサイトのプライバシーポリシー', path: '/ja/privacy/' },
+  ]}
+>
+  <Header />
+
+  <div class="layout">
+    <aside class="ad-rail left"></aside>
+
+    <main class="col">
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>ホーム</a><span class="sep">/</span><span>ウェブサイトのプライバシーポリシー</span>
+        </nav>
+
+        <article>
+          <div class="article-head">
+            <h1>ウェブサイトのプライバシーポリシー</h1>
+            <div class="meta"><span>施行日 2026年8月6日</span></div>
+          </div>
+
+          <div class="article-lead">
+            このポリシーは、パーキンオンの<b>ウェブサイト</b>(記事のページ)に適用されます。パーキンオン<b>アプリ</b>のプライバシーポリシーは別の文書で、<a
+              href="/privacy/ja">こちら</a
+            >でご覧いただけます。ウェブサイトには会員登録がなく、健康に関する情報も取り扱わないため、扱う内容がアプリとは異なります。
+          </div>
+
+          <div class="article-body">
+            <h2 id="collect">第1条(収集する個人情報)</h2>
+            <p>
+              本ウェブサイトには会員登録の手続きがなく、訪問された方から個人情報を直接収集することはありません —
+              お名前、連絡先、健康に関する情報のいずれも収集しません。メールでお問い合わせをいただいた場合は、いただいた内容をお答えするためだけに使用します。
+            </p>
+
+            <h2 id="cookie">第2条(クッキーなどによる自動的な収集)</h2>
+            <p>
+              <b>本ウェブサイトは現在、広告およびアクセス解析のスクリプトを一切使用しておらず、クッキーの保存も行っていません(2026年8月現在)。</b>
+            </p>
+            <p>
+              今後広告を導入する場合には、広告配信事業者のクッキーが使われることがあります。その際にはこのポリシーを更新します。同意が必要な地域 —
+              欧州経済領域(EEA)、英国、スイス —
+              では、Googleが認定した同意管理プラットフォーム(CMP)を通じて同意をいただいたうえでのみ、パーソナライズされた広告を配信します。クッキーはブラウザの設定でブロックまたは削除できます。
+            </p>
+            {/*
+              ⚠️⚠️ 애드센스가 승인되면 — 광고 코드를 넣기 **전에** 위 제2조를 쿠키·행태정보
+              수집을 알리는 내용으로 다시 써야 한다.
+
+              ⚠️ 한국어판에 준비돼 있는 대체 문안을 그대로 옮기지 말 것. 한국어 페이지
+              (src/pages/ko/privacy.astro)의 주석에 완성된 문안이 있지만, 그것은 온라인
+              맞춤형 광고에 대한 한국 개인정보위·방통위 기준으로 짜인 것이다 — 처리근거
+              열, 6개월 보유기간, 표 구성이 모두 거기서 나왔다. 이 페이지의 독자는
+              **일본 거주자**이고, 일본은 개인정보보호법(APPI)과 전기통신사업법의
+              「外部送信規律」(2023년 시행)이 적용돼 요구되는 고지 항목이 다르다.
+
+              그 시점에 일본어판에 필요한 것:
+                · 쿠키로 무엇을 모으는지(광고 식별자, 이 사이트에서의 열람 이력)
+                · 누가 모으고 무슨 목적인지(AdSense 제공자로서의 Google)
+                · 민감한 분류(건강·종교·정치적 견해)를 쓰지 않는다는 점
+                · 거부 방법 — Google 広告設定(adssettings.google.com), 브라우저·모바일 OS 설정
+                · 전기통신사업법 「外部送信規律」에 따른 「外部送信に関する公表」 필요 여부를
+                  확인해 반영할 것(일본 고유 요건 — 영어판에는 없는 항목이다)
+                · EEA·영국·스위스 방문자는 Google 인증 CMP 동의 후에만 맞춤형 광고를 본다는 점
+              쓰기 전에 애드센스 게시자 요건과 일본 총무성 가이드라인을 반드시 최신으로
+              확인하고, 제4조 수탁자 표에 Google 을 추가할 것(그쪽 주석 참고).
+              ⚠️ 확인하지 못한 일본 제도·근거를 지어내지 말 것.
+            */}
+
+            <h2 id="access-log">第3条(サービスの提供にあたって処理されるアクセス情報)</h2>
+            <p>
+              本ウェブサイトは、Cloudflare, Inc.(米国)が提供するホスティングおよびコンテンツ配信サービスを通じて提供されています。その過程で、サービスの提供と安全の確保(通信の処理、攻撃の遮断)のために、アクセス元のIPアドレスなどの技術的な情報が処理される場合があります。当社は、この情報を個々の訪問者を識別できる形で保存したり分析したりすることはありません。
+            </p>
+
+            <h2 id="third-party">第4条(第三者への提供および委託)</h2>
+            <p>当社は、訪問された方の個人情報を第三者に提供しません。</p>
+            <table class="policy-table">
+              <thead>
+                <tr><th>委託先</th><th>国</th><th>委託する業務</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Cloudflare, Inc.</td><td>米国</td><td>ウェブサイトのホスティングおよびコンテンツ配信</td></tr>
+              </tbody>
+            </table>
+            <p>広告を導入する場合には、広告配信事業者をこの表に追加し、このポリシーを更新します。</p>
+            {/*
+              ⚠️⚠️ 애드센스가 승인되면 — 위 표에 이 줄을 추가하고, 이 주석 바로 위의 문장을 지운다:
+                <tr><td>Google LLC (Google AdSense)</td><td>米国</td><td>パーソナライズされた広告の配信</td></tr>
+            */}
+
+            <h2 id="rights">第5条(ご本人の権利)</h2>
+            <p>
+              クッキーはブラウザの設定でブロックまたは削除できます。個人情報についてのご質問は
+              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> までお寄せください。ご回答いたします。
+            </p>
+
+            <h2 id="change">第6条(このポリシーの変更)</h2>
+            <p>このポリシーを変更する場合は、変更の内容と施行日をウェブサイトに掲載します。</p>
+          </div>
+
+          {/* 사업자 정보는 lib/business.ts 가 정본이다 — 일본어 화면에 국문 표기가 나가면 안 된다.
+              (한국어가 아닌 로케일은 영문 표기를 돌려준다 — 상호·대표자·주소를 여기서 일본어로
+              옮기지 말 것. 법인 등록 표기는 번역 대상이 아니다.)
+              전화번호는 해외에 실효가 없어 넣지 않는다(그 파일 주석 참고). */}
+          <div class="article-source">
+            {biz.name} · 代表者: {biz.reps} · 事業者登録番号 {BIZ_NO}<br />
+            {biz.address} · {SUPPORT_EMAIL}
+          </div>
+        </article>
+
+        <ArticleSide toc={toc} />
+      </div>
+    </main>
+
+    <aside class="ad-rail right"></aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  article {
+    max-width: 760px;
+  }
+  .article-head h1 {
+    font-size: 30px;
+    line-height: 1.42;
+    color: var(--text);
+  }
+  .article-head .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .article-lead {
+    margin-top: 20px;
+    border-left: 3px solid var(--primary);
+    padding: 14px 18px;
+    background: var(--secondary-container);
+    border-radius: 0 12px 12px 0;
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    line-height: 1.7;
+  }
+  .article-lead a {
+    text-decoration: underline;
+  }
+  .article-body {
+    margin-top: 32px;
+  }
+  .article-body h2 {
+    font-size: 19px;
+    color: var(--text);
+    margin-top: 36px;
+    margin-bottom: 12px;
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-body a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .policy-table {
+    margin-top: 16px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .policy-table th,
+  .policy-table td {
+    border: 1px solid var(--outline);
+    padding: 10px 12px;
+    text-align: left;
+    line-height: 1.6;
+  }
+  .policy-table th {
+    background: var(--surface-low);
+    font-weight: 700;
+  }
+  .article-source {
+    margin-top: 40px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+</style>

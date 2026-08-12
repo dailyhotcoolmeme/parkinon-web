@@ -42,13 +42,19 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
    * 영어판 메뉴.
    * - exercise     : 영상이 parkinson.co.kr 한국어 자료라 영어권에 의미가 없어 뺐다.
    * - clinical     : ClinicalTrials.gov 기반이고 TRIAL_COUNTRIES 에 us·ca·au 가 이미 있어 그대로 맞는다.
-   * - institutions : ⚠️ **해외판도 만들기로 이미 확정돼 있다**
-   *   (docs/website-plan.md "해외판 제도·지원 스코프 (확정, 2026-08-01)" — 미국 SSDI,
-   *   호주 NDIS, 뉴질랜드 Work and Income, 캐나다는 연방 제도(CRA DTC·CPP)까지만).
-   *   2026-08-12 에 내가 그 절을 못 보고 "한국 제도라 제외"로 잘못 정했다가 오너가 잡았다.
-   *   영어 제도 글이 준비되면 아래 목록에 'institutions' 를 추가할 것.
+   * - institutions : 해외판도 한다 — docs/website-plan.md "해외판 제도·지원 스코프
+   *   (확정, 2026-08-01)". 영어판은 미국 SSDI(+Medicare·SSI) · 호주 NDIS ·
+   *   뉴질랜드 Supported Living Payment · 캐나다 연방(DTC·CPP-D·CDB) 4개국.
+   *   ⚠️ 각국 제도는 해마다 바뀐다 — 글마다 basisDate 를 달고 연 1회 재확인한다
+   *   (미국 1월 COLA · 뉴질랜드 4월 1일 · 캐나다 1월·7월 · NDIS 비정기).
    */
-  en: ['news', 'lifestyle', 'clinical'],
+  en: ['news', 'lifestyle', 'clinical', 'institutions'],
+  /*
+   * 일본어판 메뉴. 영어판과 같은 이유로 exercise 는 뺐다(영상이 한국어 자료다).
+   * institutions : 일본 제도 글(難病医療費助成制度 등)이 아직 없어서 뺐다 —
+   *   그 글을 쓰면 여기에 'institutions' 를 추가할 것.
+   */
+  ja: ['news', 'lifestyle', 'clinical'],
 };
 
 export interface NavItem {

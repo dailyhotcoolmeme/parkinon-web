@@ -1,0 +1,259 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
+import pathImg from '../../../assets/images/path.jpg';
+
+const locale = Astro.currentLocale ?? 'ja';
+
+/*
+ * 필터탭 = 한국어판 5분류를 그대로 옮긴 일본어 라벨.
+ *   질환 이해 → 病気を知る / 시작하기 → はじめの一歩 / 몸에서 일어나는 일 → 体に起こること
+ *   하루를 보내는 법 → 一日の過ごし方 / 사람과 상황 → 人と場面
+ * ⚠️ 이 문자열은 글 frontmatter 의 `section:` 값과 **정확히 일치해야** 필터가 동작한다
+ *    (data-section 으로 비교하기 때문). 일본어판 글을 새로 쓸 때 여기 있는 값만 쓸 것 —
+ *    한 글자라도 다르면 그 글은 "すべて" 에서만 보이고 해당 탭에서 조용히 사라진다.
+ */
+const SECTIONS = [
+  '病気を知る',
+  'はじめの一歩',
+  '体に起こること',
+  '一日の過ごし方',
+  '人と場面',
+];
+
+/*
+ * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
+ * 예전에는 글을 하나 추가할 때 글 페이지·허브 목록·사이드 패널 세 군데를 고쳐야 했고,
+ * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
+ */
+const posts = sortByDateDesc(
+  await getCollection('articles', inCategory(locale, 'lifestyle'))
+);
+
+const sideLinks = posts.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `lifestyle/${slugOf(e)}`),
+}));
+
+---
+
+<Layout
+  title="暮らしの工夫 — パーキンオン"
+  breadcrumbs={[
+    { name: 'ホーム', path: '/ja/' },
+    { name: '暮らしの工夫', path: '/ja/lifestyle/' },
+  ]}
+>
+  <Header active="lifestyle" />
+
+  <div class="layout">
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${pathImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>暮らしの工夫</h1>
+          <p>診断されたばかりの時期から、体に起こる変化、一日の過ごし方、周りの人とのかかわりまで — 毎日の困りごとを少し軽くする実践的な情報を集めました。</p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href={getRelativeLocaleUrl(locale, '')}>ホーム</a><span class="sep">/</span><span>暮らしの工夫</span>
+      </nav>
+
+      <div class="hub-tabs" id="sectionTabs">
+        {/* data-section="all" — 고정 식별자. exercise 페이지와 같은 이유(2026-08-08). */}
+        <button class="tab active" data-section="all">すべて</button>
+        {SECTIONS.map((s) => <button class="tab" data-section={s}>{s}</button>)}
+      </div>
+
+      <div class="content-body">
+        <div class="hub-list" id="hubList">
+          {
+            posts.map((post) => (
+              <a
+                class="hub-row"
+                data-section={post.data.section}
+                href={getRelativeLocaleUrl(locale, `lifestyle/${slugOf(post)}`)}
+              >
+                <span class="tag">{post.data.tag}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <div class="hashtags">
+                  {post.data.hashtags.map((h) => <span>{h}</span>)}
+                </div>
+                <p class="meta">{formatDate(post.data.publishedAt)}</p>
+              </a>
+            ))
+          }
+        </div>
+        <p class="empty-state" id="emptyState" hidden>この分類の記事はまだありません。順次追加していきます。</p>
+
+        <ArticleSide links={sideLinks} linksTitle="暮らしの工夫の他の記事" />
+      </div>
+
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+
+  /*
+   * 필터탭 = 밑줄 방식(헤더 메뉴·임상시험 국가 탭과 같은 방식, 오너 확정 2026-08-08:
+   * "필터칩 스타일이 틀린거라고 얘기했잖아 — 알약 칩은 웹사이트에 안 쓴다").
+   * 알약 칩(앱의 project_parkinon_filter_chip_standard)은 앱 전용이고 이 웹사이트에는
+   * 안 쓴다 — 새 필터 UI를 만들 때 앱 표준을 그대로 옮기지 말 것.
+   */
+  .hub-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    flex-shrink: 0;
+    position: relative;
+    font: inherit;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+  .tab.active {
+    color: var(--primary);
+  }
+  .tab.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
+    background: var(--primary);
+  }
+  .hub-row[hidden] {
+    display: none;
+  }
+  .empty-state {
+    font-size: 15px;
+    color: var(--text-sub);
+    padding: 40px 0;
+    text-align: center;
+  }
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--primary);
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>
+
+<script>
+  // 순수 필터링(서버 재요청 없음) — /ko/exercise/ 와 같은 방식.
+  const tabs = document.querySelectorAll<HTMLButtonElement>('#sectionTabs .tab');
+  const rows = document.querySelectorAll<HTMLAnchorElement>('#hubList .hub-row');
+  const emptyState = document.querySelector<HTMLParagraphElement>('#emptyState');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      const section = tab.dataset.section;
+      let shown = 0;
+      rows.forEach((row) => {
+        row.hidden = section !== 'all' && row.dataset.section !== section;
+        if (!row.hidden) shown++;
+      });
+      if (emptyState) emptyState.hidden = shown > 0;
+    });
+  });
+</script>

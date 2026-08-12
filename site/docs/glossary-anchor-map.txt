@@ -1,0 +1,51 @@
+# glossary 앵커 매핑 (한국어 → 영어)
+#
+# 영어판 글을 번역할 때 Term 링크의 href 를 이 표대로 바꾼다.
+# 한국어 앵커는 한국어 제목에서, 영어 앵커는 영어 제목에서 생성되므로 값이 완전히 다르다.
+# 2026-08-12 기준, 43개 전부 실제 렌더 결과로 존재 확인함.
+#
+# 형식: <ko-anchor>|<en-anchor>
+
+lrrk2gbasnca-유전자-이름이-왜-나오나요|what-are-lrrk2-gba-and-snca
+충동조절장애icd가-뭔가요|what-is-an-impulse-control-disorder-icd
+흡인성-폐렴이-뭔가요|what-is-aspiration-pneumonia
+이상운동증운동-변동온-오프이-뭔가요|what-are-dyskinesia-and-motor-fluctuations-on-off
+뇌심부자극술dbs이-뭔가요|what-is-deep-brain-stimulation-dbs
+흑질기저핵-뇌의-어떤-부분인가요|what-are-the-substantia-nigra-and-basal-ganglia
+파라콰트트리클로로에틸렌이-뭔가요|what-are-paraquat-and-trichloroethylene
+정상압-수두증혈관성-파킨슨증이-뭔가요|what-are-normal-pressure-hydrocephalus-and-vascular-parkinsonism
+임상시험-1상2상3상-무슨-뜻인가요|what-do-phase-1-2-and-3-mean-in-clinical-trials
+서동증경직이-뭔가요|what-are-bradykinesia-and-rigidity
+상염색체-우성열성이-뭔가요|what-are-autosomal-dominant-and-recessive-inheritance
+브라크-가설미주신경이-뭔가요|what-are-the-braak-hypothesis-and-the-vagus-nerve
+본태성-떨림약물유발-파킨슨증이-뭔가요|what-are-essential-tremor-and-drug-induced-parkinsonism
+무감동apathy가-뭔가요|what-is-apathy
+도파민-작용제가-뭔가요|what-is-a-dopamine-agonist
+근긴장이상-통증중추성-통증이-뭔가요|what-are-dystonic-pain-and-central-pain
+prkn이-뭔가요|what-is-prkn
+mao-b-억제제가-뭔가요|what-is-a-mao-b-inhibitor
+datscansyn-one-검사가-뭔가요|what-are-the-datscan-and-syn-one-tests
+하지불안증후군rls가-뭔가요|what-is-restless-legs-syndrome-rls
+페노티아진-계열이-뭔가요|what-are-phenothiazines
+펀딩이-뭔가요|what-is-punding
+파킨슨병-정신병이-뭔가요|what-is-parkinsons-disease-psychosis
+젊은-발병-파킨슨병yopd이-뭔가요|what-is-young-onset-parkinsons-yopd
+임의후견이-뭔가요|what-is-a-durable-power-of-attorney
+요양원과-요양병원은-어떻게-다른가요|what-is-the-difference-between-assisted-living-and-a-nursing-home
+야간-무동증이-뭔가요|what-is-nocturnal-akinesia
+알파-시누클레인이-뭔가요|what-is-alpha-synuclein
+수시적성검사가-뭔가요|what-is-a-driver-medical-review
+사전연명의료의향서가-뭔가요|what-is-an-advance-directive
+불완전-침투율이-뭔가요|what-is-incomplete-penetrance
+루이소체-치매dlb가-뭔가요|what-is-dementia-with-lewy-bodies-dlb
+렘수면행동장애rbd가-뭔가요|what-is-rem-sleep-behavior-disorder-rbd
+돌봄-소진이-뭔가요|what-is-care-partner-burnout
+도파민-차단제가-뭔가요|what-is-a-dopamine-blocker
+도파민-조절장애-증후군이-뭔가요|what-is-dopamine-dysregulation-syndrome
+단백질-재분배-식이가-뭔가요|what-is-a-protein-redistribution-diet
+경두개직류자극tdcs이-뭔가요|what-is-transcranial-direct-current-stimulation-tdcs
+경도인지장애mci가-뭔가요|what-is-mild-cognitive-impairment-mci
+updrs가-뭔가요|what-is-the-updrs
+pde5-억제제가-뭔가요|what-is-a-pde5-inhibitor
+msapspcbd가-뭔가요|what-are-msa-psp-and-cbd
+lsvt-loud가-뭔가요|what-is-lsvt-loud

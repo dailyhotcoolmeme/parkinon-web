@@ -35,13 +35,13 @@ const locale = Astro.currentLocale ?? 'ja';
  * ⚠️ 앵커 id는 Astro가 그 글의 h2 텍스트로 자동 생성한 것이다 — 그 글의 해당 제목을
  * 바꾸면 이 문자열도 같이 고쳐야 한다.
  *
- * ⚠️⚠️ TODO(일본어판) — **일본어 용어 모아보기 글(ja/lifestyle/glossary.mdx)이 아직 없다.**
- *   지금 이 링크는 영어판 앵커(`#what-do-phase-1-2-and-3-mean-in-clinical-trials`)를
- *   그대로 쓰고 있어서, 일본어 글이 생기기 전까지는 목적지가 없다(404 또는 앵커 불일치).
- *   일본어 앵커를 여기서 **지어내지 않는다** — 글의 h2 제목이 정해지면 Astro가 만드는
- *   실제 id를 확인해서 이 문자열을 고칠 것.
+ * 아래 앵커는 지어낸 것이 아니라 **빌드 결과물에서 확인한 실제 id** 다(2026-08-13):
+ *   dist/ja/lifestyle/glossary/index.html → id="臨床試験の第1相第2相第3相とは何ですか"
+ * 일본어·한국어 제목은 github-slugger 가 소문자화나 치환 없이 그대로 통과시키므로
+ * 언어판마다 앵커가 다르다 — 영어판 앵커를 여기 가져다 쓰면 조용히 빗나간다(실제로 그랬다).
  */
-const phaseGlossaryUrl = getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#what-do-phase-1-2-and-3-mean-in-clinical-trials';
+const phaseGlossaryUrl =
+  getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#臨床試験の第1相第2相第3相とは何ですか';
 
 /*
  * 기본 국가 = "전체"(오너 확정 2026-08-08: "한국이 메인이 아니다" — 여러 번 반복된 지적).

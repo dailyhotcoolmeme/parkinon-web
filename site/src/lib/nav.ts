@@ -51,8 +51,8 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
   en: ['news', 'lifestyle', 'clinical', 'institutions'],
   /*
    * 일본어판 메뉴. 영어판과 같은 이유로 exercise 는 뺐다(영상이 한국어 자료다).
-   * institutions : 일본 제도 글(難病医療費助成制度 등)이 아직 없어서 뺐다 —
-   *   그 글을 쓰면 여기에 'institutions' 를 추가할 것.
+   * institutions : 난병의료비조성제도(指定難病6) 글을 쓰고 2026-08-12 에 열었다.
+   *   ⚠️ 일본 제도도 해마다 바뀐다 — 글마다 basisDate 를 달고 연 1회 재확인한다.
    */
   ja: ['news', 'lifestyle', 'clinical', 'institutions'],
 };

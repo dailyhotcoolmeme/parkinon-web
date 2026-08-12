@@ -53,6 +53,46 @@
   (미국 1월 COLA · 뉴질랜드 4월 1일 · 캐나다 1월·7월 · NDIS 비정기)
 - 링크는 **HTTP 200 을 실제로 확인**한다. 404 인 채로 올리지 않는다
 
+## 2-1. 정부 사이트가 막혔을 때 — Wayback Machine
+
+정부 사이트는 봇을 차단하는 곳이 많다. 2026-08-13 실측:
+
+| 사이트 | 직접 접근 |
+|---|---|
+| medicare.gov · irs.gov · pharmac.govt.nz · workandincome.govt.nz · mhlw.go.jp | ✅ |
+| ssa.gov · medicaid.gov | 200 을 주지만 **본문이 "Access Denied"** 다(더 나쁘다 — 코드만 보면 속는다) |
+| ndis.gov.au · ramq.gouv.qc.ca | 403 |
+| servicesaustralia.gov.au · canada.ca | 연결 자체가 안 됨(000) |
+
+**Wayback Machine 은 전부 뚫린다.** 이렇게 쓴다.
+
+```bash
+# 1) 어느 시점 스냅샷이 있는지 먼저 확인한다 — 날짜를 모르고 쓰면 안 된다
+curl -s "https://archive.org/wayback/available?url=ssa.gov/benefits/disability/&timestamp=20260801"
+
+# 2) 본문을 가져온다
+curl -sL --compressed -A 'Mozilla/5.0' "https://web.archive.org/web/2026/https://www.ssa.gov/benefits/disability/"
+```
+
+### ⚠️ 스냅샷은 과거다 — 여기서 사고가 난다
+
+가져온 페이지가 **언제 것인지 반드시 확인하고**, 그에 따라 쓸 수 있는 것이 달라진다.
+
+- **제도의 구조·요건·절차·서류** — 잘 안 바뀐다. 오래된 스냅샷도 쓸 만하다.
+- **금액·요율·소득 기준·급여액** — 해마다 바뀐다. **오래된 스냅샷의 숫자는 쓰지 마라.**
+  2026-08 실측에서 `ssa.gov` 는 2024-01 스냅샷뿐이었다. 그 사이 COLA 가 두 번 지나갔다.
+  그 숫자를 그대로 옮기면 **틀린 금액을 사실처럼 쓰는 것**이 된다.
+- 스냅샷으로 확인한 내용은 `sources` 에 **원래 기관 URL**을 적되, 최신 값을 확인하지 못했다면
+  본문에서 금액을 쓰지 말고 「the current figure changes each year — check <기관> for this year's amount」
+  처럼 안내한다.
+
+그 밖의 우회 경로도 시도해 볼 것: 같은 기관의 **PDF 직링크**(HTML 은 막아도 PDF 는 열리는 곳이
+많다), 다른 부처·주정부 경로(health.gov.au · pbs.gov.au · ontario.ca · gov.bc.ca), 법령 사이트
+(e-gov.go.jp · laws-lois.justice.gc.ca · legislation.govt.nz).
+
+**`sources` 에는 실제로 열어서 내용을 확인한 URL만 넣는다.** HTTP 200 은 확인이 아니다 —
+위 표처럼 200 을 주면서 "Access Denied" 본문을 내려주는 사이트가 실제로 있다.
+
 ## 3. 글의 성격 — 제도 나열이 아니다
 
 기존 글들이 잘한 지점이 이것이다. 제목을 보라.

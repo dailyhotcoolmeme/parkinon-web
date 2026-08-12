@@ -120,6 +120,10 @@ const ko: Dict = {
   'article.summaryTitle': '세 줄 요약',
   'article.relatedTitle': '함께 보면 좋은 글',
 
+  'notFound.title': '페이지를 찾을 수 없습니다',
+  'notFound.body': '주소가 바뀌었거나, 없는 페이지입니다. 아래에서 다시 찾아보세요.',
+  'notFound.home': '홈으로 가기',
+
   'source.title': '출처',
   'source.contact': '문의',
 

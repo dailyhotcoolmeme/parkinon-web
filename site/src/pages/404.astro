@@ -1,0 +1,118 @@
+---
+/*
+ * 404 페이지.
+ *
+ * 왜 필요했나 (2026-08-12 발견): 이 파일이 없으면 Cloudflare Pages 가 **존재하지 않는 모든
+ * 경로에 루트 `index.html` 을 200 으로** 내줬다. 그래서 /zz-nonexistent/ 같은 주소도
+ * "200 + 파킨온 페이지"가 되어, 구글이 소프트 404 로 잡고 크롤 예산을 낭비하는 상태였다
+ * (프로덕션에서 실측 확인). Astro 가 이 파일로 dist/404.html 을 만들면 Pages 가 그걸
+ * 404 상태코드로 서빙한다.
+ *
+ * 색인 걱정은 없다 — 실제 404 상태로 나가므로 구글이 색인하지 않는다. 그래서 Layout 에
+ * noindex prop 을 새로 만들지 않았다.
+ *
+ * 언어: 이 파일은 로케일 접두사 밖(`/404`)이라 defaultLocale(ko)로 렌더된다.
+ * 문구는 사전 키로 넣어 뒀으니, 영어판을 열 때 언어별 404 를 따로 만들지 결정하면 된다.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { t } from '../i18n';
+import { navItemsFor } from '../lib/nav';
+
+const locale = Astro.currentLocale ?? 'ko';
+const links = navItemsFor(locale);
+---
+
+<Layout title={`${t(locale, 'notFound.title')} — ${t(locale, 'brand.name')}`}>
+  <Header />
+
+  <div class="layout">
+    <main class="col">
+      <div class="content-body">
+        <div class="nf">
+          <p class="nf-code">404</p>
+          <h1>{t(locale, 'notFound.title')}</h1>
+          <p class="nf-body">{t(locale, 'notFound.body')}</p>
+
+          <a class="nf-home" href={getRelativeLocaleUrl(locale, '')}>
+            {t(locale, 'notFound.home')}
+          </a>
+
+          <nav class="nf-links">
+            {links.map((item) => <a href={item.href}>{item.label}</a>)}
+          </nav>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .nf {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 72px 20px 96px;
+    text-align: center;
+  }
+  .nf-code {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #2e7d32;
+  }
+  .nf h1 {
+    margin: 0 0 14px;
+    font-size: 28px;
+    line-height: 1.35;
+    color: #111;
+  }
+  .nf-body {
+    margin: 0 0 28px;
+    font-size: 17px;
+    line-height: 1.7;
+    color: #555;
+  }
+  .nf-home {
+    display: inline-block;
+    padding: 14px 28px;
+    border-radius: 8px;
+    background: #2e7d32;
+    color: #fff;
+    font-size: 17px;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .nf-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 22px;
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid #eee;
+  }
+  .nf-links a {
+    font-size: 16px;
+    color: #333;
+    text-decoration: none;
+  }
+  .nf-links a:hover {
+    text-decoration: underline;
+  }
+  @media (max-width: 640px) {
+    .nf {
+      padding: 48px 20px 72px;
+    }
+    .nf h1 {
+      font-size: 23px;
+    }
+    .nf-body {
+      font-size: 16px;
+    }
+  }
+</style>

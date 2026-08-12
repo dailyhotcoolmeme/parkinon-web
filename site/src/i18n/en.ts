@@ -143,6 +143,10 @@ const en = {
   'article.summaryTitle': 'The short version',
   'article.relatedTitle': 'Related reading',
 
+  'notFound.title': 'We couldn’t find that page',
+  'notFound.body': 'The address may have changed, or the page may not exist. Try one of these instead.',
+  'notFound.home': 'Go to the homepage',
+
   'source.title': 'Sources',
   'source.contact': 'Contact',
 

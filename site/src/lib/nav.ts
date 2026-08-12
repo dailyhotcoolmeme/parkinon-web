@@ -39,11 +39,14 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
   // clinical : 0-6 완료(2026-08-08) — 임상시험 허브
   ko: ['news', 'lifestyle', 'clinical', 'exercise', 'institutions'],
   /*
-   * 영어판은 메뉴 3개다 (오너 확정 2026-08-12).
+   * 영어판 메뉴.
    * - exercise     : 영상이 parkinson.co.kr 한국어 자료라 영어권에 의미가 없어 뺐다.
-   * - institutions : 5편 전부 한국 제도(장애등록·장기요양보험·의료비 세액공제 등)라 뺐다.
-   * 임상시험은 ClinicalTrials.gov 기반이고 TRIAL_COUNTRIES 에 us·jp·fr·de·it·au 가
-   * 이미 들어 있어 영어판에 그대로 맞는다.
+   * - clinical     : ClinicalTrials.gov 기반이고 TRIAL_COUNTRIES 에 us·ca·au 가 이미 있어 그대로 맞는다.
+   * - institutions : ⚠️ **해외판도 만들기로 이미 확정돼 있다**
+   *   (docs/website-plan.md "해외판 제도·지원 스코프 (확정, 2026-08-01)" — 미국 SSDI,
+   *   호주 NDIS, 뉴질랜드 Work and Income, 캐나다는 연방 제도(CRA DTC·CPP)까지만).
+   *   2026-08-12 에 내가 그 절을 못 보고 "한국 제도라 제외"로 잘못 정했다가 오너가 잡았다.
+   *   영어 제도 글이 준비되면 아래 목록에 'institutions' 를 추가할 것.
    */
   en: ['news', 'lifestyle', 'clinical'],
 };

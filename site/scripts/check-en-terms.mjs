@@ -20,7 +20,16 @@ const ARTICLES = path.join(ROOT, 'src/content/articles');
 /** 검사 대상 언어 — 한국어는 해당 없음. */
 const LOCALES = ['en', 'fr', 'ja'];
 
-/** 본문에 나오면 안 되는 말. person-first 원칙. */
+/*
+ * 본문에 나오면 안 되는 말.
+ * ⚠️ 언어마다 다르다. 영어는 person-first 라 patient 를 금지하지만, **일본어는 患者さん 이
+ *    정상 표현이고 오히려 ケアパートナー 가 쓰이지 않는 말이다**(docs/ja-style-guide.md).
+ *    그래서 금지어를 언어별로 나눈다.
+ */
+const BANNED_JA = [
+  { re: /ケアパートナー/, fix: 'ご家族 / 介護者' },
+];
+
 const BANNED = [
   { re: /\bpatients?\b/i, fix: "people with Parkinson's" },
   { re: /\bsufferers?\b/i, fix: "people with Parkinson's" },
@@ -101,7 +110,8 @@ for (const file of files) {
   const raw = await readFile(file, 'utf8');
   const prose = proseOnly(raw);
 
-  for (const { re, fix } of BANNED) {
+  const banned = locale === 'ja' ? BANNED_JA : BANNED;
+  for (const { re, fix } of banned) {
     const m = prose.match(re);
     if (m) problems.push(`${rel}: 금지어 "${m[0]}" → ${fix} 로 바꿀 것`);
   }

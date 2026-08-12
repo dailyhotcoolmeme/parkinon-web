@@ -30,11 +30,24 @@ told us it sounds negative" 라고 명시한다. 우리는 미국 관행상 첫 
 - `보호자분께` → **If you're a care partner**
 - 두 표현을 "To the patient / To the caregiver" 로 직역하지 말 것 — 위 금지어에 걸린다.
 
+### ⚠️ 예외 — 실제 발표된 저작의 제목·인용문은 고치지 않는다
+금지어 규칙은 **우리가 쓰는 문장**에 적용된다. `sources:` 의 논문·기사 제목이나
+`<SourceQuote>` 의 원문 인용에 `patients` 가 들어 있다면 **그대로 둔다** — 바꾸면 인용 왜곡이다.
+
+실제 사례: `drooling-management.mdx` 의 출처
+"Drooling, Swallowing Difficulties and Health Related Quality of Life in Parkinson's Disease
+**Patients**" (PMC8345955) 는 발표된 제목 그대로다.
+
 ## 자가 점검 명령
+
+`sources:`·`attribution`·`quote` 같은 인용부는 제외하고 본문만 본다.
 
 ```
 cd site/src/content/articles/en
-grep -roi "patient\|sufferer\|victim\|caregiver\|suffers from" .   # 0 이어야 한다
+# 본문에서 금지어 찾기 (인용·출처 줄 제외) — 0 이어야 한다
+grep -rn --include=*.mdx -iE "\b(patients?|sufferers?|victims?|caregivers?)\b" . \
+  | grep -viE "^[^:]+:[0-9]+: *(- )?(name|url|quote|attribution):" \
+  | grep -viE "sources:|https?://"
 ```
 
 ---

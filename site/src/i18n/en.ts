@@ -169,7 +169,7 @@ const en = {
   'app.effectTracking.alt': 'Parkinon app - body and mood tracking screen',
   'app.exercise.title': 'Log today’s exercise in the app',
   'app.exercise.body':
-    'Keeping an exercise log gives you motivation to keep going, and lets your caregiver see how much you’ve been moving too.',
+    'Keeping an exercise log gives you motivation to keep going, and lets your care partner see how much you’ve been moving too.',
   'app.exercise.alt': 'Parkinon app - exercise log screen',
   'app.record.title': 'Log your symptoms in the app, too',
   'app.record.body':
@@ -181,7 +181,7 @@ const en = {
   'app.medRegistration.alt': 'Parkinon app - medication registration screen',
   'app.family.title': 'Manage it together with family',
   'app.family.body':
-    'When the patient logs an entry, caregivers get notified too — so you can check on each other even when you’re apart.',
+    'When one of you logs an entry, the other gets notified too — so you can check on each other even when you’re apart.',
   'app.family.alt': 'Parkinon app - family linking screen',
   'app.reminder.title': 'Let the app remind you when to take your medication',
   'app.reminder.body':
@@ -193,7 +193,7 @@ const en = {
   'app.familyDiary.alt': 'Parkinon app - family diary screen',
   'app.community.title': 'Talk with others in a similar situation',
   'app.community.body':
-    'In the Parkinon app’s information and sharing community, patients and caregivers can share their experiences.',
+    'In the Parkinon app’s information and sharing community, people with Parkinson’s and their care partners can share their experiences.',
   'app.community.alt': 'Parkinon app - information and sharing community screen',
 
   'medSchedule.deleteMed': 'Delete {name}',

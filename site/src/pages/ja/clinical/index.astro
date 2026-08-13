@@ -24,6 +24,7 @@ import Tr from '../../../i18n/Tr.astro';
 import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
+import { paragraphizeAbstract } from '../../../lib/abstractFormat';
 
 const locale = Astro.currentLocale ?? 'ja';
 
@@ -373,7 +374,9 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
                             {(paper.abstractTranslated ?? paper.abstract).map((sec) => (
                               <div class="abstract-section">
                                 {sec.label && <p class="abstract-label">{sec.label}</p>}
-                                <p class="abstract-text">{sec.text}</p>
+                                {paragraphizeAbstract(sec.text).map((p) => (
+                                  <p class="abstract-text">{p}</p>
+                                ))}
                               </div>
                             ))}
                           </div>
@@ -1121,6 +1124,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
 </script>
 
 <script>
+  import { paragraphizeAbstract } from '../../../lib/abstractFormat';
+
   /*
    * 검색+더보기 — functions/api/trials.js, functions/api/research.js 를 방문 중에 실시간
    * 호출한다(오너 확정 2026-08-08). 새 카드를 그릴 때 쓰는 라벨은 #clientLabels(위 JSON,
@@ -1135,6 +1140,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     ui: Record<string, string>;
   }
   const LABELS: ClientLabels = JSON.parse(document.getElementById('clientLabels')!.textContent!);
+  // 서버 렌더와 같은 함수 — 여기서 새로 짓지 않는다(모듈 스크립트라 import 가능).
+
   const MONTH_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
   function esc(s: string) {
@@ -1187,7 +1194,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     const badgesHtml = badges.map((b: string) => `<span class="badge">${esc(b)}</span>`).join('');
     const sections = paper.abstractTranslated ?? paper.abstract ?? [];
     const abstractHtml = sections
-      .map((sec: any) => `<div class="abstract-section">${sec.label ? `<p class="abstract-label">${esc(sec.label)}</p>` : ''}<p class="abstract-text">${esc(sec.text)}</p></div>`)
+      .map((sec: any) => {
+        const paras: string[] = paragraphizeAbstract(sec.text);
+        const parasHtml = paras.map((p) => `<p class="abstract-text">${esc(p)}</p>`).join('');
+        return `<div class="abstract-section">${sec.label ? `<p class="abstract-label">${esc(sec.label)}</p>` : ''}${parasHtml}</div>`;
+      })
       .join('');
     return `<details class="research-card">
       <summary>

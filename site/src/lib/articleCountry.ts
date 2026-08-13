@@ -77,10 +77,13 @@ export function assertAllCountried(entries: CollectionEntry<'articles'>[]): void
     .filter((e) => countryOf(e) === null)
     .map((e) => slugOf(e));
   if (orphans.length) {
+    /* i18n-exempt:start — 방문자에게 보이지 않는 빌드 실패 메시지다(개발자만 콘솔에서 본다).
+       사전을 거칠 이유가 없다. */
     throw new Error(
       `영어 제도 글의 나라를 가려낼 수 없다: ${orphans.join(', ')}\n` +
         `  슬러그를 ${Object.keys(PREFIX).join(' / ')} 중 하나로 시작하게 하거나,\n` +
         `  새 나라라면 src/lib/articleCountry.ts 의 PREFIX 와 EN_COUNTRIES 에 함께 추가할 것.`
     );
+    /* i18n-exempt:end */
   }
 }

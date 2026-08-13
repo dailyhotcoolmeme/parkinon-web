@@ -19,8 +19,8 @@
  * "이 문장에 나라마다 달라질 사실이 들어 있는가?"
  */
 const en = {
-  'brand.name': 'Parkinon',
-  'site.description': 'Parkinon — making each day with Parkinson’s a little easier',
+  'brand.name': 'ParkinON',
+  'site.description': 'ParkinON — making each day with Parkinson’s a little easier',
 
   // 메뉴 — 항목별 노출 여부는 src/lib/nav.ts 의 AVAILABLE 이 정한다(번역과 별개)
   'nav.news': 'News',
@@ -162,41 +162,41 @@ const en = {
 
   'app.promoTitle': 'Manage your medication with the app',
   'app.promoBody':
-    'Parkinon reminds you when to take your medication and keeps a record. Your family can follow along too.',
-  'app.shotAlt': 'The Parkinon app showing today’s medication status',
+    'ParkinON reminds you when to take your medication and keeps a record. Your family can follow along too.',
+  'app.shotAlt': 'The ParkinON app showing today’s medication status',
 
   'app.effectTracking.title': 'Track how you feel in the app, too',
   'app.effectTracking.body':
     'Logging your body and mood after each dose, matched to your medication schedule, builds a record you can use to track how well your medication is working.',
-  'app.effectTracking.alt': 'Parkinon app - body and mood tracking screen',
+  'app.effectTracking.alt': 'ParkinON app - body and mood tracking screen',
   'app.exercise.title': 'Log today’s exercise in the app',
   'app.exercise.body':
     'Keeping an exercise log gives you motivation to keep going, and lets your care partner see how much you’ve been moving too.',
-  'app.exercise.alt': 'Parkinon app - exercise log screen',
+  'app.exercise.alt': 'ParkinON app - exercise log screen',
   'app.record.title': 'Log your symptoms in the app, too',
   'app.record.body':
     'Keeping a record of your day-to-day symptoms makes it much easier to describe changes at your next appointment.',
-  'app.record.alt': 'Parkinon app - record and manage screen',
+  'app.record.alt': 'ParkinON app - record and manage screen',
   'app.medRegistration.title': 'Register your medications in the app',
   'app.medRegistration.body':
     'Registering what you take and when means you can see everything at a glance instead of tracking a separate list.',
-  'app.medRegistration.alt': 'Parkinon app - medication registration screen',
+  'app.medRegistration.alt': 'ParkinON app - medication registration screen',
   'app.family.title': 'Manage it together with family',
   'app.family.body':
     'When one of you logs an entry, the other gets notified too — so you can check on each other even when you’re apart.',
-  'app.family.alt': 'Parkinon app - family linking screen',
+  'app.family.alt': 'ParkinON app - family linking screen',
   'app.reminder.title': 'Let the app remind you when to take your medication',
   'app.reminder.body':
     'Get a notification at the time you set, and checking it off builds your record automatically.',
-  'app.reminder.alt': 'Parkinon app - medication time and reminder screen',
+  'app.reminder.alt': 'ParkinON app - medication time and reminder screen',
   'app.familyDiary.title': 'Share your day with family',
   'app.familyDiary.body':
     'Keep a short daily entry that can later be collected into a book, with family able to join in too.',
-  'app.familyDiary.alt': 'Parkinon app - family diary screen',
+  'app.familyDiary.alt': 'ParkinON app - family diary screen',
   'app.community.title': 'Talk with others in a similar situation',
   'app.community.body':
-    'In the Parkinon app’s information and sharing community, people with Parkinson’s and their care partners can share their experiences.',
-  'app.community.alt': 'Parkinon app - information and sharing community screen',
+    'In the ParkinON app’s information and sharing community, people with Parkinson’s and their care partners can share their experiences.',
+  'app.community.alt': 'ParkinON app - information and sharing community screen',
 
   'medSchedule.deleteMed': 'Delete {name}',
 

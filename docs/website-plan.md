@@ -245,6 +245,13 @@ parkinon.com/app/…     → 기존 기록보기 (서브로 이전)
 한국 독자는 미국 승인 소식을, 프랑스 독자는 일본 동향을 본다. 국내 사이트가 못 하는 자리이고,
 번역 1벌로 전 언어가 커버되니 비용 대비 효율이 가장 좋다.
 
+⚠️ **소재를 어디서 어떻게 가져오는가는 `site/docs/news-sourcing.md` 가 정본이다**
+(오너 지시 2026-08-13: *"크롤링 방식도 firecrawl이면.. 막힐 경우 대비해서 다른 방식도 넣자.
+이걸 규칙에 담아서"*). 요지는 **firecrawl 없이도 돈다**는 것이다 — 주력 소재 두 곳
+(Parkinson's News Today · MedicalXpress)이 전부 RSS 로 들어오고, 1차 출처인 PubMed 와
+ClinicalTrials.gov 는 공식 API 다. 넷 다 봇 차단도 사용량 한도도 없다.
+경로가 살아 있는지는 `npm run check-news-sources --prefix site` 로 확인한다.
+
 발행 주기 근거(2026-08-07 실측):
 
 - **Parkinson's News Today** (파킨슨 전문 매체, 유급 기자) — 최근 50일 **하루 1.2건, 평일만, 주말 0건**

@@ -7,7 +7,9 @@
  * 확인하는 것:
  *   1) 가로 스크롤이 생기는가 (요소가 화면 폭을 넘어감)
  *   2) input/select 가 내용을 담기에 너무 좁게 눌렸는가(아이콘만 남는 등)
- *   3) 화면마다 스크린샷을 docs/ui-screenshots/ 에 저장 — 배포마다 최신 상태를
+ *   3) 본문 블록 요소(인용·표·강조박스·절차카드…)의 위·아래 여백이 같은가
+ *      (2026-08-14: 아래 여백을 옆 요소가 정하고 있어서 같은 박스인데 아래가 제각각이었다)
+ *   4) 화면마다 스크린샷을 docs/ui-screenshots/ 에 저장 — 배포마다 최신 상태를
  *      실제로 눈으로 볼 수 있게 남긴다(오너 지시 2026-08-08: "고치고나서 실제
  *      화면을 찍어서 보라고! 브라우저 크기별로 모두다 검수하라고").
  *
@@ -124,6 +126,47 @@ async function main() {
           });
           if (overflow) {
             issues.push(`${slug}@${width}px [${state.name}] 가로 스크롤 발생 — scrollWidth ${overflow}px > 화면 ${width}px`);
+          }
+
+          /*
+           * 본문 블록 요소의 **위·아래 여백이 같은지** 본다.
+           *
+           * 예전에는 모든 요소가 margin-top 만 갖고 있어서, 어떤 요소의 아래 간격을 "다음에
+           * 오는 것"이 정했다 — 같은 회색 인용 박스인데 아래가 문단이면 14px, 표면 18px,
+           * 제목이면 44px 로 제각각이었다(2026-08-14 오너 지적). 요소가 스스로 위·아래를
+           * 같이 들고 있어야 옆에 무엇이 오든 간격이 유지된다.
+           * 제목(h2·h3)은 일부러 비대칭이므로 대상에서 뺀다 — 위가 넓어야 절이 나뉘어 보인다.
+           * 규칙: memory `feedback_symmetric_spacing_standalone_line`
+           */
+          const asym = await page.evaluate(() => {
+            const SEL = [
+              'blockquote',
+              '.callout',
+              '.table-scroll',
+              '.steps',
+              '.check',
+              'figure.chart',
+              'figure.photo',
+              'ul',
+              'ol',
+            ];
+            const bad = [];
+            const body = document.querySelector('.article-body');
+            if (!body) return bad;
+            for (const sel of SEL) {
+              const el = body.querySelector(':scope > ' + sel);
+              if (!el) continue;
+              const s = getComputedStyle(el);
+              const top = parseFloat(s.marginTop);
+              const bottom = parseFloat(s.marginBottom);
+              if (Math.abs(top - bottom) > 0.5) {
+                bad.push(`${sel} 위 ${Math.round(top)}px ≠ 아래 ${Math.round(bottom)}px`);
+              }
+            }
+            return bad;
+          });
+          if (asym.length) {
+            issues.push(`${slug}@${width}px [${state.name}] 본문 여백이 위아래 비대칭: ${asym.join(', ')}`);
           }
 
           const narrow = await page.evaluate(() => {

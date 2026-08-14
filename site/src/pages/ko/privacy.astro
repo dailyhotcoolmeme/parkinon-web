@@ -92,6 +92,7 @@ const toc = [
                 파악·분석할 수 있는 온라인 활동 정보)를 처리합니다. 종교·건강·정치적 견해 등
                 민감한 정보는 행태정보로 수집하지 않습니다.
               </p>
+              <div class="table-scroll">
               <table class="policy-table">
                 <thead>
                   <tr><th>구분</th><th>법적근거</th><th>수집항목</th><th>수집방법</th><th>수집목적</th><th>보유기간</th></tr>
@@ -107,7 +108,9 @@ const toc = [
                   </tr>
                 </tbody>
               </table>
+              </div>
               <p><b>제3자 광고 사업자를 통한 맞춤형 광고</b></p>
+              <div class="table-scroll">
               <table class="policy-table">
                 <thead>
                   <tr><th>사업자</th><th>수집항목</th><th>수집방법</th><th>수집목적</th><th>보유기간</th></tr>
@@ -122,6 +125,7 @@ const toc = [
                   </tr>
                 </tbody>
               </table>
+              </div>
               <p>
                 유럽경제지역(EEA)·영국·스위스 이용자에게는 Google이 인증한 동의 관리
                 도구(CMP)를 통해 동의를 받은 뒤에만 맞춤형 광고를 게재합니다. 그 외 지역
@@ -149,6 +153,7 @@ const toc = [
 
             <h2 id="third-party">제4조 (제3자 제공 및 처리 위탁)</h2>
             <p>회사는 방문자의 개인정보를 제3자에게 제공하지 않습니다.</p>
+            <div class="table-scroll">
             <table class="policy-table">
               <thead>
                 <tr><th>수탁업체</th><th>소재국</th><th>위탁 업무</th></tr>
@@ -157,6 +162,7 @@ const toc = [
                 <tr><td>Cloudflare, Inc.</td><td>미국</td><td>웹사이트 호스팅 및 콘텐츠 전송</td></tr>
               </tbody>
             </table>
+            </div>
             <p>광고를 도입하면 광고 사업자를 이 표에 추가하고 방침을 갱신합니다.</p>
             {/*
               ⚠️⚠️ 애드센스 승인 → 광고 코드 삽입 직전에 위 표의 <tbody> 마지막 행 뒤에
@@ -254,6 +260,23 @@ const toc = [
   .article-body a {
     color: var(--primary);
     text-decoration: underline;
+  }
+  /*
+   * 표가 화면보다 넓을 때 표 안에서만 가로로 스크롤한다 — 감싸지 않으면 넓은 표가 문서
+   * 전체 폭을 늘려 좁은 화면에서 페이지가 찌그러진다(2026-08-14). 위·아래 여백은 같은
+   * 값으로 짝지어 준다. 스크롤바는 숨긴다(오너 규칙: 가로 스크롤바 노출 금지).
+   */
+  .table-scroll {
+    margin: 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .table-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .table-scroll > .policy-table {
+    margin-top: 0;
   }
   .policy-table {
     margin-top: 16px;

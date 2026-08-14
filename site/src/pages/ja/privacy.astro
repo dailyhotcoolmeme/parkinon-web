@@ -111,6 +111,7 @@ const toc = [
 
             <h2 id="third-party">第4条(第三者への提供および委託)</h2>
             <p>当社は、訪問された方の個人情報を第三者に提供しません。</p>
+            <div class="table-scroll">
             <table class="policy-table">
               <thead>
                 <tr><th>委託先</th><th>国</th><th>委託する業務</th></tr>
@@ -119,6 +120,7 @@ const toc = [
                 <tr><td>Cloudflare, Inc.</td><td>米国</td><td>ウェブサイトのホスティングおよびコンテンツ配信</td></tr>
               </tbody>
             </table>
+            </div>
             <p>広告を導入する場合には、広告配信事業者をこの表に追加し、このポリシーを更新します。</p>
             {/*
               ⚠️⚠️ 애드센스가 승인되면 — 위 표에 이 줄을 추가하고, 이 주석 바로 위의 문장을 지운다:
@@ -217,6 +219,23 @@ const toc = [
   .article-body a {
     color: var(--primary);
     text-decoration: underline;
+  }
+  /*
+   * 표가 화면보다 넓을 때 표 안에서만 가로로 스크롤한다 — 감싸지 않으면 넓은 표가 문서
+   * 전체 폭을 늘려 좁은 화면에서 페이지가 찌그러진다(2026-08-14). 위·아래 여백은 같은
+   * 값으로 짝지어 준다. 스크롤바는 숨긴다(오너 규칙: 가로 스크롤바 노출 금지).
+   */
+  .table-scroll {
+    margin: 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .table-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .table-scroll > .policy-table {
+    margin-top: 0;
   }
   .policy-table {
     margin-top: 16px;

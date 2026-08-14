@@ -621,8 +621,12 @@ site/src/content/articles/<카테고리>/<slug>.mdx   →  /ko/<카테고리>/<s
   배지·상세 배지에도 웹과 같은 번호가 표시된다(오너 지시 2026-08-10). 번호는 #1부터 새로
   시작하기로 확정(기존 #12/#13 → #1/#2로 정정) — 다음 글부터 #3.
 - 필요 env(`site/.env`, 커밋 안 됨): `NEWS_BOT_PASSWORD`.
-- 지금은 **수동 실행**이다(오너 승인 후 정식으로 GH Actions cron 에 올릴지는 미결) — 소식 글을
-  새로 배포한 뒤 이 스크립트를 돌려야 앱에 반영된다.
+- **자동화됨(2026-08-14)** — `npm run deploy:dev --prefix site` 파이프라인 마지막 단계로
+  `set-news-app-feature.mjs`(앱 추천 화면 채우기) → `sync-news-posts.mjs`(앱 posts 동기화)가
+  자동으로 붙었다. 예전엔 배포와 별개 명령이라 소식 #4 배포 때 실제로 빠뜨린 적이 있다
+  (2026-08-14, 오너 지적) — dev 배포를 돌릴 때마다 손으로 두 스크립트를 따로 기억해 실행할
+  필요가 없어졌다. **다만 정식 프로덕션 배포(`merge-deploy.mjs` 경로)에는 아직 안 붙어 있다**
+  — 그건 `parkinon.com` 배포이므로 별도로 챙길 것.
 - 앱 쪽 변경: `FeedScreen.tsx`(목록에 📰 파킨온 소식 배지, `news_feed` 관련 죽은 코드 전부 제거),
   `PostDetailScreen.tsx`(is_news 글은 본문을 `react-native-markdown-display`로 렌더 + 하단에
   "파킨온 웹사이트에서 더 보기" 배너). 좋아요·댓글은 실제 `posts` FK라 그대로 정상 동작(오너

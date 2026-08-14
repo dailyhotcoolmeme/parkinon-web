@@ -224,7 +224,6 @@ const catHref = getRelativeLocaleUrl(locale, category);
     background: var(--secondary-container);
     border-radius: 14px;
     padding: 20px 22px;
-    word-break: keep-all;
   }
   .a-summary h2 {
     font-size: 14px;
@@ -262,7 +261,6 @@ const catHref = getRelativeLocaleUrl(locale, category);
    */
   .article-body {
     margin-top: 34px;
-    word-break: keep-all;
   }
   .article-body :global(hr) {
     border: none;
@@ -345,11 +343,39 @@ const catHref = getRelativeLocaleUrl(locale, category);
   }
 
   /* 표 — 색 박스 콜아웃 대신 표로 정리한다(오너 지적 2026-08-06) */
+  /*
+   * 표가 화면보다 넓을 때 표 안에서만 가로로 스크롤한다. 감싸는 <div class="table-scroll">
+   * 는 astro.config.mjs 의 rehypeTableScroll 이 붙인다 — 없으면 넓은 표가 문서 전체 폭을
+   * 늘려 좁은 화면에서 페이지가 반쪽으로 찌그러진다(2026-08-14). 스크롤바는 숨긴다.
+   */
+  .article-body :global(.table-scroll) {
+    margin-top: 18px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .article-body :global(.table-scroll::-webkit-scrollbar) {
+    display: none;
+  }
   .article-body :global(table) {
     width: 100%;
     margin-top: 18px;
     border-collapse: collapse;
     font-size: 15.5px;
+  }
+  .article-body :global(.table-scroll > table) {
+    margin-top: 0;
+  }
+  /*
+   * 열이 4개 이상인 표만 내용 폭대로 벌려서 가로 스크롤한다.
+   * 그냥 두면 표가 감싸개 폭(100%)에 맞춰 눌리면서 칸 안의 글자가 한 글자씩 세로로
+   * 쪼개진다(일본어는 글자 사이 어디서나 끊기므로 최소 폭이 한 글자다). 반대로 모든 표를
+   * 내용 폭대로 벌리면 2열짜리 설명 표까지 687~1448px가 되어 전부 옆으로 밀어야 읽힌다
+   * (2026-08-14 실측 비교). 그래서 숫자 표(4열 이상)만 벌린다.
+   */
+  .article-body :global(.table-scroll > table:has(thead th:nth-child(4))) {
+    width: max-content;
+    min-width: 100%;
   }
   .article-body :global(th),
   .article-body :global(td) {

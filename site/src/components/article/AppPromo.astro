@@ -104,14 +104,12 @@ const body = bodyProp ?? (feat ? t(locale, `app.${feat}.body` as DictKey) : t(lo
     font-size: 18px;
     color: var(--text);
     /* 한국어는 낱말 중간에서 끊지 않는다 — 좁은 폭에서 "앱으/로"처럼 잘리는 것 방지 */
-    word-break: keep-all;
   }
   p {
     margin-top: 8px;
     font-size: 15.5px;
     line-height: 1.75;
     color: var(--text-sub);
-    word-break: keep-all;
   }
 
   /* 홈의 스토어 버튼과 같은 모양 */

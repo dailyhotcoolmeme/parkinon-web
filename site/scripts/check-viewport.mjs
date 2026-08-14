@@ -51,6 +51,26 @@ const PAGES = [
       },
     ],
   },
+  /*
+   * ⚠️ 2026-08-14 — 여기에 한국어 임상 페이지 한 장만 들어 있어서, **일본어판 전 페이지가
+   * 모바일에서 깨져 있는 것을 이 검사가 통과시켰다**(오너 지적: "일본어 모바일에서 모든
+   * 페이지가 다 이상하다"). 원인은 `word-break: keep-all` 이었다 — 한국어는 띄어쓰기에서
+   * 줄이 바뀌지만 일본어는 띄어쓰기가 없어 문장 전체가 끊을 수 없는 한 덩어리가 되고,
+   * 그 길이가 그대로 문서 폭이 되어(360px 화면에서 804~1030px) 페이지가 반쪽으로
+   * 찌그러졌다. 이 종류의 사고는 **언어 단위로 한꺼번에** 터지므로, 언어마다 대표 화면을
+   * 넣어 둔다. 글이 늘어난다고 여기 목록을 늘릴 필요는 없다 — 원인이 언어·공통 CSS라
+   * 대표 한 장이면 잡힌다.
+   */
+  { slug: 'ja-home', path: '/ja/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'ja-institutions', path: '/ja/institutions/', states: [{ name: 'default', run: async () => {} }] },
+  {
+    // 넓은 숫자 표(5열)가 있는 글 — 표가 문서 폭을 늘리지 않는지 본다
+    slug: 'ja-article',
+    path: '/ja/institutions/kougaku-ryouyouhi/',
+    states: [{ name: 'default', run: async () => {} }],
+  },
+  { slug: 'en-article', path: '/en/institutions/us-ssdi-disability-benefits/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'ko-home', path: '/ko/', states: [{ name: 'default', run: async () => {} }] },
 ];
 
 const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml' };
@@ -112,6 +132,9 @@ async function main() {
               const r = el.getBoundingClientRect();
               const style = getComputedStyle(el);
               if (style.display === 'none' || style.visibility === 'hidden') return;
+              /* 체크박스·라디오는 원래 20px짜리 정사각형이다 — 여기서 보려는 건
+                 "글자가 들어가야 하는 칸이 눌렸는가"이므로 뺀다(글 본문 체크리스트). */
+              if (el.type === 'checkbox' || el.type === 'radio') return;
               if (r.width > 0 && r.width < 24) {
                 bad.push(`${el.tagName.toLowerCase()}#${el.id || '(no id)'} width=${Math.round(r.width)}px`);
               }

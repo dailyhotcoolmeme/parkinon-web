@@ -16,6 +16,37 @@ import remarkGfm from 'remark-gfm';
  *
  * ⚠️ URL 구조는 나중에 바꾸면 검색 순위를 잃는다. 여기 값을 임의로 고치지 말 것.
  */
+/*
+ * 본문 표를 <div class="table-scroll"> 로 감싼다.
+ *
+ * 표는 열이 많으면 화면보다 넓어질 수밖에 없다. 감싸지 않으면 그 넓이가 그대로 문서
+ * 전체 폭이 되어, 좁은 화면에서 **페이지 전체가 옆으로 밀리고 반쪽으로 찌그러진다**
+ * (2026-08-14 오너 지적으로 발견 — 일본어 제도 글의 표가 360px 화면에서 1014px였다).
+ * 표에 직접 overflow 를 걸면 표가 자기 폭으로 줄어들어 넓은 화면에서 꽉 차지 않으므로,
+ * 바깥을 감싸는 방식으로 한다 — 표 생김새는 그대로 두고 넘칠 때만 표 안에서 스크롤한다.
+ * 스크롤바는 숨긴다(오너 규칙: 가로 스크롤바 노출 금지).
+ */
+function rehypeTableScroll() {
+  return (tree) => {
+    const walk = (node) => {
+      if (!node.children) return;
+      node.children = node.children.map((child) => {
+        walk(child);
+        if (child.type === 'element' && child.tagName === 'table') {
+          return {
+            type: 'element',
+            tagName: 'div',
+            properties: { className: ['table-scroll'] },
+            children: [child],
+          };
+        }
+        return child;
+      });
+    };
+    walk(tree);
+  };
+}
+
 export default defineConfig({
   outDir: './dist',
   // hreflang·canonical 은 절대 URL 이어야 한다. 배포 대상에 맞춰 빌드 시 주입한다.
@@ -43,6 +74,7 @@ export default defineConfig({
   markdown: {
     gfm: false,
     remarkPlugins: [[remarkGfm, { singleTilde: false }]],
+    rehypePlugins: [rehypeTableScroll],
   },
   // 글은 마크다운(MDX)으로 쓴다 — 본문 안에서 블록 컴포넌트(절차 카드·체크리스트 등)를 쓰기 위함
   integrations: [

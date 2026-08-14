@@ -649,7 +649,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     color: var(--text);
     /* 한글 어절 중간에서 줄바꿈되던 것을 막는다(오너 지적 2026-08-08) — 이 사이트 다른
        제목들과 같은 규칙(AppPromo.astro, index.astro). */
-    word-break: keep-all;
   }
   .trial-card dl {
     margin-top: 12px;
@@ -815,7 +814,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     font-size: 17px;
     line-height: 1.5;
     color: var(--text);
-    word-break: keep-all;
   }
   .research-meta {
     /* "짧은 텍스트 줄 사이 간격 = 8px" 규칙(2026-08-08, 아래 참고)에 맞춰 6px에서 조정. */

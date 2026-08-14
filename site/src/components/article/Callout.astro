@@ -29,8 +29,23 @@ const { text } = Astro.props;
     color: var(--text);
     font-weight: 700;
   }
+  /*
+   * ⚠️ 2026-08-14 — 예전엔 밑줄(초록)이었다. 오너 지적: "그냥 밑줄인거는 보통 다른
+   * 게시글로 이동하는거 아니었나?" — 맞다. 본문 링크(`.article-body a`)도 초록 실선
+   * 밑줄이라 **모양이 겹쳐서**, 눌러지지 않는 강조 글씨가 링크처럼 보였다(방문간호 글
+   * 실측: 실선 밑줄 5개 중 3개가 링크가 아닌 이 강조였다).
+   *
+   * 본문 밖의 강조(`.article-body strong`)는 옅은 초록 칩인데, 강조 박스는 배경이 이미
+   * 그 옅은 초록이라 같은 칩을 쓰면 보이지 않는다. 세 가지를 실제로 렌더해서 비교했다.
+   *   ① 굵기만(800) → 박스 전체가 이미 굵어서 강조가 거의 안 보인다
+   *   ② 흰색 칩 → 강조가 두세 줄에 걸치면 흰 덩어리가 계단처럼 박스를 찢어놓는다
+   *   ③ 글자색(진초록) → 깔끔하고 강조가 분명하다. **이걸로 한다.**
+   * `--on-secondary-container` 는 원래 `--secondary-container` 배경 위 글자색으로 정의된
+   * 짝이라 다크모드에서도 그대로 맞는다(다크: 진초록 배경 + 연초록 글자).
+   * 실선 밑줄은 이제 이 사이트에서 링크 하나만 뜻한다.
+   */
   .callout :global(b) {
-    text-decoration: underline;
-    text-decoration-color: var(--primary);
+    font-weight: 800;
+    color: var(--on-secondary-container);
   }
 </style>

@@ -18,36 +18,15 @@
  *  - frontmatter(제목·요약·출처)는 보지 않는다 — 거기엔 컴포넌트를 못 쓴다
  */
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { vocabulary as vocabOf, missingTerms } from './lib/glossary-terms.mjs';
 
 const LANGS = ['ko', 'en', 'ja'];
 const BASELINE = 'docs/glossary-term-baseline.json';
-const MIN_LEN = 4;
 
-/* 용어사전에서 "용어 이름" 목록을 뽑는다. ### 는 그대로, ## 는 「…とは何ですか」류 꼬리를 뗀다.
-   「○○でよく出てくる言葉」 같은 묶음 제목은 용어가 아니므로 뺀다. */
+/* 판정 로직은 scripts/lib/glossary-terms.mjs 한 곳에만 둔다 — 훅(guard.mjs)과 같은 기준이어야 한다. */
 function vocabulary(lang) {
-  const path = `src/content/articles/${lang}/lifestyle/glossary.mdx`;
-  if (!existsSync(path)) return [];
-  const out = [];
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    const h3 = line.match(/^### (.+)$/);
-    if (h3) {
-      out.push(h3[1].trim());
-      continue;
-    }
-    const h2 = line.match(/^## (.+)$/);
-    if (!h2) continue;
-    const title = h2[1].trim();
-    if (/(よく出てくる言葉|窓口の名前|words that come up|나오는 말)/i.test(title)) continue;
-    out.push(
-      title
-        .replace(/(とは何ですか|はどう違いますか|とは)\s*$/, '')
-        .replace(/(가 뭔가요|이 뭔가요|은 뭔가요|는 뭔가요|은 어떻게 다른가요|는 어떻게 다른가요)\s*$/, '')
-        .replace(/^(What is|What are|What do)\s+/i, '')
-        .trim()
-    );
-  }
-  return [...new Set(out)].filter((t) => t.length >= MIN_LEN);
+  const p = `src/content/articles/${lang}/lifestyle/glossary.mdx`;
+  return existsSync(p) ? vocabOf(readFileSync(p, 'utf8')) : [];
 }
 
 function findMisses() {
@@ -60,16 +39,7 @@ function findMisses() {
       for (const file of readdirSync(dir)) {
         if (file === 'glossary.mdx' || !file.endsWith('.mdx')) continue;
         const key = `${lang}/${category}/${file}`;
-        const source = readFileSync(`${dir}/${file}`, 'utf8');
-        const body = source.replace(/^---[\s\S]*?\n---\n/, '');
-
-        const wrapped = new Set([...body.matchAll(/<Term[^>]*>([^<]*)<\/Term>/g)].map((m) => m[1].trim()));
-        const linked = new Set(
-          [...body.matchAll(/href="\/[a-z]{2}\/lifestyle\/glossary\/#([^"]+)"/g)].map((m) => decodeURIComponent(m[1]))
-        );
-        const plain = body.replace(/<Term[\s\S]*?<\/Term>/g, '');
-
-        const found = vocab.filter((t) => plain.includes(t) && !wrapped.has(t) && !linked.has(t));
+        const found = missingTerms(readFileSync(`${dir}/${file}`, 'utf8'), vocab);
         if (found.length) misses[key] = found.sort();
       }
     }
@@ -77,13 +47,19 @@ function findMisses() {
   return misses;
 }
 
+/* `_` 로 시작하는 키는 사람이 적어 둔 메모다(왜 안 고쳤는지) — 건수에 넣지 않는다. */
+const counted = (o) => Object.entries(o).filter(([k]) => !k.startsWith('_')).reduce((n, [, v]) => n + v.length, 0);
+
 const current = findMisses();
 const baseline = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : null;
 
 /* `--update-baseline` 로 지금 상태를 기준선으로 굳힌다(처음 도입할 때만). */
 if (process.argv.includes('--update-baseline')) {
-  writeFileSync(BASELINE, JSON.stringify(current, null, 2) + '\n');
-  const count = Object.values(current).reduce((n, v) => n + v.length, 0);
+  /* 사람이 적어 둔 `_` 메모는 덮어쓰지 않고 그대로 남긴다 — 왜 안 고쳤는지가 여기 있다. */
+  const prev = existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : {};
+  const notes = Object.fromEntries(Object.entries(prev).filter(([k]) => k.startsWith('_')));
+  writeFileSync(BASELINE, JSON.stringify({ ...notes, ...current }, null, 2) + '\n');
+  const count = counted(current);
   console.log(`기준선을 갱신했다 — ${Object.keys(current).length}편 ${count}건`);
   process.exit(0);
 }
@@ -109,8 +85,8 @@ if (added.length) {
 }
 
 const fixed =
-  Object.values(baseline).reduce((n, v) => n + v.length, 0) - Object.values(current).reduce((n, v) => n + v.length, 0);
-const remaining = Object.values(current).reduce((n, v) => n + v.length, 0);
+  counted(baseline) - counted(current);
+const remaining = counted(current);
 console.log(
   `✓ 용어사전 연결 검사 통과 — 새 누락 없음` + (remaining ? ` (기존 미연결 ${remaining}건 남음${fixed > 0 ? `, 이번에 ${fixed}건 줄임` : ''})` : '')
 );

@@ -1,214 +1,38 @@
 {
-  "ko/institutions/medical-expense-tax-deduction-guide.mdx": [
-    "세법상 장애인"
-  ],
-  "ko/lifestyle/conditions-confused-with-parkinsons.mdx": [
-    "MSA·PSP·CBD"
-  ],
-  "ko/lifestyle/diet-protein-medication-timing.mdx": [
-    "단백질 재분배 식이"
-  ],
-  "ko/lifestyle/driving-safety.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/hallucinations-delusions-parkinsons.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/hospital-stay-preparation.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/impulse-control-disorders.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/is-parkinsons-hereditary.mdx": [
-    "LRRK2",
-    "SNCA"
-  ],
-  "ko/lifestyle/orthostatic-hypotension-tips.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/pain-management-parkinsons.mdx": [
-    "뇌심부자극술(DBS)"
-  ],
+  "_why": {
+    "설명": "여기 남은 것은 '아직 안 고친 빚'이 아니라 '일부러 감싸지 않기로 한 것'이다. 규칙에 '그 문장 안에서 완전한 정의를 방금 줬다면 Term 을 안 달아도 된다'고 되어 있다.",
+    "ko/lifestyle/parkinsons-symptoms-overview.mdx": "증상 목록에서 '- **서동증(bradykinesia)**: 움직임이 전반적으로 느려지는 증상입니다.' 처럼 그 줄에서 바로 정의한다. 툴팁을 덧붙이면 같은 설명이 두 번이다.",
+    "en/lifestyle/parkinsons-symptoms-overview.mdx": "같은 이유(증상 목록에서 그 자리에 정의).",
+    "ja/lifestyle/parkinsons-symptoms-overview.mdx": "같은 이유(증상 목록에서 그 자리에 정의).",
+    "en/lifestyle/conditions-confused-with-parkinsons.mdx": "MSA·PSP·CBD 를 각각 한 줄씩 설명하는 목록이다. 묶음 용어(MSA, PSP and CBD)는 이미 Term 으로 감쌌다.",
+    "en/institutions/australia-carer-payments.mdx": "이미 [care partner burnout](/en/lifestyle/caregiver-burnout-prevention/) 로 더 자세한 글에 링크돼 있다.",
+    "en/lifestyle/impulse-control-disorders.mdx": "용어사전 제목이 'What is a dopamine agonist' 라 관사까지 용어로 잡힌 것이다. 본문에서는 'dopamine agonist' 를 이미 Term 으로 감쌌다.",
+    "ja/institutions/nanbyou-medical-expense-subsidy.mdx": "「障害認定日」は、初診日から1年6か月経過した日…です 처럼 그 문장에서 정의한다."
+  },
   "ko/lifestyle/parkinsons-symptoms-overview.mdx": [
     "경직(rigidity)",
     "서동증(bradykinesia)"
   ],
-  "ko/lifestyle/sexual-health.mdx": [
-    "도파민 작용제"
-  ],
-  "ko/lifestyle/speech-voice-changes.mdx": [
-    "서동증·경직"
-  ],
-  "ko/lifestyle/travel-preparation.mdx": [
-    "뇌심부자극술(DBS)"
-  ],
-  "ko/news/cell-therapy-3year-tavapadon-fda-news.mdx": [
-    "UPDRS"
-  ],
   "en/institutions/australia-carer-payments.mdx": [
     "care partner burnout"
   ],
-  "en/institutions/us-ssdi-disability-benefits.mdx": [
-    "apathy"
-  ],
   "en/lifestyle/conditions-confused-with-parkinsons.mdx": [
     "Corticobasal Degeneration (CBD)",
-    "MSA, PSP and CBD",
     "Multiple System Atrophy (MSA)",
     "Progressive Supranuclear Palsy (PSP)"
   ],
-  "en/lifestyle/constipation-management.mdx": [
-    "Braak hypothesis"
-  ],
-  "en/lifestyle/depression-apathy-parkinsons.mdx": [
-    "apathy"
-  ],
-  "en/lifestyle/diet-protein-medication-timing.mdx": [
-    "Bradykinesia",
-    "a protein redistribution diet"
-  ],
-  "en/lifestyle/drooling-management.mdx": [
-    "Bradykinesia"
-  ],
   "en/lifestyle/impulse-control-disorders.mdx": [
     "a dopamine agonist"
-  ],
-  "en/lifestyle/is-parkinsons-hereditary.mdx": [
-    "LRRK2",
-    "SNCA"
-  ],
-  "en/lifestyle/living-alone-preparation.mdx": [
-    "apathy"
-  ],
-  "en/lifestyle/pain-management-parkinsons.mdx": [
-    "Central pain",
-    "deep brain stimulation (DBS)"
   ],
   "en/lifestyle/parkinsons-symptoms-overview.mdx": [
     "Bradykinesia",
     "Rigidity"
   ],
-  "en/lifestyle/sexual-health.mdx": [
-    "a dopamine agonist"
-  ],
-  "en/lifestyle/speech-voice-changes.mdx": [
-    "bradykinesia and rigidity"
-  ],
-  "en/news/cell-therapy-3year-tavapadon-fda-news.mdx": [
-    "Phase 1",
-    "Phase 3"
-  ],
-  "en/news/vaccine-fast-track-bezisterim-trial-news.mdx": [
-    "Phase 2",
-    "Phase 3"
-  ],
-  "ja/institutions/chiryou-shigoto-ryouritsu.mdx": [
-    "傷病手当金",
-    "難病相談支援センター"
-  ],
-  "ja/institutions/houmon-kango.mdx": [
-    "年間上限"
-  ],
-  "ja/institutions/kaigo-hoken.mdx": [
-    "地域包括支援センター",
-    "生活機能障害度",
-    "軽症高額該当"
-  ],
-  "ja/institutions/kougaku-ryouyouhi.mdx": [
-    "誤嚥性肺炎",
-    "軽症高額該当"
-  ],
   "ja/institutions/nanbyou-medical-expense-subsidy.mdx": [
-    "特定疾病",
-    "軽症高額該当",
     "障害認定日"
-  ],
-  "ja/institutions/shintai-shougaisha-techou.mdx": [
-    "区分支給限度基準額",
-    "特定疾病",
-    "生活機能障害度",
-    "身体障害者更生相談所",
-    "軽症高額該当"
-  ],
-  "ja/institutions/shougai-fukushi-service.mdx": [
-    "難病相談支援センター"
-  ],
-  "ja/lifestyle/caregiver-burnout-prevention.mdx": [
-    "地域包括支援センター",
-    "特定疾病"
-  ],
-  "ja/lifestyle/conditions-confused-with-parkinsons.mdx": [
-    "MSA・PSP・CBD"
-  ],
-  "ja/lifestyle/continuing-to-work.mdx": [
-    "傷病手当金",
-    "標準報酬月額",
-    "産業保健総合支援センター",
-    "難病相談支援センター"
-  ],
-  "ja/lifestyle/diet-protein-medication-timing.mdx": [
-    "タンパク質再配分食"
-  ],
-  "ja/lifestyle/driving-safety.mdx": [
-    "ドパミンアゴニスト"
-  ],
-  "ja/lifestyle/hallucinations-delusions-parkinsons.mdx": [
-    "ドパミンアゴニスト",
-    "パーキンソン病の精神症状"
-  ],
-  "ja/lifestyle/hospital-stay-preparation.mdx": [
-    "ドパミンアゴニスト"
-  ],
-  "ja/lifestyle/impulse-control-disorders.mdx": [
-    "ドパミンアゴニスト"
-  ],
-  "ja/lifestyle/is-parkinsons-hereditary.mdx": [
-    "LRRK2",
-    "LRRK2・GBA・SNCA",
-    "SNCA"
-  ],
-  "ja/lifestyle/legal-planning-guardianship.mdx": [
-    "地域包括支援センター"
-  ],
-  "ja/lifestyle/living-alone-preparation.mdx": [
-    "地域包括支援センター",
-    "特定疾病"
-  ],
-  "ja/lifestyle/newly-diagnosed-first-steps.mdx": [
-    "特定疾病",
-    "生活機能障害度",
-    "軽症高額該当"
-  ],
-  "ja/lifestyle/nursing-facility-search.mdx": [
-    "地域包括支援センター",
-    "特定疾病"
-  ],
-  "ja/lifestyle/orthostatic-hypotension-tips.mdx": [
-    "ドパミンアゴニスト"
-  ],
-  "ja/lifestyle/pain-management-parkinsons.mdx": [
-    "脳深部刺激療法(DBS)"
   ],
   "ja/lifestyle/parkinsons-symptoms-overview.mdx": [
     "動作緩慢(bradykinesia)",
     "筋固縮(rigidity)"
-  ],
-  "ja/lifestyle/sexual-health.mdx": [
-    "ドパミンアゴニスト"
-  ],
-  "ja/lifestyle/travel-preparation.mdx": [
-    "脳深部刺激療法(DBS)"
-  ],
-  "ja/lifestyle/why-parkinsons-happens.mdx": [
-    "LRRK2・GBA・SNCA",
-    "不完全浸透"
-  ],
-  "ja/news/cell-therapy-3year-tavapadon-fda-news.mdx": [
-    "UPDRS"
-  ],
-  "ja/news/tdcs-mood-lrrk2-structure-news.mdx": [
-    "LRRK2・GBA・SNCA",
-    "SNCA"
   ]
 }

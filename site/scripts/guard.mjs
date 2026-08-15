@@ -27,6 +27,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
+import { vocabulary as vocabOf, missingTerms } from './lib/glossary-terms.mjs';
 
 const SITE = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const REPO = path.resolve(SITE, '..');
@@ -36,30 +37,10 @@ const isArticle = (p) => /src\/content\/articles\/[a-z]{2}\/[^/]+\/[^/]+\.mdx$/.
 const isGlossary = (p) => rel(p).endsWith('/lifestyle/glossary.mdx');
 const body = (src) => src.replace(/^---[\s\S]*?\n---\n/, '');
 
-/* ── 용어사전 어휘 ─────────────────────────────────────────────────────────── */
+/* 판정 로직은 scripts/lib/glossary-terms.mjs 한 곳에만 둔다 — 빌드 게이트와 같은 기준이어야 한다. */
 function vocabulary(lang) {
   const p = path.join(SITE, `src/content/articles/${lang}/lifestyle/glossary.mdx`);
-  if (!fs.existsSync(p)) return [];
-  const out = [];
-  for (const line of fs.readFileSync(p, 'utf8').split('\n')) {
-    const h3 = line.match(/^### (.+)$/);
-    if (h3) {
-      out.push(h3[1].trim());
-      continue;
-    }
-    const h2 = line.match(/^## (.+)$/);
-    if (!h2) continue;
-    const t = h2[1].trim();
-    if (/(よく出てくる言葉|窓口の名前|words that come up|나오는 말)/i.test(t)) continue;
-    out.push(
-      t
-        .replace(/(とは何ですか|はどう違いますか|とは)\s*$/, '')
-        .replace(/(가 뭔가요|이 뭔가요|은 뭔가요|는 뭔가요|은 어떻게 다른가요|는 어떻게 다른가요)\s*$/, '')
-        .replace(/^(What is|What are|What do)\s+/i, '')
-        .trim()
-    );
-  }
-  return [...new Set(out)].filter((t) => t.length >= 4);
+  return fs.existsSync(p) ? vocabOf(fs.readFileSync(p, 'utf8')) : [];
 }
 
 const BASELINE_PATH = path.join(SITE, 'docs/glossary-term-baseline.json');
@@ -73,15 +54,9 @@ const RULES = [
     applies: (p) => isArticle(p) && !isGlossary(p),
     check(file, src) {
       const lang = rel(file).split('/')[3];
-      const b = body(src);
-      const wrapped = new Set([...b.matchAll(/<Term[^>]*>([^<]*)<\/Term>/g)].map((m) => m[1].trim()));
-      const linked = new Set(
-        [...b.matchAll(/href="\/[a-z]{2}\/lifestyle\/glossary\/#([^"]+)"/g)].map((m) => decodeURIComponent(m[1]))
-      );
-      const plain = b.replace(/<Term[\s\S]*?<\/Term>/g, '');
       const known = new Set(baseline[rel(file).replace('src/content/articles/', '')] ?? []);
-      return vocabulary(lang)
-        .filter((t) => plain.includes(t) && !wrapped.has(t) && !linked.has(t) && !known.has(t))
+      return missingTerms(src, vocabulary(lang))
+        .filter((t) => !known.has(t))
         .map((t) => `용어사전에 있는 "${t}" 가 맨 텍스트로 나온다 — <Term brief="…" href="/${lang}/lifestyle/glossary/#앵커">${t}</Term> 로 감쌀 것`);
     },
   },
@@ -93,6 +68,27 @@ const RULES = [
       return [...body(src).matchAll(/<Term\b([^>]*)>([^<]*)</g)]
         .filter((m) => !/\bhref=/.test(m[1]))
         .map((m) => `<Term> "${m[2].trim()}" 에 href 가 없다 — 용어사전 앵커로 연결할 것(앵커는 빌드 후 실제 id 를 grep 해서 확인)`);
+    },
+  },
+  {
+    id: 'component-import',
+    why: '컴포넌트를 쓰면서 import 를 빠뜨리면 "Expected component `Term` to be defined" 로 빌드가 죽는다. 그 글에서 처음 Term 을 쓸 때 잊기 쉽다 (2026-08-15, 기존 글 정리하다 7편에서 냈다).',
+    applies: (p) => isArticle(p),
+    check(file, src) {
+      const used = ['Term', 'Steps', 'Checklist', 'Callout', 'CompareBar', 'SourceQuote', 'StoryHead'];
+      return used
+        .filter((c) => new RegExp(`<${c}[\\s/>]`).test(body(src)) && !new RegExp(`^import ${c} from`, 'm').test(src))
+        .map((c) => `<${c}> 를 쓰는데 import 가 없다 — frontmatter 뒤에 import ${c} from '../../../../components/article/${c}.astro'; 를 넣을 것`);
+    },
+  },
+  {
+    id: 'term-brief-quotes',
+    why: 'brief 안에 겹따옴표가 들어가면 속성이 거기서 끊겨 툴팁이 깨진다 (2026-08-15, 「항시 치료를 요하는 중증환자」를 따옴표로 쓰다가 실제로 냈다). 인용은 「」 나 홑따옴표로 쓸 것.',
+    applies: (p) => isArticle(p) || isGlossary(p),
+    check(file, src) {
+      return [...src.matchAll(/<Term\s+brief="(.*?)"\s+(?:href|>)/gs)]
+        .filter((m) => m[1].includes('"'))
+        .map((m) => `brief 안에 겹따옴표가 있다 — 「」 로 바꿀 것: ${m[1].slice(0, 40)}…`);
     },
   },
   {

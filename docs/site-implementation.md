@@ -653,3 +653,23 @@ site/src/content/articles/<카테고리>/<slug>.mdx   →  /ko/<카테고리>/<s
 - `site/public/_redirects` — 루트 → `/ko/`, 옛 주소 → 새 주소
 - `site/src/assets/images/` — 로고·hero·path·food·yoga·sleep·family·lab.jpg + `appshots/`(앱스토어
   실제 스크린샷 9장). 각 페이지는 `astro:assets`로 WebP 자동 변환 적용
+
+## 규칙 파수꾼 (guard.mjs) — 기억에 안 맡기는 층
+
+`site/scripts/guard.mjs` 가 **파일 하나를 고치는 순간** 도는 검사다. Claude Code 훅
+(`~/.claude/hooks/guard-post-edit.sh` = Edit/Write 직후, `guard-stop.sh` = 응답 끝)이
+자동으로 부른다 — 훅은 harness 가 실행하므로 세션이 새로 시작돼도 계속 돈다.
+
+```
+node site/scripts/guard.mjs file <경로>   # 파일 하나
+node site/scripts/guard.mjs changed       # git 기준 변경분 전부
+node site/scripts/guard.mjs list          # 등록된 규칙
+```
+
+지금 등록된 규칙: `glossary-link`(용어사전 항목이 맨 텍스트로 나옴) ·
+`term-needs-href`(Term 에 용어사전 링크 없음) · `stray-inline-block`(`<b>…</b>` 만으로 된
+줄이 혼자 떨어져 있음 → 위 여백 0) · `raw-table-wrap`(직접 쓴 표가 안 감싸짐).
+
+**빌드 검사와 역할이 다르다.** 빌드(`npm run build`)는 글을 다 쓰고 나서 도는 마지막 관문이고,
+guard 는 쓰는 도중에 바로 잡는다. 사고가 나면 문장으로만 적지 말고 **guard.mjs 의 RULES 에
+한 줄 추가**할 것.

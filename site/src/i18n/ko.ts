@@ -91,6 +91,7 @@ const ko: Dict = {
   'search.resultCountForQuery': "'{q}' 검색 결과 {n}건",
   'search.filter.anyPhase': '임상 단계 전체',
   'search.filter.startDate': '기간',
+  'search.filter.datePlaceholder': 'YYYY-MM-DD',
   'search.filter.sponsor': '주관 기관',
   'search.filter.anyPubtype': '연구 유형 전체',
   'search.filter.anyJournal': '게재지 전체',

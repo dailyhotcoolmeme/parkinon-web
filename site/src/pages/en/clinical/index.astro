@@ -170,9 +170,21 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
           <label class="date-filter">
             <Tr k="search.filter.startDate" />
             <span class="date-filter-range">
-              <input type="date" id="filterDateFrom" />
+              <input
+                type="text"
+                inputmode="numeric"
+                pattern="\d{4}-\d{2}-\d{2}"
+                id="filterDateFrom"
+                placeholder={t(locale, 'search.filter.datePlaceholder' as DictKey)}
+              />
               <span>~</span>
-              <input type="date" id="filterDateTo" />
+              <input
+                type="text"
+                inputmode="numeric"
+                pattern="\d{4}-\d{2}-\d{2}"
+                id="filterDateTo"
+                placeholder={t(locale, 'search.filter.datePlaceholder' as DictKey)}
+              />
             </span>
           </label>
           <input type="text" id="filterSponsor" placeholder={t(locale, 'search.filter.sponsor' as DictKey)} />
@@ -947,8 +959,12 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     gap: 6px;
   }
   .date-filter input {
-    /* 90px 이면 네이티브 날짜칸의 "연도. 월. 일." 표시 중 "월"이 잘렸다(2026-08-08 실측). */
+    /* YYYY-MM-DD(10자) 기준 128px면 충분하다. 예전엔 네이티브 <input type="date">였는데,
+       그 달력 UI가 페이지 lang이 아니라 브라우저/OS 언어를 따라가는 문제가 있어(2026-08-16)
+       언어 무관 텍스트 입력으로 바꿨다. */
     width: 128px;
+    text-align: center;
+    letter-spacing: 0.02em;
   }
   #filterYearFrom,
   #filterYearTo {
@@ -1270,6 +1286,18 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     });
   });
 
+  /*
+   * 날짜 필터는 예전에 <input type="date"> 였는데, 그 네이티브 달력 UI가 문서의 lang이
+   * 아니라 브라우저/OS 자체 언어를 따라간다(2026-08-08 실측 "연도. 월. 일." 잘림 메모 참고,
+   * 2026-08-16 오너 재지적 — 일본어판인데 한국어로 나옴). 언어 무관 숫자 텍스트 입력으로
+   * 바꾸고, 형식만 여기서 확인한다.
+   */
+  function isValidDateStr(s: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    const d = new Date(s + 'T00:00:00Z');
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+  }
+
   function buildParams(offset: number): URLSearchParams {
     const feed = currentFeed();
     const params = new URLSearchParams({ locale: LABELS.locale, country: searchCountrySel.value, offset: String(offset) });
@@ -1281,8 +1309,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       const dateTo = (document.getElementById('filterDateTo') as HTMLInputElement).value;
       const sponsor = (document.getElementById('filterSponsor') as HTMLInputElement).value.trim();
       if (phase) params.set('phase', phase);
-      if (dateFrom) params.set('date_from', dateFrom);
-      if (dateTo) params.set('date_to', dateTo);
+      if (isValidDateStr(dateFrom)) params.set('date_from', dateFrom);
+      if (isValidDateStr(dateTo)) params.set('date_to', dateTo);
       if (sponsor) params.set('sponsor', sponsor);
     } else {
       const pubtype = (document.getElementById('filterPubtype') as HTMLSelectElement).value;

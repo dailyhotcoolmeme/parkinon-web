@@ -99,6 +99,7 @@ const ja: Dict = {
   'search.resultCountForQuery': '「{q}」の検索結果{n}件',
   'search.filter.anyPhase': '試験段階すべて',
   'search.filter.startDate': '期間',
+  'search.filter.datePlaceholder': 'YYYY-MM-DD',
   'search.filter.sponsor': '実施主体',
   'search.filter.anyPubtype': '研究の種類すべて',
   'search.filter.anyJournal': '掲載誌すべて',

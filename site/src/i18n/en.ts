@@ -115,6 +115,7 @@ const en = {
   'search.resultCountForQuery': '{n} results for "{q}"',
   'search.filter.anyPhase': 'Any phase',
   'search.filter.startDate': 'Period',
+  'search.filter.datePlaceholder': 'YYYY-MM-DD',
   'search.filter.sponsor': 'Sponsor',
   'search.filter.anyPubtype': 'Any study type',
   'search.filter.anyJournal': 'Any journal',

@@ -106,8 +106,28 @@ async function main() {
   );
   if (upsertError) throw new Error(`clinical_trials upsert failed: ${upsertError.message}`);
 
-  // 위치·연락처는 매번 전부 지우고 다시 넣는다(간단하고, 시험당 몇 개 안 되는 행이라 부담 없음).
   const nctIds = trials.map((t) => t.nctId);
+
+  /*
+   * upsert는 "오늘도 모집 중인 시험"만 갱신한다 — 더 이상 모집 중이 아니게 된 시험은
+   * 그냥 오늘 목록에서 빠질 뿐, 기존 행이 지워지지도 status가 바뀌지도 않는다. 그래서
+   * 실제로는 모집이 끝난 시험이 사이트에 "모집 중" 배지를 단 채로 계속 남아 있었다
+   * (2026-08-16 오너가 발견 — NCT06467461은 이미 ACTIVE_NOT_RECRUITING, NCT07572903·
+   * NCT07590700은 COMPLETED로 바뀐 지 며칠 지났는데도 사이트엔 그대로였다). 오늘 목록에
+   * 없는 기존 행은 지운다 — trial_locations·trial_contacts·trial_translations는 FK
+   * CASCADE라 같이 정리된다.
+   */
+  const { data: existingRows, error: existingError } = await supabase.from('clinical_trials').select('nct_id');
+  if (existingError) throw new Error(`clinical_trials fetch failed: ${existingError.message}`);
+  const currentSet = new Set(nctIds);
+  const staleIds = (existingRows ?? []).map((r) => r.nct_id).filter((id) => !currentSet.has(id));
+  if (staleIds.length > 0) {
+    const { error: deleteStaleError } = await supabase.from('clinical_trials').delete().in('nct_id', staleIds);
+    if (deleteStaleError) throw new Error(`stale clinical_trials delete failed: ${deleteStaleError.message}`);
+  }
+  console.log(`Removed ${staleIds.length} trials no longer recruiting.`);
+
+  // 위치·연락처는 매번 전부 지우고 다시 넣는다(간단하고, 시험당 몇 개 안 되는 행이라 부담 없음).
   await supabase.from('trial_locations').delete().in('nct_id', nctIds);
   await supabase.from('trial_contacts').delete().in('nct_id', nctIds);
 

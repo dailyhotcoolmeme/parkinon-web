@@ -769,9 +769,10 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     white-space: normal;
   }
   .phase-help p a {
-    display: inline-block;
-    /* 6px → 8px. 설명 텍스트→"자세히 알아보기" 링크도 "짧은 텍스트 줄 사이" 관계라
-       카드 규칙과 같은 값을 쓴다(2026-08-08 전수조사에서 발견). */
+    /* ⚠️ inline-block만으로는 설명 글이 짧아 박스 폭을 다 안 채우면 그 줄에 그대로
+       붙어버린다 — 설명 길이에 따라 줄바꿈이 들쭉날쭉했다(2026-08-16 오너 지적).
+       Term.astro와 같은 원인(2026-08-08) — block으로 폭과 무관하게 새 줄에서 시작. */
+    display: block;
     margin-top: 8px;
     color: var(--primary);
     font-weight: 700;

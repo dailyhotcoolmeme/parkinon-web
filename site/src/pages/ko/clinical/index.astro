@@ -94,6 +94,16 @@ const PUBTYPE_BADGE: Record<string, DictKey> = {
 };
 const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).filter((k): k is DictKey => Boolean(k));
 
+/*
+ * 기간 필터 — 타이핑이 아니라 탭/선택으로 고르게 한다(오너 지시 2026-08-16: "타이핑하는게
+ * 맞아? 노인들이 YYYY-MM-DD를 알겠냐고!"). <input type="date">의 네이티브 달력은 브라우저/OS
+ * 언어를 따라가 문서 lang과 어긋나는 문제가 있었고(직전 커밋), 그렇다고 텍스트 타이핑으로
+ * 바꾼 것도 틀렸다 — 결국 연/월/일 각각을 select로 골라서, 옵션 문구는 사전을 거치게 한다.
+ */
+const CURRENT_YEAR = new Date().getFullYear();
+const DATE_YEARS = Array.from({ length: CURRENT_YEAR - 2000 + 3 }, (_, i) => CURRENT_YEAR + 2 - i);
+const DATE_MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+
 /* 발표일도 번역 대상이다(오너 확정 2026-08-08) — PubMed 영어 월 축약("Aug")을 그대로
    보여주지 않고 언어판에 맞게 새로 조립한다.
    ⚠️ "년"/"월" 같은 조사·단위는 절대 코드에 직접 쓰지 않는다 — 사전(date.yearMonth/
@@ -170,21 +180,27 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
           <label class="date-filter">
             <Tr k="search.filter.startDate" />
             <span class="date-filter-range">
-              <input
-                type="text"
-                inputmode="numeric"
-                pattern="\d{4}-\d{2}-\d{2}"
-                id="filterDateFrom"
-                placeholder={t(locale, 'search.filter.datePlaceholder' as DictKey)}
-              />
+              <span class="date-select-group" id="filterDateFromGroup">
+                <select id="filterDateFromY" class="date-select date-select-y">
+                  <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                  {DATE_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+                </select>
+                <select id="filterDateFromM" class="date-select date-select-m">
+                  <option value="">{t(locale, 'search.filter.dateMonthAny' as DictKey)}</option>
+                  {DATE_MONTHS.map((m) => <option value={m}>{tv(locale, 'search.filter.dateMonthUnit' as DictKey, { n: String(m) })}</option>)}
+                </select>
+              </span>
               <span>~</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                pattern="\d{4}-\d{2}-\d{2}"
-                id="filterDateTo"
-                placeholder={t(locale, 'search.filter.datePlaceholder' as DictKey)}
-              />
+              <span class="date-select-group" id="filterDateToGroup">
+                <select id="filterDateToY" class="date-select date-select-y">
+                  <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                  {DATE_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+                </select>
+                <select id="filterDateToM" class="date-select date-select-m">
+                  <option value="">{t(locale, 'search.filter.dateMonthAny' as DictKey)}</option>
+                  {DATE_MONTHS.map((m) => <option value={m}>{tv(locale, 'search.filter.dateMonthUnit' as DictKey, { n: String(m) })}</option>)}
+                </select>
+              </span>
             </span>
           </label>
           <input type="text" id="filterSponsor" placeholder={t(locale, 'search.filter.sponsor' as DictKey)} />
@@ -958,13 +974,22 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     align-items: center;
     gap: 6px;
   }
-  .date-filter input {
-    /* YYYY-MM-DD(10자) 기준 128px면 충분하다. 예전엔 네이티브 <input type="date">였는데,
-       그 달력 UI가 페이지 lang이 아니라 브라우저/OS 언어를 따라가는 문제가 있어(2026-08-16)
-       언어 무관 텍스트 입력으로 바꿨다. */
-    width: 128px;
-    text-align: center;
-    letter-spacing: 0.02em;
+  /*
+   * 연/월 select — 예전엔 네이티브 <input type="date">였는데, 달력 UI가 페이지 lang이 아니라
+   * 브라우저/OS 언어를 따라가는 문제가 있었고(2026-08-08 처음 발견, 2026-08-16 오너 재지적),
+   * 그걸 텍스트 타이핑으로 고쳤다가 "노인이 YYYY-MM-DD를 어떻게 아냐"고 다시 지적받았다
+   * (2026-08-16). 탭/선택만으로 되는 select로 최종 확정 — 오너 승인(연도+월 정밀도, 일 단위는
+   * 필요 없음).
+   */
+  .date-select-group {
+    display: flex;
+    gap: 4px;
+  }
+  .date-select-y {
+    width: 76px;
+  }
+  .date-select-m {
+    width: 58px;
   }
   #filterYearFrom,
   #filterYearTo {
@@ -1050,12 +1075,16 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       flex: 1 1 100%;
       width: 100%;
     }
-    .date-filter input,
     #filterYearFrom,
     #filterYearTo {
       flex: 1;
       width: auto;
       min-width: 110px;
+    }
+    /* Y·M select 는 좁은 화면에서도 고정폭을 유지한다(76px+58px) — flex:1로 늘리면
+       숫자만 있는 select 가 불필요하게 넓어져 group 4개가 줄 밖으로 밀려난다. */
+    .date-select-group {
+      flex-wrap: nowrap;
     }
   }
 </style>
@@ -1287,15 +1316,26 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   });
 
   /*
-   * 날짜 필터는 예전에 <input type="date"> 였는데, 그 네이티브 달력 UI가 문서의 lang이
-   * 아니라 브라우저/OS 자체 언어를 따라간다(2026-08-08 실측 "연도. 월. 일." 잘림 메모 참고,
-   * 2026-08-16 오너 재지적 — 일본어판인데 한국어로 나옴). 언어 무관 숫자 텍스트 입력으로
-   * 바꾸고, 형식만 여기서 확인한다.
+   * 날짜 필터는 연/월 select 두 쌍(시작·종료)이다. 예전엔 <input type="date">였는데 달력 UI가
+   * 브라우저/OS 언어를 따라가는 문제가 있었고(2026-08-08), 텍스트 타이핑으로 고쳤다가
+   * "노인이 YYYY-MM-DD를 아냐"고 다시 지적받았다(2026-08-16). select 로 최종 확정.
+   *
+   * search_trials RPC(Supabase)는 date 타입 두 개를 받아 `start_date >= p_date_from and
+   * start_date <= p_date_to`로 비교한다(직접 함수 정의 확인, 2026-08-16). 그래서 "부터"는
+   * 그 달의 1일로, "까지"는 그 달의 마지막 날로 만들어 넘긴다 — 연/월만 골라도 그 달 전체가
+   * 포함되게 하기 위함이다.
    */
-  function isValidDateStr(s: string): boolean {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
-    const d = new Date(s + 'T00:00:00Z');
-    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+  function pad2(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+  function monthStart(y: string, m: string): string | null {
+    if (!y || !m) return null;
+    return `${y}-${pad2(Number(m))}-01`;
+  }
+  function monthEnd(y: string, m: string): string | null {
+    if (!y || !m) return null;
+    const lastDay = new Date(Number(y), Number(m), 0).getDate();
+    return `${y}-${pad2(Number(m))}-${pad2(lastDay)}`;
   }
 
   function buildParams(offset: number): URLSearchParams {
@@ -1305,12 +1345,16 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     if (q) params.set('q', q);
     if (feed === 'trials') {
       const phase = (document.getElementById('filterPhase') as HTMLSelectElement).value;
-      const dateFrom = (document.getElementById('filterDateFrom') as HTMLInputElement).value;
-      const dateTo = (document.getElementById('filterDateTo') as HTMLInputElement).value;
+      const dateFromY = (document.getElementById('filterDateFromY') as HTMLSelectElement).value;
+      const dateFromM = (document.getElementById('filterDateFromM') as HTMLSelectElement).value;
+      const dateToY = (document.getElementById('filterDateToY') as HTMLSelectElement).value;
+      const dateToM = (document.getElementById('filterDateToM') as HTMLSelectElement).value;
       const sponsor = (document.getElementById('filterSponsor') as HTMLInputElement).value.trim();
       if (phase) params.set('phase', phase);
-      if (isValidDateStr(dateFrom)) params.set('date_from', dateFrom);
-      if (isValidDateStr(dateTo)) params.set('date_to', dateTo);
+      const dateFrom = monthStart(dateFromY, dateFromM);
+      const dateTo = monthEnd(dateToY, dateToM);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
       if (sponsor) params.set('sponsor', sponsor);
     } else {
       const pubtype = (document.getElementById('filterPubtype') as HTMLSelectElement).value;

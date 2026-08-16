@@ -24,6 +24,8 @@ export async function onRequestGet(context) {
   const p = url.searchParams;
 
   const country = p.get('country');
+  // 'RECRUITING' | 'CLOSED' | 'ALL' — 안 주면 RPC 기본값(RECRUITING)이 적용돼 예전 동작과 같다.
+  const status = p.get('status');
   const { data, error } = await supabase.rpc('search_trials', {
     p_locale: p.get('locale') || 'ko',
     p_q: p.get('q') || null,
@@ -32,6 +34,7 @@ export async function onRequestGet(context) {
     p_date_from: p.get('date_from') || null,
     p_date_to: p.get('date_to') || null,
     p_sponsor: p.get('sponsor') || null,
+    ...(status ? { p_status: status } : {}),
     p_limit: Math.min(Number(p.get('limit')) || 30, 100),
     p_offset: Number(p.get('offset')) || 0,
   });
@@ -53,6 +56,7 @@ export async function onRequestGet(context) {
     completionDateEstimated: row.completion_date_estimated,
     lastUpdate: row.last_update,
     url: row.url,
+    status: row.status,
   }));
 
   return new Response(JSON.stringify({ items, total }), {

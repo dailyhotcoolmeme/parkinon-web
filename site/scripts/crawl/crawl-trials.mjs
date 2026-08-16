@@ -109,23 +109,46 @@ async function main() {
   const nctIds = trials.map((t) => t.nctId);
 
   /*
-   * upsert는 "오늘도 모집 중인 시험"만 갱신한다 — 더 이상 모집 중이 아니게 된 시험은
-   * 그냥 오늘 목록에서 빠질 뿐, 기존 행이 지워지지도 status가 바뀌지도 않는다. 그래서
-   * 실제로는 모집이 끝난 시험이 사이트에 "모집 중" 배지를 단 채로 계속 남아 있었다
-   * (2026-08-16 오너가 발견 — NCT06467461은 이미 ACTIVE_NOT_RECRUITING, NCT07572903·
-   * NCT07590700은 COMPLETED로 바뀐 지 며칠 지났는데도 사이트엔 그대로였다). 오늘 목록에
-   * 없는 기존 행은 지운다 — trial_locations·trial_contacts·trial_translations는 FK
-   * CASCADE라 같이 정리된다.
+   * upsert는 "오늘도 모집 중인 시험"만 갱신한다 — 더 이상 모집 중이 아니게 된 시험은 오늘
+   * 목록에서 그냥 빠질 뿐, status가 안 바뀌었다. 그래서 실제로는 모집이 끝난 시험이 사이트에
+   * "모집 중" 배지를 단 채로 계속 남아 있었다(2026-08-16 오너가 발견).
+   *
+   * ⚠️ 처음엔 이 행들을 지우려고 했었는데 오너가 반려했다 — "모집중이 있으면 모집종료도
+   * 있을거라는게 기본 상식이잖아! 모집 종료도 계속 쌓아야 의미 있는거지!" 지우지 않고,
+   * ClinicalTrials.gov에 그 시험들의 실제 현재 상태를 다시 물어서 status만 정확하게
+   * 갱신한다. `filter.ids`로 여러 NCT ID를 한 번에 조회할 수 있다(실측 확인).
    */
   const { data: existingRows, error: existingError } = await supabase.from('clinical_trials').select('nct_id');
   if (existingError) throw new Error(`clinical_trials fetch failed: ${existingError.message}`);
   const currentSet = new Set(nctIds);
   const staleIds = (existingRows ?? []).map((r) => r.nct_id).filter((id) => !currentSet.has(id));
-  if (staleIds.length > 0) {
-    const { error: deleteStaleError } = await supabase.from('clinical_trials').delete().in('nct_id', staleIds);
-    if (deleteStaleError) throw new Error(`stale clinical_trials delete failed: ${deleteStaleError.message}`);
+
+  let statusUpdated = 0;
+  for (let i = 0; i < staleIds.length; i += 150) {
+    const chunk = staleIds.slice(i, i + 150);
+    const params = new URLSearchParams({
+      'filter.ids': chunk.join(','),
+      fields: 'NCTId,OverallStatus,LastUpdatePostDate',
+      pageSize: '150',
+    });
+    const res = await fetch(`${API_BASE}?${params}`);
+    if (!res.ok) {
+      console.warn(`상태 재조회 실패(건너뜀): ${res.status}`);
+      continue;
+    }
+    const data = await res.json();
+    for (const raw of data.studies ?? []) {
+      const s = raw.protocolSection.statusModule;
+      const nctId = raw.protocolSection.identificationModule.nctId;
+      const { error } = await supabase
+        .from('clinical_trials')
+        .update({ status: s.overallStatus, last_update: s.lastUpdatePostDateStruct?.date ?? null, updated_at: new Date().toISOString() })
+        .eq('nct_id', nctId);
+      if (error) console.warn(`${nctId} 상태 갱신 실패: ${error.message}`);
+      else statusUpdated += 1;
+    }
   }
-  console.log(`Removed ${staleIds.length} trials no longer recruiting.`);
+  console.log(`Re-checked ${staleIds.length} no-longer-recruiting trials, updated status for ${statusUpdated}.`);
 
   // 위치·연락처는 매번 전부 지우고 다시 넣는다(간단하고, 시험당 몇 개 안 되는 행이라 부담 없음).
   await supabase.from('trial_locations').delete().in('nct_id', nctIds);

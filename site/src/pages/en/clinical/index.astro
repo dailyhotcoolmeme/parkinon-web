@@ -171,6 +171,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
           <button id="searchClear" class="search-btn-ghost" hidden><Tr k="search.clear" /></button>
         </div>
         <div class="search-filters" id="filtersTrials">
+          <select id="filterStatus">
+            <option value="ALL">{t(locale, 'search.filter.anyStatus' as DictKey)}</option>
+            <option value="RECRUITING" selected>{t(locale, 'search.filter.statusRecruiting' as DictKey)}</option>
+            <option value="CLOSED">{t(locale, 'search.filter.statusClosed' as DictKey)}</option>
+          </select>
           <select id="filterPhase">
             <option value="">{t(locale, 'search.filter.anyPhase' as DictKey)}</option>
             {['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => (
@@ -457,6 +462,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   pubtypeLabels: Object.fromEntries(Object.entries(PUBTYPE_BADGE).map(([raw, key]) => [raw, t(locale, key)])),
   ui: {
     recruiting: t(locale, 'clinical.recruiting' as DictKey),
+    closed: t(locale, 'clinical.closed' as DictKey),
     viewOriginal: t(locale, 'clinical.viewOriginal' as DictKey),
     phase: t(locale, 'clinical.phase' as DictKey),
     phaseHelp: t(locale, 'clinical.phaseHelp' as DictKey),
@@ -663,6 +669,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     color: var(--primary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+  }
+  /* 모집 종료 — 색으로도 모집중과 바로 구분되게(초록 대신 회색). 검색에서 상태 필터로
+     "모집 종료"를 골랐을 때만 실제로 뜬다(2026-08-16, 오너 지시로 상태 구분 추가). */
+  .badge-closed {
+    color: var(--text-sub);
   }
   .trial-card h3 {
     margin-top: 8px;
@@ -1219,8 +1230,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     }
     if (duration) dl += `<dt>${esc(LABELS.ui.duration)}</dt><dd>${esc(duration)}</dd>`;
     if (trial.sponsor) dl += `<dt>${esc(LABELS.ui.sponsor)}</dt><dd>${esc(trial.sponsor)}</dd>`;
+    const isRecruiting = trial.status === 'RECRUITING';
+    const badgeClass = isRecruiting ? 'badge' : 'badge badge-closed';
+    const badgeLabel = isRecruiting ? LABELS.ui.recruiting : LABELS.ui.closed;
     return `<details class="trial-card">
-      <summary><span class="badge">${esc(LABELS.ui.recruiting)}</span><h3>${title}</h3></summary>
+      <summary><span class="${badgeClass}">${esc(badgeLabel)}</span><h3>${title}</h3></summary>
       <a class="view-link" href="${trial.url}" target="_blank" rel="noopener">${esc(LABELS.ui.viewOriginal)} (${esc(trial.nctId)})</a>
       <dl>${dl}</dl>
     </details>`;
@@ -1345,12 +1359,14 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     const q = searchQuery.value.trim();
     if (q) params.set('q', q);
     if (feed === 'trials') {
+      const status = (document.getElementById('filterStatus') as HTMLSelectElement).value;
       const phase = (document.getElementById('filterPhase') as HTMLSelectElement).value;
       const dateFromY = (document.getElementById('filterDateFromY') as HTMLSelectElement).value;
       const dateFromM = (document.getElementById('filterDateFromM') as HTMLSelectElement).value;
       const dateToY = (document.getElementById('filterDateToY') as HTMLSelectElement).value;
       const dateToM = (document.getElementById('filterDateToM') as HTMLSelectElement).value;
       const sponsor = (document.getElementById('filterSponsor') as HTMLInputElement).value.trim();
+      if (status) params.set('status', status);
       if (phase) params.set('phase', phase);
       const dateFrom = monthStart(dateFromY, dateFromM);
       const dateTo = monthEnd(dateToY, dateToM);

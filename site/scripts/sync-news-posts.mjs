@@ -110,18 +110,19 @@ function contentTypeFor(filePath) {
   return 'image/jpeg';
 }
 
-/** 앱이 커뮤니티 사진을 올릴 때 쓰는 같은 r2-upload 엣지함수 경로로 히어로 이미지를 올리고
- * 워커 공개 URL을 반환한다. 키는 slug 로 고정해 재실행해도 같은 오브젝트를 덮어쓴다. */
-async function uploadHeroImage(localImagePath, slug, publishedAt) {
+/** 앱이 커뮤니티 사진을 올릴 때 쓰는 같은 r2-upload 엣지함수 경로로 이미지를 올리고
+ * 워커 공개 URL을 반환한다. 키는 keySlug 로 고정해 재실행해도 같은 오브젝트를 덮어쓴다.
+ * 히어로 이미지·본문 중간 이미지가 이 함수를 같이 쓴다(키만 다르게 넘긴다). */
+async function uploadImage(localImagePath, keySlug, publishedAt) {
   const yyyyMm = String(publishedAt).slice(0, 7); // 'YYYY-MM'
   const ext = path.extname(localImagePath).toLowerCase().replace('.', '') || 'jpg';
-  const key = `parkinon/community/${BOT_USER_ID}/${yyyyMm}/${slug}.${ext}`;
+  const key = `parkinon/community/${BOT_USER_ID}/${yyyyMm}/${keySlug}.${ext}`;
   const contentType = contentTypeFor(localImagePath);
 
   const { data: invokeData, error: invokeError } = await supabase.functions.invoke('r2-upload', {
     body: { key, contentType },
   });
-  if (invokeError) throw new Error(`r2-upload invoke 실패(${slug}): ${invokeError.message}`);
+  if (invokeError) throw new Error(`r2-upload invoke 실패(${keySlug}): ${invokeError.message}`);
 
   const bytes = fs.readFileSync(localImagePath);
   const putRes = await fetch(invokeData.presignedUrl, {
@@ -129,9 +130,29 @@ async function uploadHeroImage(localImagePath, slug, publishedAt) {
     headers: { 'Content-Type': contentType },
     body: bytes,
   });
-  if (!putRes.ok) throw new Error(`R2 PUT 실패(${slug}): ${putRes.status}`);
+  if (!putRes.ok) throw new Error(`R2 PUT 실패(${keySlug}): ${putRes.status}`);
 
   return { key, publicUrl: invokeData.publicUrl };
+}
+
+/*
+ * 본문 중간 <figure class="photo"> 사진은 **앱으로 내보내지 않고 통째로 지운다.**
+ *
+ * 앱은 소식 글에서 **히어로 이미지 한 장만** 본문 가운데("소식 1"과 "소식 2" 사이 구분선
+ * 자리)에 끼워 넣는 규칙을 이미 갖고 있다(parkinon-app PostDetailScreen.tsx 의
+ * newsHeroSplitIdx). 그래서 사이트 본문에 있는 중간 사진까지 함께 내보내면 앱에서만
+ * **사진이 두 장**이 된다(오너 지적 2026-08-21: 소식 #6·#7 에서 실제로 그랬다).
+ *
+ * ⚠️ 2026-08-19 에 나는 이걸 "raw 코드가 텍스트로 보인다"는 문제로만 보고 마크다운
+ *   이미지(![alt](url))로 **변환**했는데, 그게 바로 두 장이 된 원인이었다. 앱이 이미
+ *   히어로를 그 자리에 넣고 있으므로 올바른 처리는 변환이 아니라 **제거**다.
+ *   사이트(MDX)는 그대로 둔다 — 웹에서는 히어로가 맨 위에 따로 있어 중간 사진이 겹치지 않는다.
+ */
+function stripInlineFigures(body) {
+  return body.replace(
+    /<figure class="photo">[\s\S]*?<\/figure>\s*/g,
+    '',
+  );
 }
 
 async function upsertPost({ slug, title, content, newsUrl, newsTag }) {
@@ -220,7 +241,12 @@ async function main() {
     const { data: fm, content: body } = matter(raw);
 
     const newsUrl = `${SITE_ORIGIN}/ko/news/${slug}`;
-    const plainBody = mdxBodyToPlainMarkdown(body);
+    // gray-matter(js-yaml)는 `publishedAt: 2026-08-09` 같은 값을 Date 객체로 파싱한다 —
+    // String(date)는 "Sat Aug 09 2026..." 꼴이라 그대로 쓰면 안 되고 toISOString()으로 뽑는다.
+    const publishedDate = fm.publishedAt instanceof Date
+      ? fm.publishedAt.toISOString().slice(0, 10)
+      : String(fm.publishedAt ?? '').slice(0, 10);
+    const plainBody = mdxBodyToPlainMarkdown(stripInlineFigures(body));
 
     const { id: postId, created } = await upsertPost({
       slug,
@@ -233,12 +259,7 @@ async function main() {
     if (fm.hero) {
       const heroPath = path.resolve(path.dirname(filePath), fm.hero);
       if (fs.existsSync(heroPath)) {
-        // gray-matter(js-yaml)는 `publishedAt: 2026-08-09` 같은 값을 Date 객체로 파싱한다 —
-        // String(date)는 "Sat Aug 09 2026..." 꼴이라 그대로 쓰면 안 되고 toISOString()으로 뽑는다.
-        const publishedDate = fm.publishedAt instanceof Date
-          ? fm.publishedAt.toISOString().slice(0, 10)
-          : String(fm.publishedAt ?? '').slice(0, 10);
-        const { key: r2Key, publicUrl: r2Url } = await uploadHeroImage(heroPath, slug, publishedDate || '2026-01-01');
+        const { key: r2Key, publicUrl: r2Url } = await uploadImage(heroPath, slug, publishedDate || '2026-01-01');
         await upsertPostMedia(postId, r2Key, r2Url);
       } else {
         console.warn(`  ⚠ 히어로 이미지 없음(건너뜀): ${heroPath}`);

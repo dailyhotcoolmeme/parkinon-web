@@ -56,15 +56,36 @@ const homeHref = getRelativeLocaleUrl(locale, '');
       >
     </button>
   </div>
-  <div class="search-panel" id="searchPanel">
+  <div class="search-panel" id="searchPanel" data-locale={locale} data-clinical-href={getRelativeLocaleUrl(locale, 'clinical')}>
     <div class="search-panel-inner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-        ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
-      >
-      <input type="text" id="searchInput" placeholder={t(locale, 'header.searchPlaceholder')} />
+      <form id="searchForm" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          ><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg
+        >
+        <input type="text" id="searchInput" placeholder={t(locale, 'header.searchPlaceholder')} />
+        <button type="submit" class="search-panel-submit">{t(locale, 'search.submit')}</button>
+      </form>
+      {/*
+        검색 버튼(또는 Enter)을 눌러야 실행된다 — 타이핑할 때마다 서버를 안 건드린다
+        (오너 승인 2026-08-16: 임상시험 페이지 검색과 같은 패턴). 결과는 페이지 이동 없이
+        이 패널 안에 그대로 뜬다. 글은 빌드 타임 인덱스(/{locale}/search-index.json)를
+        불러와 브라우저에서 substring 매칭, 임상시험·연구는 /api/search 를 부른다 —
+        상세페이지가 없는 항목이라 클릭하면 /clinical/ 의 실시간 검색으로 넘어간다.
+      */}
+      <div class="search-panel-results" id="searchPanelResults" hidden>
+        <p class="search-panel-empty" id="searchPanelEmpty" hidden>{t(locale, 'search.noResults')}</p>
+        <div id="searchPanelSections"></div>
+      </div>
     </div>
   </div>
 </header>
+
+<script type="application/json" id="searchLabels" set:html={JSON.stringify({
+  sectionArticles: t(locale, 'search.sectionArticles'),
+  sectionTrials: t(locale, 'clinical.feedTrials'),
+  sectionResearch: t(locale, 'research.feedLabel'),
+  viewAll: t(locale, 'search.loadMore'),
+})} />
 
 <script is:inline>
   /*
@@ -327,13 +348,22 @@ const homeHref = getRelativeLocaleUrl(locale, '');
     overflow: hidden;
     transition: max-height 0.2s ease;
   }
+  /*
+   * 원래 120px(입력창 한 줄)이었는데, 톱바 검색이 글+임상시험+연구 결과를 이 패널
+   * 안에 그대로 보여주도록 바뀌면서(오너 지시 2026-08-16: "톱바 검색 기능 작동
+   * 안되는데") 결과 개수만큼 늘어나는 가변 높이를 담아야 한다. 화면을 완전히
+   * 덮지 않게 상한을 두고, 넘치면 패널 안에서만 스크롤한다.
+   */
   .search-panel.open {
-    max-height: 120px;
+    max-height: min(80vh, 640px);
+    overflow-y: auto;
   }
   .search-panel-inner {
     max-width: var(--max);
     margin: 0 auto;
     padding: 16px var(--gutter);
+  }
+  #searchForm {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -358,6 +388,68 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   .search-panel-inner input::placeholder {
     color: var(--text-sub);
   }
+  .search-panel-submit {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .search-panel-results {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--outline);
+  }
+  .search-panel-empty {
+    color: var(--text-sub);
+    font-size: 14px;
+  }
+</style>
+
+{/*
+  ⚠️ is:global 필수 — 검색 결과는 클라이언트 JS가 나중에 innerHTML로 끼워 넣는다.
+  Astro는 템플릿에 실제로 적힌 태그에만 스코프 속성(data-astro-cid-*)을 붙이므로,
+  스코프가 걸린 채로는 이 규칙들이 새로 생긴 결과 항목에 전혀 안 먹는다 — 똑같은
+  문제를 clinical/index.astro 의 .trial-card/.research-card 에서 이미 겪었다
+  (2026-08-08, 그 파일 630번째 줄 주석 참고). 실측(2026-08-16): 스코프를 안 풀었더니
+  <a>가 기본값 display:inline 으로 나와 글 제목들이 줄바꿈 없이 한 덩어리로 붙었다.
+  ⚠️⚠️ 여기엔 "동적으로 생기는 결과 항목" 클래스만 넣는다 — 다른 컴포넌트와 이름이
+  겹치면 조용히 서로 덮어써서 사고가 난다(2026-08-08 실제 사고, .search-btn 사례).
+  새 클래스를 추가하기 전에 src/components·src/layouts 안에 같은 이름이 있는지 검색할 것 —
+  scripts/check-style-collisions.mjs 가 배포 전에 자동으로 검사해 막는다.
+*/}
+<style is:global>
+  .search-result-section + .search-result-section {
+    margin-top: 16px;
+  }
+  .search-result-section h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-sub);
+    margin: 0 0 6px;
+  }
+  .search-result-item {
+    display: block;
+    padding: 8px 4px;
+    font-size: 15px;
+    color: var(--text);
+    border-radius: 6px;
+  }
+  .search-result-item:hover {
+    background: var(--surface-low);
+  }
+  .search-result-more {
+    display: inline-block;
+    margin-top: 4px;
+    padding: 4px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--primary);
+  }
 </style>
 
 <script>
@@ -366,6 +458,10 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   const searchBtn = document.getElementById('searchBtn')!;
   const searchPanel = document.getElementById('searchPanel')!;
   const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const searchForm = document.getElementById('searchForm') as HTMLFormElement;
+  const searchResultsEl = document.getElementById('searchPanelResults')!;
+  const searchEmptyEl = document.getElementById('searchPanelEmpty')!;
+  const searchSectionsEl = document.getElementById('searchPanelSections')!;
 
   function closeMenu() {
     navLinks.classList.remove('open');
@@ -374,7 +470,107 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   function closeSearch() {
     searchPanel.classList.remove('open');
     searchBtn.setAttribute('aria-expanded', 'false');
+    // 닫을 때마다 비워서, 다음에 열었을 때 지난 검색어·결과가 남아있지 않게 한다.
+    searchResultsEl.hidden = true;
+    searchSectionsEl.innerHTML = '';
+    searchEmptyEl.hidden = true;
+    searchInput.value = '';
   }
+
+  /*
+   * 톱바 검색 — 글 + 임상시험 + 연구 전부(오너 지시 2026-08-16). 글은 빌드 타임 정적
+   * 인덱스를 한 번만 받아 캐시해두고 브라우저에서 substring 매칭한다(언어당 최대 80여
+   * 편이라 이 정도로 충분하다). 임상시험·연구는 상세페이지가 없어서, 항목을 누르면
+   * /clinical/ 페이지의 실시간 검색으로 그 검색어를 그대로 넘긴다(같은 오너 지시).
+   */
+  interface ArticleIndexEntry {
+    title: string;
+    description: string;
+    url: string;
+  }
+  interface SearchLabels {
+    sectionArticles: string;
+    sectionTrials: string;
+    sectionResearch: string;
+    viewAll: string;
+  }
+  const searchLocale = searchPanel.dataset.locale || 'ko';
+  const clinicalHref = searchPanel.dataset.clinicalHref || '';
+  const SEARCH_LABELS: SearchLabels = JSON.parse(document.getElementById('searchLabels')!.textContent!);
+
+  let articleIndexPromise: Promise<ArticleIndexEntry[]> | null = null;
+  function getArticleIndex(): Promise<ArticleIndexEntry[]> {
+    if (!articleIndexPromise) {
+      articleIndexPromise = fetch(`/${searchLocale}/search-index.json`)
+        .then((r) => r.json())
+        .catch(() => []);
+    }
+    return articleIndexPromise;
+  }
+
+  function esc(s: string): string {
+    return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  }
+
+  function sectionHtml(label: string, items: { title: string; href: string }[], viewAllHref?: string, viewAllTotal?: number): string {
+    if (!items.length) return '';
+    const rows = items.map((it) => `<a class="search-result-item" href="${it.href}">${esc(it.title)}</a>`).join('');
+    const more =
+      viewAllHref && viewAllTotal && viewAllTotal > items.length
+        ? `<a class="search-result-more" href="${viewAllHref}">${esc(SEARCH_LABELS.viewAll)} (${viewAllTotal})</a>`
+        : '';
+    return `<div class="search-result-section"><h3>${esc(label)}</h3>${rows}${more}</div>`;
+  }
+
+  async function runHeaderSearch(rawQuery: string) {
+    const query = rawQuery.trim();
+    if (!query) return;
+
+    const [articleIndex, apiRes] = await Promise.all([
+      getArticleIndex(),
+      fetch(`/api/search?locale=${searchLocale}&q=${encodeURIComponent(query)}`)
+        .then((r) => r.json())
+        .catch(() => ({ trials: [], trialsTotal: 0, research: [], researchTotal: 0 })),
+    ]);
+
+    const qLower = query.toLowerCase();
+    const articleMatches = articleIndex
+      .filter((a) => a.title.toLowerCase().includes(qLower) || a.description.toLowerCase().includes(qLower))
+      .slice(0, 5);
+
+    // clinicalHref(getRelativeLocaleUrl 결과)가 이미 끝에 / 를 달고 오므로 여기서 또 붙이면
+    // //?q= 처럼 슬래시가 겹친다(실측 2026-08-16).
+    const trialsHref = `${clinicalHref}?q=${encodeURIComponent(query)}&feed=trials`;
+    const researchHref = `${clinicalHref}?q=${encodeURIComponent(query)}&feed=research`;
+
+    const html = [
+      sectionHtml(
+        SEARCH_LABELS.sectionArticles,
+        articleMatches.map((a) => ({ title: a.title, href: a.url })),
+      ),
+      sectionHtml(
+        SEARCH_LABELS.sectionTrials,
+        (apiRes.trials ?? []).map((it: { title: string }) => ({ title: it.title, href: trialsHref })),
+        trialsHref,
+        apiRes.trialsTotal,
+      ),
+      sectionHtml(
+        SEARCH_LABELS.sectionResearch,
+        (apiRes.research ?? []).map((it: { title: string }) => ({ title: it.title, href: researchHref })),
+        researchHref,
+        apiRes.researchTotal,
+      ),
+    ].join('');
+
+    searchResultsEl.hidden = false;
+    searchSectionsEl.innerHTML = html;
+    searchEmptyEl.hidden = html.length > 0;
+  }
+
+  searchForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    runHeaderSearch(searchInput.value);
+  });
 
   menuBtn.addEventListener('click', () => {
     const open = navLinks.classList.toggle('open');
@@ -386,12 +582,14 @@ const homeHref = getRelativeLocaleUrl(locale, '');
   });
 
   searchBtn.addEventListener('click', () => {
-    const open = searchPanel.classList.toggle('open');
-    searchBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open) {
-      closeMenu();
-      setTimeout(() => searchInput.focus(), 50);
+    if (searchPanel.classList.contains('open')) {
+      closeSearch();
+      return;
     }
+    searchPanel.classList.add('open');
+    searchBtn.setAttribute('aria-expanded', 'true');
+    closeMenu();
+    setTimeout(() => searchInput.focus(), 50);
   });
 
   document.addEventListener('click', (e) => {

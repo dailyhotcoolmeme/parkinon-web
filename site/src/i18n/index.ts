@@ -1,4 +1,5 @@
 import en, { type Dict, type DictKey } from './en';
+import fr from './fr';
 import ja from './ja';
 import ko from './ko';
 
@@ -9,7 +10,7 @@ export type { DictKey };
  * astro.config 의 `locales` 에는 있지만 여기 없는 언어는 **아직 사전이 없는 언어**다.
  * 그 언어로 실제 페이지를 만들면 `scripts/check-i18n.mjs` 가 빌드를 실패시킨다.
  */
-const DICTS: Record<string, Dict> = { en, ko, ja };
+const DICTS: Record<string, Dict> = { en, ko, ja, fr };
 
 /** 폴백 목적지. 한국어로는 절대 내려가지 않는다 (오너 지시 2026-08-07). */
 const FALLBACK_LOCALE = 'en';

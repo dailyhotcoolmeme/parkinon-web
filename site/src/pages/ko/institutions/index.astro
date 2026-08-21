@@ -5,6 +5,7 @@ import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
+import AdFitBanner from '../../../components/article/AdFitBanner.astro';
 import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
 import familyImg from '../../../assets/images/family.jpg';
 
@@ -52,6 +53,13 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
         <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>제도·지원</span>
       </nav>
 
+      <div class="ad-slot-mobile">
+        <AdFitBanner unit="DAN-3XSXyjQZO20EXhAU" width={300} height={250} />
+      </div>
+      <div class="ad-slot-pc">
+        <AdFitBanner unit="DAN-uNXspgUS7sxUF0Xi" width={728} height={90} />
+      </div>
+
       {/*
        * 필터탭 없음(오너 지적 2026-08-09: "태그마다 글이 1개씩인데 나누는 이유가 뭐냐").
        * 태그 하나에 글이 여러 편 쌓이기 전까지는 탭이 거를 게 없어 클릭만 늘린다.
@@ -81,12 +89,30 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       </div>
 
     </main>
+
+    <aside class="ad-rail right">
+      <AdFitBanner unit="DAN-gNuNjB3TJiRLLR61" width={160} height={600} />
+    </aside>
   </div>
 
   <Footer />
 </Layout>
 
 <style>
+  .ad-slot-mobile {
+    display: block;
+  }
+  .ad-slot-pc {
+    display: none;
+  }
+  @media (min-width: 1280px) {
+    .ad-slot-mobile {
+      display: none;
+    }
+    .ad-slot-pc {
+      display: block;
+    }
+  }
   .breadcrumb {
     font-size: 13px;
     color: var(--text-sub);

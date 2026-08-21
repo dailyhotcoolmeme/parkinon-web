@@ -20,7 +20,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { vocabulary as vocabOf, missingTerms } from './lib/glossary-terms.mjs';
 
-const LANGS = ['ko', 'en', 'ja'];
+const LANGS = ['ko', 'en', 'ja', 'fr'];
 const BASELINE = 'docs/glossary-term-baseline.json';
 
 /* 판정 로직은 scripts/lib/glossary-terms.mjs 한 곳에만 둔다 — 훅(guard.mjs)과 같은 기준이어야 한다. */

@@ -1,0 +1,250 @@
+---
+/*
+ * 웹사이트(콘텐츠 사이트) 전용 개인정보처리방침 — 프랑스어판(캐나다 대상).
+ *
+ * ⚠️ 앱 방침(`/privacy`, 다른 프로젝트가 서빙)과 **별개 문서다. 섞지 말 것.**
+ *    앱은 건강정보를 매일 수집하지만 웹은 회원가입도 없고 방문자에게서 받는 정보가 없다.
+ *    (parkinon-app/CLAUDE.md: "앱 기준을 웹에 가져다 붙이지 말 것")
+ *
+ * 영어판(src/pages/en/privacy.astro, 오너 승인 2026-08-06)을 그대로 번역한 것이다 —
+ * 내용을 새로 쓰지 않았다. 문구를 바꿀 일이 있으면 영어판부터 오너 확인 후 고칠 것.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { business, BIZ_NO, SUPPORT_EMAIL, privacyOfficer } from '../../lib/business';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import ArticleSide from '../../components/ArticleSide.astro';
+
+const locale = Astro.currentLocale ?? 'fr';
+
+const biz = business(locale);
+
+const toc = [
+  { id: 'collect', label: 'Article 1 — Données personnelles collectées' },
+  { id: 'cookie', label: 'Article 2 — Témoins (cookies) et collecte automatique' },
+  { id: 'access-log', label: 'Article 3 — Données d’accès' },
+  { id: 'third-party', label: 'Article 4 — Divulgation et sous-traitants' },
+  { id: 'rights', label: 'Article 5 — Vos droits' },
+  { id: 'change', label: 'Article 6 — Modifications de cette politique' },
+  { id: 'officer', label: 'Article 7 — Responsable de la protection des données' },
+];
+---
+
+<Layout
+  title="Politique de confidentialité du site Web — ParkinON"
+  description="Politique de confidentialité du site Web ParkinON (pages de contenu). Le site Web ne requiert aucune inscription et ne collecte aucune donnée personnelle auprès des visiteurs."
+  breadcrumbs={[
+    { name: 'Accueil', path: '/fr/' },
+    { name: 'Politique de confidentialité du site Web', path: '/fr/privacy/' },
+  ]}
+>
+  <Header />
+
+  <div class="layout">
+    <aside class="ad-rail left"></aside>
+
+    <main class="col">
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>Accueil</a><span class="sep">/</span><span>Politique de confidentialité du site Web</span>
+        </nav>
+
+        <article>
+          <div class="article-head">
+            <h1>Politique de confidentialité du site Web</h1>
+            <div class="meta"><span>En vigueur depuis le 6 août 2026</span></div>
+          </div>
+
+          <div class="article-lead">
+            Cette politique s’applique au <b>site Web</b> ParkinON (les pages de contenu). La politique de
+            confidentialité de l’<b>application</b> ParkinON est un document distinct, disponible <a href="/privacy/fr">ici</a>.
+            Le site Web ne requiert aucune inscription et ne collecte aucune donnée de santé, ce qui le distingue
+            de l’application.
+          </div>
+
+          <div class="article-body">
+            <h2 id="collect">Article 1 (Données personnelles collectées)</h2>
+            <p>
+              Le site Web ne comporte aucun processus d’inscription, et nous ne collectons directement aucune
+              donnée personnelle auprès des visiteurs — ni nom, ni coordonnées, ni renseignement de santé. Si vous
+              nous écrivez une question par courriel, nous utilisons ce que vous nous envoyez uniquement pour y répondre.
+            </p>
+
+            <h2 id="cookie">Article 2 (Témoins (cookies) et autre collecte automatique)</h2>
+            <p>
+              <b>Ce site Web n’exécute actuellement aucun script publicitaire ou d’analyse et ne stocke aucun
+              témoin (à compter d’août 2026).</b>
+            </p>
+            <p>
+              Si de la publicité est introduite ultérieurement, des témoins d’un fournisseur publicitaire pourraient
+              être utilisés. Nous mettrons alors cette politique à jour. Dans les régions où le consentement est
+              requis — l’Espace économique européen (EEE), le Royaume-Uni et la Suisse — la publicité personnalisée
+              ne sera diffusée qu’après obtention du consentement via une plateforme de gestion du consentement (CMP)
+              certifiée par Google. Vous pouvez bloquer ou supprimer les témoins dans les paramètres de votre navigateur.
+            </p>
+
+            <h2 id="access-log">Article 3 (Données d’accès traitées pour la prestation du service)</h2>
+            <p>
+              Le site Web est livré par l’intermédiaire des services d’hébergement et de diffusion de contenu de
+              Cloudflare, Inc. (États-Unis). Dans ce cadre, des renseignements techniques comme votre adresse IP
+              d’accès peuvent être traités afin de fournir le service et d’en assurer la sécurité (gestion du
+              trafic, blocage des attaques). L’Entreprise ne conserve ni n’analyse ces renseignements sous une
+              forme permettant d’identifier individuellement les visiteurs.
+            </p>
+
+            <h2 id="third-party">Article 4 (Divulgation à des tiers et sous-traitants)</h2>
+            <p>L’Entreprise ne fournit aucune donnée personnelle des visiteurs à des tiers.</p>
+            <div class="table-scroll">
+            <table class="policy-table">
+              <thead>
+                <tr><th>Sous-traitant</th><th>Pays</th><th>Tâche confiée</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Cloudflare, Inc.</td><td>États-Unis</td><td>Hébergement du site Web et diffusion de contenu</td></tr>
+              </tbody>
+            </table>
+            </div>
+            <p>Si de la publicité est introduite, le fournisseur publicitaire sera ajouté à ce tableau et cette politique sera mise à jour.</p>
+
+            <h2 id="rights">Article 5 (Vos droits)</h2>
+            <p>
+              Vous pouvez bloquer ou supprimer les témoins dans les paramètres de votre navigateur. Pour toute
+              question relative aux données personnelles, écrivez-nous à
+              <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> et nous vous répondrons.
+            </p>
+
+            <h2 id="change">Article 6 (Modifications de cette politique)</h2>
+            <p>Lorsque cette politique change, nous publierons la modification et sa date d’entrée en vigueur sur le site Web.</p>
+
+            {/* 개인정보보호법 제30조상 처리방침 필수 기재항목(오너 확정 2026-08-21).
+                연락처는 이메일만 — 전화번호는 넣지 않는다. */}
+            <h2 id="officer">Article 7 (Responsable de la protection des données personnelles)</h2>
+            <p>La personne chargée de superviser le traitement des données personnelles est&nbsp;:</p>
+            <ul>
+              <li>Nom&nbsp;: {privacyOfficer(locale)}</li>
+              <li>Fonction&nbsp;: Représentant</li>
+              <li>Contact&nbsp;: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
+            </ul>
+          </div>
+
+          {/* 사업자 정보는 lib/business.ts 가 정본이다 — 프랑스어 화면에 국문 표기가 나가면 안 된다.
+              전화번호는 해외에 실효가 없어 넣지 않는다(그 파일 주석 참고). */}
+          <div class="article-source">
+            {biz.name} · Représentants : {biz.reps} · N° d’enregistrement d’entreprise {BIZ_NO}<br />
+            {biz.address} · {SUPPORT_EMAIL}
+          </div>
+        </article>
+
+        <ArticleSide toc={toc} />
+      </div>
+    </main>
+
+    <aside class="ad-rail right"></aside>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  article {
+    max-width: 760px;
+  }
+  .article-head h1 {
+    font-size: 30px;
+    line-height: 1.42;
+    color: var(--text);
+  }
+  .article-head .meta {
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+  }
+  .article-lead {
+    margin-top: 20px;
+    border-left: 3px solid var(--primary);
+    padding: 14px 18px;
+    background: var(--secondary-container);
+    border-radius: 0 12px 12px 0;
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    line-height: 1.7;
+  }
+  .article-lead a {
+    text-decoration: underline;
+  }
+  .article-body {
+    margin-top: 32px;
+  }
+  .article-body h2 {
+    font-size: 19px;
+    color: var(--text);
+    margin-top: 36px;
+    margin-bottom: 12px;
+    scroll-margin-top: 88px;
+  }
+  .article-body h2:first-child {
+    margin-top: 0;
+  }
+  .article-body p {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-body a {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .table-scroll {
+    margin: 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .table-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .table-scroll > .policy-table {
+    margin-top: 0;
+  }
+  .policy-table {
+    margin-top: 16px;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .policy-table th,
+  .policy-table td {
+    border: 1px solid var(--outline);
+    padding: 10px 12px;
+    text-align: left;
+    line-height: 1.6;
+  }
+  .policy-table th {
+    background: var(--surface-low);
+    font-weight: 700;
+  }
+  .article-source {
+    margin-top: 40px;
+    padding: 18px 20px;
+    background: var(--surface-low);
+    border-radius: 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.8;
+  }
+</style>

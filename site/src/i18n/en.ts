@@ -110,6 +110,7 @@ const en = {
   'search.placeholder': 'Search by title',
   'search.submit': 'Search',
   'search.clear': 'Clear',
+  'search.sectionArticles': 'Articles',
   'search.loadMore': 'Load more',
   'search.noResults': 'No results found.',
   'search.resultCount': '{n} results',
@@ -127,8 +128,6 @@ const en = {
   'search.filter.anyPubtype': 'Any study type',
   'search.filter.anyJournal': 'Any journal',
   'search.filter.year': 'Published year',
-  'search.filter.yearFrom': 'From year',
-  'search.filter.yearTo': 'To year',
 
   'date.yearMonth': '{m} {y}',
   'date.yearOnly': '{y}',

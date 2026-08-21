@@ -94,6 +94,7 @@ const ja: Dict = {
   'search.placeholder': 'タイトルで検索',
   'search.submit': '検索',
   'search.clear': 'クリア',
+  'search.sectionArticles': '記事',
   'search.loadMore': 'もっと見る',
   'search.noResults': '検索結果がありません。',
   'search.resultCount': '検索結果{n}件',
@@ -111,8 +112,6 @@ const ja: Dict = {
   'search.filter.anyPubtype': '研究の種類すべて',
   'search.filter.anyJournal': '掲載誌すべて',
   'search.filter.year': '発表年',
-  'search.filter.yearFrom': '開始年',
-  'search.filter.yearTo': '終了年',
 
   'date.yearMonth': '{y}年{m}月',
   'date.yearOnly': '{y}年',

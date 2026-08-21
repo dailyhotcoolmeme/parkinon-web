@@ -86,8 +86,17 @@ export default defineConfig({
        * (nav.ts 참고) 사이트맵엔 그대로 들어가 있어서 검색엔진이 찾을 수 있었다
        * (2026-08-10 애드센스 신청 준비하며 발견 — 아직 오너가 공개 여부를 안 정한 페이지가
        * 조용히 색인 대상이 되고 있었다).
+       *
+       * ⚠️ /en/·/ja/ 도 뺀다(2026-08-16 오너 지시) — "애드센스 심사는 한국어만 보이게"
+       * 해둔 상태였는데, merge-deploy.mjs 가 전체 언어를 한 번에 프로덕션에 올리는 구조라
+       * 다른 기능 배포 도중 영어·일본어 페이지가 통째로 사이트맵에 실려 나간 사고가 있었다.
+       * robots.txt.ts 의 Disallow: /en/, /ja/ 와 같은 이유 — 둘 다 같이 고쳐야 한다.
        */
-      filter: (page) => !page.includes('/preview/') && !page.includes('/tools'),
+      filter: (page) =>
+        !page.includes('/preview/') &&
+        !page.includes('/tools') &&
+        !page.includes('search-index.json') &&
+        !/\/(en|ja)\//.test(page),
     }),
   ],
 });

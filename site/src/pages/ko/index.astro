@@ -5,6 +5,7 @@ import { Image } from 'astro:assets';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
+import AdFitBanner from '../../components/article/AdFitBanner.astro';
 import { inLocale, inCategory, sortByDateDesc, slugOf, categoryOf, categoryLabel, formatDate } from '../../lib/articles';
 
 import heroImg from '../../assets/images/hero.jpg';
@@ -176,6 +177,13 @@ const axisCards = [
         </div>
       </section>
 
+      <div class="ad-slot-mobile">
+        <AdFitBanner unit="DAN-3XSXyjQZO20EXhAU" width={300} height={250} />
+      </div>
+      <div class="ad-slot-pc">
+        <AdFitBanner unit="DAN-uNXspgUS7sxUF0Xi" width={728} height={90} />
+      </div>
+
       <section>
         <div class="axes-head">
           <h2>둘러보기</h2>
@@ -250,12 +258,30 @@ const axisCards = [
         </div>
       </section>
     </main>
+
+    <aside class="ad-rail right">
+      <AdFitBanner unit="DAN-gNuNjB3TJiRLLR61" width={160} height={600} />
+    </aside>
   </div>
 
   <Footer />
 </Layout>
 
 <style>
+  .ad-slot-mobile {
+    display: block;
+  }
+  .ad-slot-pc {
+    display: none;
+  }
+  @media (min-width: 1280px) {
+    .ad-slot-mobile {
+      display: none;
+    }
+    .ad-slot-pc {
+      display: block;
+    }
+  }
   .btn {
     display: inline-flex;
     align-items: center;

@@ -52,8 +52,29 @@ console.log('\n=== 3/4: 출력 합치기 ===');
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-// Astro 가 루트를 맡는다.
-cpSync(ASTRO_DIST, OUT, { recursive: true });
+/*
+ * ⚠️ 애드센스 통과 전까지 한국어 외 언어는 프로덕션에 아예 올리지 않는다(2026-08-16
+ * 오너 지시, "강력하게 조치해라"). 예전엔 robots.txt/noindex 로 "검색엔진에는 안 보이게"만
+ * 해뒀는데, 그래도 URL 자체는 실제로 떠 있어서 다른 기능 배포에 딸려 en 88개·ja 63개가
+ * sitemap 에 그대로 실려 나간 사고가 있었다(임상시험 검색 API·톱바 검색 배포 도중).
+ * 이번엔 아예 파일 자체를 복사에서 뺀다 — noindex 를 깜빡해도, sitemap 필터를 깜빡해도
+ * 사고가 안 나는 구조. site/astro.config.mjs 의 i18n.locales 와 맞춰 관리한다.
+ *
+ * 이 배열을 지우거나 줄이는 건 오너가 애드센스 통과를 확인해준 뒤에만 할 것 —
+ * scripts/guard-production-locales.mjs(배포 커맨드를 가로채는 훅)도 같은 목록을 본다.
+ */
+const BLOCKED_LOCALES = ['en', 'ja', 'fr'];
+console.log(`   (애드센스 통과 전까지 프로덕션에서 제외: ${BLOCKED_LOCALES.join(', ')})`);
+
+// Astro 가 루트를 맡는다 — 단, 위 차단 언어 디렉터리는 복사하지 않는다.
+cpSync(ASTRO_DIST, OUT, {
+  recursive: true,
+  filter: (src) => {
+    const rel = path.relative(ASTRO_DIST, src);
+    const top = rel.split(path.sep)[0];
+    return !BLOCKED_LOCALES.includes(top);
+  },
+});
 
 // SPA 전체를 /app/ 아래로 — 아이콘·폰트가 index.html 의 /app/ 참조와 맞아야 한다.
 cpSync(SPA_DIST, path.join(OUT, 'app'), { recursive: true });
@@ -122,5 +143,30 @@ const spaRedirects = `
 `;
 writeFileSync(path.join(OUT, '_redirects'), astroRedirects + spaRedirects);
 
-console.log(`\n=== 4/4: 완료 — ${path.relative(ROOT, OUT)} ===`);
+/*
+ * Cloudflare Pages 는 `wrangler pages deploy <dist>` 실행 시 정적 파일이 아니라
+ * **현재 작업 디렉터리**(`--cwd` 기준) 의 `functions/` 폴더를 Pages Functions 로 읽는다
+ * (merged-dist 안에 넣어봐야 무시된다). 저장소 루트 `functions/`(관리자·앱 API)만 쓰던
+ * 시절엔 문제없었는데, 임상시험 검색 API(`site/functions/api/trials.js` 등)는
+ * `site/` 프로젝트(`parkinon-site-dev`) 전용으로 따로 만들어져서 프로덕션(`parkinon-web`)
+ * 배포엔 한 번도 안 실려 있었다 — `/api/trials` 가 프로덕션에서 404 나던 원인
+ * (2026-08-16 발견). `functions/` 원본은 각자 자리(저장소 루트 / site/)에 그대로 두고,
+ * 배포 시에만 둘을 합친 사본을 만들어 그쪽을 `--cwd` 로 가리킨다.
+ */
+console.log('\n=== 5/5: 배포용 Functions 합치기 ===');
+const DEPLOY_STAGING = path.join(ROOT, '.deploy-staging');
+rmSync(DEPLOY_STAGING, { recursive: true, force: true });
+mkdirSync(path.join(DEPLOY_STAGING, 'functions'), { recursive: true });
+cpSync(path.join(ROOT, 'functions'), path.join(DEPLOY_STAGING, 'functions'), { recursive: true });
+cpSync(
+  path.join(ROOT, 'site', 'functions', 'api'),
+  path.join(DEPLOY_STAGING, 'functions', 'api'),
+  { recursive: true },
+);
+
+console.log(`\n=== 완료 — ${path.relative(ROOT, OUT)} ===`);
 console.log('배포 전 반드시 이 산출물을 미리보기로 먼저 검증할 것.');
+console.log(
+  `배포 명령: wrangler pages deploy ${OUT} --project-name=parkinon-web --branch=main ` +
+    `--commit-dirty=true --cwd=${DEPLOY_STAGING}`,
+);

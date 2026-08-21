@@ -1,0 +1,701 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import { inLocale, inCategory, sortByDateDesc, slugOf, categoryOf, categoryLabel, formatDate } from '../../lib/articles';
+
+import heroImg from '../../assets/images/hero.jpg';
+
+/*
+ * 프랑스어 앱 화면 — 캐나다 프랑스어권 대상(2026-08-19). 일본어판과 같은 5종 세트
+ * (docs/app-promo-standard.md 참고, 실제 자산은 assets/images/appshots/fr/ 에 있다).
+ * 한국어 9종·영어 6종과 장수가 다르다. 없는 화면을 다른 언어에서 빌려오지 않는다.
+ * ⚠️ FR_04_overseas 는 파일명과 달리 **알림 설정 화면**이다(일본어판과 동일한 유래) —
+ *   이름만 보고 "해외" 관련 화면으로 오해하지 말 것.
+ * ⚠️ 커뮤니티(정보·나눔) 화면은 넣지 않는다 — 해외 앱에는 그 탭이 아예 없다
+ *   (parkinon-app/src/navigation/MainNavigator.tsx:56-58). 없는 기능을 보여주면 거짓 광고다.
+ */
+import shot1 from '../../assets/images/appshots/fr/FR_01_home.png';
+import shot2 from '../../assets/images/appshots/fr/FR_02_bodystate.png';
+import shot3 from '../../assets/images/appshots/fr/FR_03_exercise.png';
+import shot4 from '../../assets/images/appshots/fr/FR_04_overseas.png';
+import shot5 from '../../assets/images/appshots/fr/FR_05_myinfo.png';
+
+import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
+import { t, type DictKey } from '../../i18n';
+const locale = Astro.currentLocale ?? 'fr';
+
+const appShots = [
+  { img: shot1, cap: 'Suivi des médicaments', alt: 'Appli ParkinON — écran de l’état des médicaments du jour' },
+  { img: shot2, cap: 'État physique et humeur', alt: 'Appli ParkinON — écran de suivi de l’état physique et de l’humeur' },
+  { img: shot3, cap: 'Journal d’exercices', alt: 'Appli ParkinON — écran du journal d’exercices' },
+  { img: shot4, cap: 'Rappels de médicaments', alt: 'Appli ParkinON — écran de réglage des heures et des rappels' },
+  { img: shot5, cap: 'Historique et journal familial', alt: 'Appli ParkinON — menu de l’historique et journal familial' },
+];
+
+const featureList = [
+  {
+    emoji: '💊',
+    title: 'Suivi des médicaments',
+    desc: 'L’appli vous avertit à l’heure de prendre vos médicaments.<br/>Il suffit de cocher la prise pour bâtir votre historique automatiquement.',
+  },
+  {
+    emoji: '😊',
+    title: 'État physique et humeur',
+    desc: 'Notez votre état physique et votre humeur après la prise, selon votre propre horaire de médicaments.<br/>Cet historique devient un repère concret à montrer à votre médecin lors d’un ajustement de dose.',
+  },
+  {
+    emoji: '🏃',
+    title: 'Journal d’exercices',
+    desc: 'Garder une trace de vos exercices du jour vous motive à continuer.<br/>Votre proche aidant peut aussi voir votre niveau d’activité.',
+  },
+  {
+    emoji: '👨‍👩‍👧',
+    title: 'Lien familial',
+    desc: 'Quand vous ajoutez une entrée, votre proche aidant en est aussi averti.<br/>Il sait si vous avez pris vos médicaments et comment vous vous sentez, sans avoir à demander.<br/>Même à distance, vous savez comment l’autre va.',
+  },
+  {
+    emoji: '📔',
+    title: 'Journal familial',
+    desc: 'Laissez une courte note sur votre journée, qui pourra plus tard être rassemblée dans un carnet.<br/>Votre proche aidant peut aussi y écrire, pour vous encourager mutuellement.',
+  },
+  {
+    emoji: '📋',
+    title: 'Historique et graphiques',
+    desc: 'Tout ce que vous avez noté, réuni en un seul endroit.<br/>Des graphiques transforment ces entrées en tendances que vous pouvez voir concrètement.',
+  },
+];
+
+/*
+ * 홈 "오늘의 파킨온 소식" — 예전엔 다섯 줄 다 손으로 지어낸 가짜 글이었다(제목도
+ * href="#"도 실제로 없는 글). 오너 지시(2026-08-10: "이미 세부 메뉴들 컨텐츠 있으니까
+ * 그걸로 갈아끼워야지") — 실제 글 컬렉션에서 가져온다.
+ *
+ * ⚠️ 메인 카드는 **무조건 소식(news) 카테고리**여야 한다 — 섹션 제목 자체가
+ * "오늘의 파킨온 소식"이다. 처음엔 전체 카테고리 중 최신 글을 그냥 가져와서 제도·지원
+ * 글이 메인에 뜨는 사고가 났다(오너 지적 2026-08-10: "왜 메인이 제도지원으로 바뀌었냐,
+ * 소식이 메인이 되어야 하는데"). 옆 5줄은 소식이 아니어도 되니 전체 최신 글로 채운다.
+ */
+const allArticles = sortByDateDesc(await getCollection('articles', inLocale(locale)));
+const newsArticles = sortByDateDesc(await getCollection('articles', inCategory(locale, 'news')));
+/*
+ * ⚠️ 소식 글이 아직 하나도 없는 언어판도 있다(새 언어를 열면 처음엔 0편이다).
+ *    예전엔 newsArticles[0].id 를 그대로 읽어서 **빌드가 통째로 터졌다**(2026-08-12).
+ *    그렇다고 다른 카테고리 글로 대체하면 안 된다 — 위 주석의 오너 확정("메인 카드는
+ *    무조건 소식")을 어기게 된다. 그래서 없으면 그 블록만 그리지 않는다.
+ */
+const featured = newsArticles[0] ?? null;
+const newsRows = allArticles.filter((e) => e.id !== featured?.id).slice(0, 5);
+
+const tagLabel = (e: (typeof allArticles)[number]) =>
+  categoryOf(e) === 'news' ? e.data.tag : `${categoryLabel(locale, categoryOf(e))} · ${e.data.tag}`;
+
+const articleHref = (e: (typeof allArticles)[number]) => getRelativeLocaleUrl(locale, `${categoryOf(e)}/${slugOf(e)}`);
+
+/*
+ * "둘러보기" 카드는 **그 언어판에 실제로 열려 있는 메뉴만** 보여야 한다.
+ * 프랑스어 메뉴는 4개다(src/lib/nav.ts 의 AVAILABLE.fr) — 운동 영상은 국내(한국) 영상
+ * 기반이라 뺐고, 제도·지원은 영어판에 이미 있는 캐나다 연방 제도(DTC·CPP-D·CDB)
+ * 글을 프랑스어로 옮긴 것을 쓴다. 캐나다만 다루므로 국가별 안내가 아니라 캐나다
+ * 단일 안내문으로 쓴다(영어판과 다른 점).
+ */
+const axisCards = [
+  {
+    href: getRelativeLocaleUrl(locale, 'news'),
+    cat: 'Actualités',
+    desc: 'Les dernières nouvelles de la recherche et des traitements sur la maladie de Parkinson, résumées en langage simple, tous les deux jours.',
+    icon: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M16 13H8', 'M16 17H8'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'lifestyle'),
+    cat: 'Vie quotidienne',
+    desc: 'Prévention des chutes, alimentation et sommeil, gestion des émotions, éviter l’épuisement des proches aidants — des conseils pratiques pour alléger les défis du quotidien.',
+    icon: ['M12 21s-7-4.35-9.5-8.5C1 9 2.5 5.5 6 5c2-.3 3.5.8 6 3.5C14.5 5.8 16 4.7 18 5c3.5.5 5 4 3.5 7.5C19 16.65 12 21 12 21z'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'clinical'),
+    cat: 'Essais cliniques et recherche',
+    desc: 'Consultez en un seul endroit les essais cliniques actuellement en recrutement, par pays, ainsi que les résultats de recherche les plus récents.',
+    icon: ['M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2', 'M8 2h8v4H8z'],
+  },
+  {
+    href: getRelativeLocaleUrl(locale, 'institutions'),
+    cat: 'Aides et soutien',
+    desc: 'Ce que vous pouvez obtenir au Canada — crédit d’impôt pour personnes handicapées, prestations d’invalidité et aides aux soins à domicile.',
+    icon: ['M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'M9 22V12h6v10'],
+  },
+];
+---
+
+<Layout title="ParkinON — des informations pour vivre chaque jour avec la maladie de Parkinson">
+  <Header />
+
+  <section class="hero-full" style={`background-image:url(${heroImg.src});`}>
+    <div class="hero-full-inner">
+      <h1>Vivre chaque jour avec la maladie de Parkinson, un peu plus facilement</h1>
+      <p>De l’heure des médicaments à la prévention des chutes, en passant par les aides disponibles — uniquement des informations vraiment utiles pour les personnes atteintes et leurs proches.</p>
+      <div class="actions">
+        {featured && <a class="btn btn-primary" href={articleHref(featured)}>Lire l’article recommandé du jour</a>}
+        <a class="btn btn-ghost-light" href={getRelativeLocaleUrl(locale, 'lifestyle')}>Voir la vie quotidienne</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="layout">
+    <main class="col">
+      <section>
+        <div class="news-head">
+          <h2>Actualités ParkinON du jour</h2>
+        </div>
+        <div class="news-layout">
+          {featured && (
+            <a class="feature-card" href={articleHref(featured)}>
+              <div class="thumb">
+                <Image src={featured.data.hero} alt={featured.data.heroAlt} />
+                <span class="tag">{tagLabel(featured)}</span>
+              </div>
+              <h3>{featured.data.title}</h3>
+              <p class="excerpt">{featured.data.description}</p>
+              <p class="meta" id="featureDate" data-template={t(locale, 'home.todayDate' as DictKey)}></p>
+            </a>
+          )}
+          <div class="news-list">
+            {
+              newsRows.map((row) => (
+                <a class="news-row" href={articleHref(row)}>
+                  <div class="thumb">
+                    <Image src={row.data.thumbnail ?? row.data.hero} alt={row.data.heroAlt} />
+                  </div>
+                  <div>
+                    <span class:list={['tag', { alt: categoryOf(row) === 'news' }]}>{tagLabel(row)}</span>
+                    <h4>{row.data.title}</h4>
+                  </div>
+                </a>
+              ))
+            }
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="axes-head">
+          <h2>Explorer le contenu</h2>
+        </div>
+        <div class="axes-grid">
+          {
+            axisCards.map((c) => (
+              <a class="axis-card" href={c.href}>
+                <div class="axis-ic">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    {c.icon.map((d) => <path d={d} />)}
+                  </svg>
+                </div>
+                <div>
+                  <div class="cat">{c.cat}</div>
+                  <p class="desc">{c.desc}</p>
+                  <div class="go">En savoir plus &rarr;</div>
+                </div>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <section class="cta">
+        <div class="cta-text">
+          <h2>Gérez tout, où que vous soyez, avec l’appli ParkinON</h2>
+          <p>Votre suivi quotidien et vos rappels, dans le creux de votre main. Des caractères larges et un écran épuré pour une utilisation simple, jour après jour.</p>
+          <div class="store-badges">
+            <a class="store-badge" href={PLAY_STORE_URL} target="_blank" rel="noopener">
+              <svg class="icon" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 5,21 20,12"></polygon></svg>
+              <span class="big">Google Play</span>
+            </a>
+            <a class="store-badge" href={appleStoreUrl(locale)} target="_blank" rel="noopener">
+              <svg class="icon" viewBox="0 0 384 512" fill="#fff"
+                ><path
+                  d="M318 268c-1-56 46-83 48-84-26-38-67-43-81-44-34-3-67 20-84 20-18 0-44-20-73-19-37 1-72 22-91 55-39 68-10 168 28 223 19 27 41 57 71 56 28-1 39-18 74-18 34 0 45 18 74 18 31-1 50-27 69-54 22-31 31-61 31-63-1 0-59-23-60-90zM258 63c16-19 27-46 24-73-23 1-51 15-68 34-15 17-28 44-25 70 26 2 53-13 69-31z"
+                ></path></svg
+              >
+              <span class="big">App Store</span>
+            </a>
+          </div>
+          <div class="feature-list">
+            {
+              featureList.map((f) => (
+                <div>
+                  <div class="f-head">
+                    <span class="f-emoji">{f.emoji}</span>
+                    <b>{f.title}</b>
+                  </div>
+                  <p class="f-desc" set:html={f.desc} />
+                </div>
+              ))
+            }
+          </div>
+          <button type="button" class="app-preview-toggle" id="appPreviewToggle" aria-expanded="false" aria-controls="appPreviewPanel">
+            <span>Voir les écrans de l’appli</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <div class="app-preview-panel" id="appPreviewPanel">
+            <div class="app-shots">
+              {
+                appShots.map((s) => (
+                  <div class="shot">
+                    <div class="shot-cap">{s.cap}</div>
+                    <Image src={s.img} alt={s.alt} />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    padding: 0 22px;
+    font-weight: 800;
+    font-size: 14px;
+    white-space: nowrap;
+    height: 42px;
+    transition: opacity 0.15s;
+  }
+  .btn:hover {
+    opacity: 0.88;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn-ghost-light {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+  }
+
+  .hero-full {
+    position: relative;
+    width: 100%;
+    min-height: 460px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .hero-full::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.78), rgba(10, 20, 12, 0.15) 55%, rgba(10, 20, 12, 0) 80%);
+  }
+  .hero-full-inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--gutter) 52px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .hero-full-inner h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+    max-width: 16ch;
+  }
+  .hero-full-inner p {
+    margin-top: 16px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.92);
+    max-width: 46ch;
+    line-height: 1.65;
+  }
+  .hero-full-inner .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .hero-full-inner .actions .btn {
+    height: 46px;
+    padding: 0 24px;
+  }
+  @media (max-width: 640px) {
+    .hero-full {
+      min-height: 400px;
+    }
+    .hero-full-inner h1 {
+      font-size: 30px;
+      max-width: 14ch;
+    }
+  }
+
+  .news-head {
+    margin-bottom: 20px;
+  }
+  .news-head h2 {
+    font-size: 24px;
+    color: var(--text);
+  }
+  .news-layout {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 28px;
+    margin-bottom: 56px;
+  }
+  @media (max-width: 900px) {
+    .news-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .feature-card {
+    display: block;
+  }
+  .feature-card :global(.thumb) {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    aspect-ratio: 16 / 10;
+  }
+  .feature-card :global(.thumb img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .feature-card .tag {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    background: #fff;
+    color: var(--tertiary-dark);
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+  }
+  .feature-card h3 {
+    font-size: 24px;
+    margin-top: 16px;
+    color: var(--text);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+  }
+  .feature-card .excerpt {
+    margin-top: 8px;
+    font-size: 14.5px;
+    color: var(--text-sub);
+    line-height: 1.65;
+    max-width: 56ch;
+  }
+  .feature-card .meta {
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    opacity: 0.8;
+  }
+  .news-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .news-row {
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .news-row:first-child {
+    padding-top: 0;
+  }
+  .news-row:last-child {
+    border-bottom: none;
+  }
+  .news-row :global(.thumb) {
+    width: 104px;
+    height: 78px;
+    border-radius: 6px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .news-row :global(.thumb img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .news-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--tertiary-dark);
+    display: block;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .news-row h4 {
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .axes-head {
+    margin-bottom: 18px;
+  }
+  .axes-head h2 {
+    font-size: 24px;
+    color: var(--text);
+  }
+  .axes-grid {
+    display: grid;
+    /* 4개 카드 — 2열이면 2+2 로 균등하게 나뉜다. */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 56px;
+  }
+  @media (max-width: 640px) {
+    .axes-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .axis-card {
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease;
+  }
+  .axis-card:hover {
+    border-color: var(--primary);
+  }
+  .axis-ic {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    color: var(--primary);
+  }
+  .axis-ic svg {
+    width: 100%;
+    height: 100%;
+  }
+  .axis-card .cat {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+    margin-top: 16px;
+  }
+  .axis-card .desc {
+    font-size: 13.5px;
+    color: var(--text-sub);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .axis-card .go {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 16px;
+  }
+
+  @media (max-width: 760px) {
+    .news-layout {
+      margin-bottom: 64px;
+    }
+    .axes-grid {
+      margin-bottom: 64px;
+    }
+  }
+
+  .cta {
+    padding: 12px 0 8px;
+  }
+  .cta h2 {
+    font-size: 26px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .cta p {
+    margin-top: 12px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+  .store-badges {
+    display: flex;
+    gap: 12px;
+    margin-top: 22px;
+    max-width: 420px;
+  }
+  .store-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: #000;
+    color: #fff;
+    padding: 0 16px;
+    border-radius: 8px;
+    height: 44px;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .store-badge .icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+  }
+  .store-badge .big {
+    font-size: 15px;
+    font-weight: 700;
+    font-family: var(--font-head);
+    white-space: nowrap;
+  }
+  .feature-list {
+    background: var(--secondary-container);
+    border-radius: 8px;
+    padding: 28px 30px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px 30px;
+    margin-top: 26px;
+  }
+  @media (max-width: 960px) {
+    .feature-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 640px) {
+    .feature-list {
+      grid-template-columns: 1fr;
+    }
+  }
+  .f-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .f-emoji {
+    font-size: 21px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .f-head b {
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 700;
+  }
+  .f-desc {
+    margin-top: 7px;
+    padding-left: 30px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--on-secondary-container);
+  }
+  .app-preview-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 22px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .app-preview-toggle svg {
+    width: 15px;
+    height: 15px;
+    transition: transform 0.2s;
+  }
+  .app-preview-toggle[aria-expanded='true'] svg {
+    transform: rotate(180deg);
+  }
+  .app-preview-panel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease;
+  }
+  .app-preview-panel.open {
+    max-height: 560px;
+    margin-top: 20px;
+  }
+  .app-shots {
+    display: flex;
+    gap: 36px;
+    overflow-x: auto;
+    padding: 2px 2px 14px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .shot {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .shot-cap {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .shot :global(img) {
+    height: 420px;
+    width: auto;
+    border-radius: 8px;
+    border: 1px solid var(--outline);
+    box-sizing: border-box;
+    display: block;
+  }
+  .app-shots::-webkit-scrollbar {
+    display: none;
+  }
+</style>
+
+{/*
+  ⚠️ 날짜·토글 문구는 절대 여기서 새로 짓지 않는다 — 서버가 t()로 미리 번역해 data-*
+  속성에 심어둔 템플릿을 그대로 갖다 쓴다(2026-08-08 오너 전수조사 지시로, 예전엔
+  "~월 ~일의 추천"/"오늘 · ..."/"접기" 가 여기 한글로 직접 박혀 있었다 — src/pages는
+  check-i18n.mjs 검사에서 빠져 있어서 안 잡혔었고, 지금은 <script> 블록도 검사한다). */}
+<script>
+  const today = new Date();
+  const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
+
+  const featureDateEl = document.getElementById('featureDate')!;
+  featureDateEl.textContent = (featureDateEl.dataset.template ?? '')
+    .replace('{y}', String(today.getFullYear()))
+    .replace('{m}', pad(today.getMonth() + 1))
+    .replace('{d}', pad(today.getDate()));
+
+  const appPreviewToggle = document.getElementById('appPreviewToggle')!;
+  const appPreviewPanel = document.getElementById('appPreviewPanel')!;
+  appPreviewToggle.addEventListener('click', () => {
+    const open = appPreviewPanel.classList.toggle('open');
+    appPreviewToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+</script>

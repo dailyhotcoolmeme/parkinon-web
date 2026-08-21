@@ -15,6 +15,7 @@ import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import SourceBox from '../../../components/article/SourceBox.astro';
 import AppPromo from '../../../components/article/AppPromo.astro';
+import AdFitBanner from '../../../components/article/AdFitBanner.astro';
 import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale, findRelatedArticles } from '../../../lib/articles';
 import { t, tv } from '../../../i18n';
 
@@ -96,9 +97,13 @@ const catHref = getRelativeLocaleUrl(locale, category);
             </ul>
           </div>
 
+          <AdFitBanner unit="DAN-3XSXyjQZO20EXhAU" width={300} height={250} />
+
           <div class="article-body">
             <Content />
           </div>
+
+          <AdFitBanner unit="DAN-0hNC2r2XeMYQCAZt" width={300} height={250} />
 
           <SourceBox
             basisDate={entry.data.basisDate}
@@ -129,6 +134,10 @@ const catHref = getRelativeLocaleUrl(locale, category);
         <ArticleSide toc={toc} links={sideLinks} linksTitle={tv(locale, 'side.moreIn', { category: catLabel })} />
       </div>
     </main>
+
+    <aside class="ad-rail right">
+      <AdFitBanner unit="DAN-gNuNjB3TJiRLLR61" width={160} height={600} />
+    </aside>
   </div>
 
   <Footer />
@@ -158,10 +167,16 @@ const catHref = getRelativeLocaleUrl(locale, category);
     inset: 0;
     background: linear-gradient(to top, rgba(10, 20, 12, 0.82), rgba(10, 20, 12, 0.15) 65%, rgba(10, 20, 12, 0) 90%);
   }
+  /*
+   * 위 여백은 아래(28px)와 대칭으로 둔다. 히어로가 flex-end(아래 정렬)라 제목이 짧을 때는
+   * 이 값이 눈에 띄지 않지만, 제목이 길어져 내용이 min-height(300px)를 넘기면 위로 밀리면서
+   * 태그 배지가 히어로 위쪽 경계에 딱 붙는다(2026-08-19 오너 발견 — 프랑스어 제목이 모바일
+   * 8줄까지 길어져 드러났다). 언어판마다 같은 CSS라 4개 언어 모두 같이 고쳤다.
+   */
   .a-hero-inner {
     position: relative;
     z-index: 1;
-    padding: 0 var(--gutter) 28px;
+    padding: 28px var(--gutter);
     max-width: 860px;
   }
   .a-tag {

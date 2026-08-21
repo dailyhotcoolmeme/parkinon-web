@@ -30,6 +30,18 @@ const BANNED_JA = [
   { re: /ケアパートナー/, fix: 'ご家族 / 介護者' },
 ];
 
+/*
+ * 프랑스어(캐나다 대상, 2026-08-19). 영어와 같은 person-first 원칙을 쓴다 —
+ * "patient" 은 프랑스어에서도 같은 철자라 영어 BANNED 로도 걸리지만, 고치는 방법이
+ * 영어와 달라서(프랑스어 표현으로 안내해야 한다) 언어별로 따로 둔다.
+ * 돌봄 제공자는 퀘벡 표준 표기인 "proche aidant" 을 쓴다("aidant naturel" 은 옛 표기).
+ */
+const BANNED_FR = [
+  { re: /\bpatients?\b/i, fix: 'personne(s) atteinte(s) de la maladie de Parkinson' },
+  { re: /\baidants? naturels?\b/i, fix: 'proche(s) aidant(s)' },
+  { re: /\bsouffre de\b/i, fix: 'vit avec / est atteint de' },
+];
+
 const BANNED = [
   { re: /\bpatients?\b/i, fix: "people with Parkinson's" },
   { re: /\bsufferers?\b/i, fix: "people with Parkinson's" },
@@ -74,6 +86,13 @@ const SECTIONS_BY_LOCALE = {
     'People and situations',
   ],
   ja: ['病気を知る', 'はじめの一歩', '体に起こること', '一日の過ごし方', '人と場面'],
+  fr: [
+    'Comprendre la maladie',
+    'Premiers pas',
+    'Ce qui se passe dans le corps',
+    'Vivre sa journée',
+    'Les proches et les situations',
+  ],
 };
 
 async function walk(dir) {
@@ -170,7 +189,7 @@ for (const file of files) {
   const raw = await readFile(file, 'utf8');
   const prose = proseOnly(raw);
 
-  const banned = locale === 'ja' ? BANNED_JA : BANNED;
+  const banned = locale === 'ja' ? BANNED_JA : locale === 'fr' ? BANNED_FR : BANNED;
   const hay = locale === 'ja' ? prose : stripProperNouns(prose);
   for (const { re, fix } of banned) {
     const m = hay.match(re);

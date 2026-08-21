@@ -13,7 +13,7 @@
  * 내용은 오너 승인을 받은 초안 그대로다(2026-08-06). 문구 수정은 오너 확인 후.
  */
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { business, BIZ_NO, SUPPORT_EMAIL } from '../../lib/business';
+import { business, BIZ_NO, SUPPORT_EMAIL, privacyOfficer } from '../../lib/business';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
@@ -30,6 +30,7 @@ const toc = [
   { id: 'third-party', label: '第4条 第三者提供と委託' },
   { id: 'rights', label: '第5条 ご本人の権利' },
   { id: 'change', label: '第6条 このポリシーの変更' },
+  { id: 'officer', label: '第7条 個人情報保護責任者' },
 ];
 ---
 
@@ -135,6 +136,16 @@ const toc = [
 
             <h2 id="change">第6条(このポリシーの変更)</h2>
             <p>このポリシーを変更する場合は、変更の内容と施行日をウェブサイトに掲載します。</p>
+
+            {/* 개인정보보호법 제30조상 처리방침 필수 기재항목(오너 확정 2026-08-21).
+                연락처는 이메일만 — 전화번호는 넣지 않는다. */}
+            <h2 id="officer">第7条(個人情報保護責任者)</h2>
+            <p>個人情報の取扱いを統括して責任を負う個人情報保護責任者は次のとおりです。</p>
+            <ul>
+              <li>氏名: {privacyOfficer(locale)}</li>
+              <li>役職: 代表者</li>
+              <li>連絡先: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
+            </ul>
           </div>
 
           {/* 사업자 정보는 lib/business.ts 가 정본이다 — 일본어 화면에 국문 표기가 나가면 안 된다.

@@ -55,6 +55,12 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
    *   ⚠️ 일본 제도도 해마다 바뀐다 — 글마다 basisDate 를 달고 연 1회 재확인한다.
    */
   ja: ['news', 'lifestyle', 'clinical', 'institutions'],
+  /*
+   * 프랑스어판 메뉴. 캐나다 프랑스어권 사용자 대상(2026-08-19 오너 지시) — 영어판과
+   * 같은 이유로 exercise 는 뺐다(영상이 한국어 자료다). institutions 은 영어판에 이미
+   * 있는 캐나다 연방 제도(DTC·CPP-D·CDB) 글을 프랑스어로 옮기는 것으로 시작한다.
+   */
+  fr: ['news', 'lifestyle', 'clinical', 'institutions'],
 };
 
 export interface NavItem {

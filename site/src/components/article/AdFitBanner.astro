@@ -1,0 +1,50 @@
+---
+/*
+ * 카카오 애드핏 배너. 애드센스 심사 통과 전까지 한국어·프로덕션에서만 노출한다
+ * (Layout.astro 의 `indexable` 과 같은 기준 — Astro.site?.host === 'parkinon.com' && locale === 'ko').
+ * 로더 스크립트(ba.min.js)는 Layout.astro 의 </body> 바로 위에서 한 번만 불러온다
+ * (애드핏 SDK 가이드 권장 위치) — 이 컴포넌트는 <ins> 광고 영역만 그린다.
+ *
+ * ⚠️ 본문(.article-body)에서 쓰는 컴포넌트가 아니다 — [category]/[slug].astro 에서
+ * 세 줄 요약 뒤·본문 앞에 한 번 넣는다("본문 시작 직후" 슬롯, docs/website-plan.md 의도).
+ */
+import { t } from '../../i18n';
+
+interface Props {
+  unit: string;
+  width: number;
+  height: number;
+}
+const { unit, width, height } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+const indexable = Astro.site?.host === 'parkinon.com' && locale === 'ko';
+---
+
+{indexable && (
+  <div class="adfit-banner">
+    <span class="adfit-label">{t(locale, 'ad.label')}</span>
+    <ins
+      class="kakao_ad_area"
+      style="display:none;"
+      data-ad-unit={unit}
+      data-ad-width={String(width)}
+      data-ad-height={String(height)}
+    ></ins>
+  </div>
+)}
+
+<style>
+  .adfit-banner {
+    margin: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .adfit-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-sub);
+  }
+</style>

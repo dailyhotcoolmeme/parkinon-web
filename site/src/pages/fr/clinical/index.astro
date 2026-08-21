@@ -1,0 +1,1533 @@
+---
+/*
+ * 임상시험 허브 (할 일 0-6, 2026-08-08 시작 → 2026-08-08 Supabase 전환).
+ *
+ * 데이터는 Supabase(`clinical_trials`류, `research_papers`류) — **빌드 타임에 한 번만** 읽는다
+ * (런타임 호출 없음, 정적 페이지). 원문은 ClinicalTrials.gov·PubMed API를 직접 부르지 않는다 —
+ * `scripts/crawl-trials.mjs`/`scripts/crawl-pubmed.mjs`(매일 도는 깃허브 액션)가 미리 받아서
+ * Supabase에 채워둔다. 오염 제거·저널 축약명 함정·국가 태깅 로직은 그 두 스크립트에 있다.
+ * 여기서는 이미 정리된 데이터를 읽어서 화면에 그리기만 한다.
+ *
+ * 기본은 "전체"를 보여주고, 국가 버튼으로 특정 나라만 볼 수 있게 한다. 국가 목록은 제도
+ * 1급 7개국과 같다.
+ *
+ * ⚠️ 사실 항목만 정형화하고 해석하지 않는다(계획서 "신설 축도 의학 정보는 다루지 않는다
+ * 안에 있다"). 제목·상·주관·위치·연락처·원문 링크만 보여준다. "이 시험이 좋다/맞다"는
+ * 말은 하지 않는다.
+ */
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import labImg from '../../../assets/images/lab.jpg';
+import Tr from '../../../i18n/Tr.astro';
+import { t, tv, type DictKey } from '../../../i18n';
+import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
+import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
+import { paragraphizeAbstract } from '../../../lib/abstractFormat';
+
+const locale = Astro.currentLocale ?? 'fr';
+
+/*
+ * 임상 단계 물음표 팝오버의 "자세히 알아보기" 링크.
+ * 항목마다 페이지를 따로 파지 않는다는 정책(website-plan.md "용어 설명" 절)에 따라
+ * 독립 페이지가 아니라 생활 요령의 **모아보는 글 한 편**
+ * (`src/content/articles/<locale>/lifestyle/glossary.mdx`)안의 그 항목으로 anchor 링크한다.
+ * ⚠️ 앵커 id는 Astro가 그 글의 h2 텍스트로 자동 생성한 것이다 — 그 글의 해당 제목을
+ * 바꾸면 이 문자열도 같이 고쳐야 한다.
+ *
+ * ⚠️⚠️ 프랑스어판은 아직 lifestyle/glossary.mdx 자체가 없다(콘텐츠 번역 단계에서 작성
+ * 예정) — 아래 앵커는 그 글의 실제 h2 제목을 "Que signifient les phases 1, 2 et 3 d'un
+ * essai clinique ?" 로 쓴다고 가정하고 github-slugger 규칙(소문자화·아포스트로피 제거·
+ * 공백→하이픈)을 손으로 적용한 **추정값**이다. ja/ko 판처럼 빌드 결과물(dist/fr/lifestyle/
+ * glossary/index.html)에서 실제 id를 확인해 필요하면 고칠 것 — 지어낸 값을 확인 없이
+ * 방치하지 말 것.
+ */
+const phaseGlossaryUrl =
+  getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#que-signifient-les-phases-1-2-et-3-dun-essai-clinique';
+
+/*
+ * 기본 국가 = "전체"(오너 확정 2026-08-08: "한국이 메인이 아니다" — 여러 번 반복된 지적).
+ * 방문자 위치를 알아내면(아래 지오로케이션 스크립트) 그 나라로 바꾸고, 못 알아내거나
+ * 목록에 없는 나라면 "전체"에 그대로 둔다. ⚠️ "전체" 옵션이 없는 다른 화면을 만들 때는
+ * 한국을 기본값으로 두지 말고 미국을 기본값으로 할 것 — 같은 원칙이 이미 여러 번 얘기됐다.
+ */
+const defaultCountry = 'all';
+
+/*
+ * Supabase 조회라 NCBI 비인증 요청 한도(3건/초, ClinicalTrials.gov 직접 호출 시절에 429를
+ * 겪었던 문제)와는 무관하지만, 나라 7개를 한꺼번에 Promise.all 로 쏘면 exact-count join
+ * 쿼리가 동시에 몰려 "statement timeout"으로 빌드가 랜덤하게 깨졌다(2026-08-08 실측,
+ * 재시도 시 인덱스가 매번 다름 — 특정 나라 데이터 문제가 아니라 동시 부하 문제였다).
+ * 순차 호출로 부하를 펼쳐서 막는다 — 빌드 타임 1회 호출이라 몇 초 늘어도 무방하다.
+ */
+const allTrials = await fetchAllRecruitingTrials(locale);
+const countryEntries = [];
+for (const c of TRIAL_COUNTRIES) {
+  countryEntries.push({
+    ...c,
+    label: t(locale, `country.${c.code}` as DictKey),
+    data: trialsForCountry(allTrials, c.apiName),
+    research: await fetchResearchPapersForCountry(c.code, locale),
+  });
+}
+
+/*
+ * 나라 순서(오너 확정 2026-08-08): "전체"는 항상 맨 앞, 그 뒤로는 임상시험+연구 건수가
+ * 많은 나라부터. "접속한 사람의 국가를 맨 앞에" 부분은 방문자 위치를 알아내는 별도
+ * 기술(Cloudflare 지오로케이션, `functions/api/geo.js`)로 클라이언트에서 처리한다
+ * (아래 <script> 참고) — 여기 서버 쪽 정렬은 건수 기준까지만.
+ */
+countryEntries.sort((a, b) => b.data.total + b.research.total - (a.data.total + a.research.total));
+
+const allEntry = {
+  code: 'all' as const,
+  apiName: '',
+  label: t(locale, 'country.all' as DictKey),
+  data: trialsForAll(allTrials),
+  research: await fetchResearchPapers(locale),
+};
+const byCountry = [allEntry, ...countryEntries];
+
+const phaseLabel = (phaseKey: string | null) => (phaseKey ? t(locale, `phase.${phaseKey}` as DictKey) : null);
+
+/* PubMed 발행유형(pubTypes) 원문 문자열 → 뱃지 사전 키. 여기 없는 유형(예: "Journal Article")은 뱃지를 안 단다. */
+const PUBTYPE_BADGE: Record<string, DictKey> = {
+  'Meta-Analysis': 'research.pubtype.metaAnalysis',
+  'Clinical Trial, Phase III': 'research.pubtype.phase3',
+  'Clinical Trial, Phase IV': 'research.pubtype.phase4',
+  'Randomized Controlled Trial': 'research.pubtype.rct',
+  'Systematic Review': 'research.pubtype.systematicReview',
+  'Observational Study': 'research.pubtype.observational',
+};
+const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).filter((k): k is DictKey => Boolean(k));
+
+/*
+ * 기간 필터 — 타이핑이 아니라 탭/선택으로 고르게 한다(오너 지시 2026-08-16: "타이핑하는게
+ * 맞아? 노인들이 YYYY-MM-DD를 알겠냐고!"). <input type="date">의 네이티브 달력은 브라우저/OS
+ * 언어를 따라가 문서 lang과 어긋나는 문제가 있었고(직전 커밋), 그렇다고 텍스트 타이핑으로
+ * 바꾼 것도 틀렸다 — 결국 연/월/일 각각을 select로 골라서, 옵션 문구는 사전을 거치게 한다.
+ */
+const CURRENT_YEAR = new Date().getFullYear();
+const DATE_YEARS = Array.from({ length: CURRENT_YEAR - 2000 + 3 }, (_, i) => CURRENT_YEAR + 2 - i);
+const DATE_MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+/*
+ * 연구(논문) 연도 필터도 같은 원칙(탭/선택, 타이핑 금지)을 적용한다(오너 지시 2026-08-16:
+ * "연구에서 검색하는거에 연도 입력하는거는 왜 타이핑이냐?"). 임상시험의 DATE_YEARS는
+ * 2000년부터지만, 논문은 실측(2026-08-16) 최소 발행년도가 1970년이라 그대로 못 쓴다 —
+ * 별도 범위를 둔다. 논문은 미래 추정일이 없으므로 임상시험처럼 +2년 여유를 둘 필요도 없다.
+ */
+const RESEARCH_MIN_YEAR = 1970;
+const RESEARCH_YEARS = Array.from({ length: CURRENT_YEAR - RESEARCH_MIN_YEAR + 1 }, (_, i) => CURRENT_YEAR - i);
+
+/* 발표일도 번역 대상이다(오너 확정 2026-08-08) — PubMed 영어 월 축약("Aug")을 그대로
+   보여주지 않고 언어판에 맞게 새로 조립한다.
+   ⚠️ "년"/"월" 같은 조사·단위는 절대 코드에 직접 쓰지 않는다 — 사전(date.yearMonth/
+   date.yearOnly)을 거친다. 예전에 이 자리에 `${paper.pubYear}년 ${paper.pubMonth}월`로
+   직접 박아 놨다가, check-i18n.mjs가 src/pages는 검사 대상이 아니라서 못 잡았고
+   클라이언트 쪽 사본(pubDateTextClient)에도 그대로 복사돼 있었다(2026-08-08 오너
+   전수조사 지시로 발견). scripts/check-i18n.mjs가 이제 <script> 블록 안의 한글도
+   잡아서 이런 하드코딩이 생기면 배포가 막힌다 — 그 검사를 통과하려면 사전을 거칠 것. */
+/* 프랑스어는 영어와 같이 **월 이름**을 쓴다(사전 date.yearMonth 가 '{m} {y}'). 한국어·일본어는
+   "{y}년 {m}월" 처럼 숫자를 쓰므로 그 페이지들은 숫자를 그대로 넣는다 — 언어판마다 페이지
+   파일이 따로라 여기서는 프랑스어 월 이름만 두면 된다.
+   ⚠️ 프랑스어 월 이름은 소문자로 쓴다(프랑스어는 월·요일을 대문자로 시작하지 않는다). */
+const MONTH_FR = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+];
+function pubDateText(paper: { pubYear: string | null; pubMonth: number | null }) {
+  if (!paper.pubYear) return '';
+  if (!paper.pubMonth) return tv(locale, 'date.yearOnly' as DictKey, { y: paper.pubYear });
+  const month = MONTH_FR[paper.pubMonth - 1] ?? String(paper.pubMonth);
+  return tv(locale, 'date.yearMonth' as DictKey, { y: paper.pubYear, m: month });
+}
+
+const phaseDesc = (phaseKey: string | null) => (phaseKey ? t(locale, `phaseDesc.${phaseKey}` as DictKey) : null);
+
+/* 시작일·종료일 중 있는 것만 이어붙인다. 둘 다 없으면 이 줄 자체를 안 그린다(astro 쪽에서 처리). */
+function durationText(trial: { startDate: string | null; startDateEstimated: boolean; completionDate: string | null; completionDateEstimated: boolean }) {
+  const estimated = t(locale, 'clinical.estimated' as DictKey);
+  const start = trial.startDate ? trial.startDate + (trial.startDateEstimated ? ` (${estimated})` : '') : null;
+  const end = trial.completionDate ? trial.completionDate + (trial.completionDateEstimated ? ` (${estimated})` : '') : null;
+  if (start && end) return `${start} ~ ${end}`;
+  return start ?? end;
+}
+---
+
+<Layout
+  title="Essais cliniques et recherche — ParkinON"
+  breadcrumbs={[
+    { name: 'Accueil', path: '/fr/' },
+    { name: 'Essais cliniques et recherche', path: '/fr/clinical/' },
+  ]}
+>
+  <Header active="clinical" />
+
+  <div class="layout">
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${labImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>Essais cliniques et recherche</h1>
+          <p><Tr k="clinical.tagline" /></p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href={getRelativeLocaleUrl(locale, '')}>Accueil</a><span class="sep">/</span><span>Essais cliniques et recherche</span>
+      </nav>
+
+      {/*
+        검색+필터(오너 확정 2026-08-08: "검색은 db에서 검색되는거 맞지" — 화면에 이미 구운
+        30/15건과 무관하게 Supabase 를 실시간으로 조회한다. functions/api/trials.js,
+        functions/api/research.js 참고). 국가 탭보다 위에 둔다(오너 지시). 검색 중엔
+        아래 국가 탭·피드를 숨기고 결과 목록으로 바꾼다 — 두 모드가 동시에 안 보인다.
+      */}
+      <div class="search-bar" id="searchBar">
+        <div class="search-row">
+          <input type="search" id="searchQuery" class="search-input" placeholder={t(locale, 'search.placeholder' as DictKey)} />
+          <select id="searchCountry" class="search-select">
+            <option value="all">{t(locale, 'country.all' as DictKey)}</option>
+            {TRIAL_COUNTRIES.map((c) => <option value={c.code}>{t(locale, `country.${c.code}` as DictKey)}</option>)}
+          </select>
+        </div>
+        <div class="search-filters" id="filtersTrials">
+          <select id="filterStatus">
+            <option value="ALL">{t(locale, 'search.filter.anyStatus' as DictKey)}</option>
+            <option value="RECRUITING" selected>{t(locale, 'search.filter.statusRecruiting' as DictKey)}</option>
+            <option value="CLOSED">{t(locale, 'search.filter.statusClosed' as DictKey)}</option>
+          </select>
+          <select id="filterPhase">
+            <option value="">{t(locale, 'search.filter.anyPhase' as DictKey)}</option>
+            {['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => (
+              <option value={k}>{t(locale, `phase.${k}` as DictKey)}</option>
+            ))}
+          </select>
+          <label class="date-filter">
+            <Tr k="search.filter.startDate" />
+            <span class="date-filter-range">
+              <span class="date-select-group" id="filterDateFromGroup">
+                <select id="filterDateFromY" class="date-select date-select-y">
+                  <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                  {DATE_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+                </select>
+                <select id="filterDateFromM" class="date-select date-select-m">
+                  <option value="">{t(locale, 'search.filter.dateMonthAny' as DictKey)}</option>
+                  {DATE_MONTHS.map((m) => <option value={m}>{tv(locale, 'search.filter.dateMonthUnit' as DictKey, { n: String(m) })}</option>)}
+                </select>
+              </span>
+              <span>~</span>
+              <span class="date-select-group" id="filterDateToGroup">
+                <select id="filterDateToY" class="date-select date-select-y">
+                  <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                  {DATE_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+                </select>
+                <select id="filterDateToM" class="date-select date-select-m">
+                  <option value="">{t(locale, 'search.filter.dateMonthAny' as DictKey)}</option>
+                  {DATE_MONTHS.map((m) => <option value={m}>{tv(locale, 'search.filter.dateMonthUnit' as DictKey, { n: String(m) })}</option>)}
+                </select>
+              </span>
+            </span>
+          </label>
+          <input type="text" id="filterSponsor" placeholder={t(locale, 'search.filter.sponsor' as DictKey)} />
+        </div>
+        <div class="search-filters" id="filtersResearch" hidden>
+          <select id="filterPubtype">
+            <option value="">{t(locale, 'search.filter.anyPubtype' as DictKey)}</option>
+            {Object.entries(PUBTYPE_BADGE).map(([raw, key]) => <option value={raw}>{t(locale, key)}</option>)}
+          </select>
+          <select id="filterJournal">
+            <option value="">{t(locale, 'search.filter.anyJournal' as DictKey)}</option>
+            {['Mov Disord', 'Lancet Neurol', 'Brain', 'JAMA Neurol', 'Neurology'].map((j) => <option value={j}>{j}</option>)}
+          </select>
+          <label class="date-filter">
+            <Tr k="search.filter.year" />
+            <span class="date-filter-range">
+              <select id="filterYearFrom" class="date-select date-select-y">
+                <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                {RESEARCH_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+              </select>
+              <span>~</span>
+              <select id="filterYearTo" class="date-select date-select-y">
+                <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                {RESEARCH_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+              </select>
+            </span>
+          </label>
+        </div>
+        {/*
+          검색·초기화 버튼은 모든 필터 뒤, 맨 밑에 둔다(오너 지시 2026-08-16: "검색버튼
+          초기화 버튼이 중간이 아니라 맨 밑에 있어야 한다") — 필터를 다 고른 다음
+          누르는 동작이라 필터보다 위에 있으면 순서가 거꾸로다. 임상시험/연구 두 필터
+          영역 중 어느 쪽이 보이든 공통으로 맨 아래 한 번만 나온다.
+        */}
+        <div class="search-actions">
+          <button id="searchSubmit" class="search-btn"><Tr k="search.submit" /></button>
+          <button id="searchClear" class="search-btn-ghost" hidden><Tr k="search.clear" /></button>
+        </div>
+      </div>
+
+      <div id="browseMode">
+
+      {/*
+        국가 전환 = 완전히 다른 나라의 데이터로 넘어가는 것이다. 필터(운동 영상 난이도처럼
+        한 목록을 거르는 것)와 성격이 달라서 알약 버튼을 쓰지 않는다(오너 지적 2026-08-08:
+        "니처럼 알약으로 메뉴탭 하는 곳이 있나" — 실제로 WHO 국가 목록·위키백과 언어 전환
+        둘 다 평범한 텍스트 링크였다). 이 사이트 헤더 메뉴와 같은 밑줄 방식으로 통일한다.
+      */}
+      <nav class="country-select" id="countryTabs">
+        {
+          byCountry.map((c) => (
+            <button
+              class:list={['country-link', { active: c.code === defaultCountry }]}
+              data-country={c.code}
+              data-total={c.data.total}
+              data-research-total={c.research.total}
+            >
+              {c.label}
+            </button>
+          ))
+        }
+      </nav>
+
+      {/*
+        국가 탭 밑에 "임상시험/연구" 중 뭘 볼지 고르는 두 번째 단계다(오너 확정 2026-08-08).
+        연구도 국가 탭에 따라 나뉜다(저자 소속기관 기반, src/lib/pubmed.ts 주석 참고) —
+        국가 탭을 바꾸면 임상시험·연구 패널과 두 숫자가 같이 바뀐다.
+        이 단계는 "필터"라 알약 스타일을 써도 된다고 오너가 확인함(국가 탭과는 다른 성격).
+      */}
+      <nav class="feed-tabs" id="feedTabs">
+        <button class="pill active" data-feed="trials">
+          <Tr k="clinical.feedTrials" /> <span class="n" id="trialsFeedCount">{byCountry.find((c) => c.code === defaultCountry)?.data.total ?? 0}</span>
+        </button>
+        <button class="pill" data-feed="research">
+          <Tr k="research.feedLabel" /> <span class="n" id="researchFeedCount">{byCountry.find((c) => c.code === defaultCountry)?.research.total ?? 0}</span>
+        </button>
+      </nav>
+
+      {/*
+        제목·문의처는 ClinicalTrials.gov 원문 그대로라 항상 영어다. 한국어판만의 문제가
+        아니다 — 프랑스어·독일어·일본어판도 똑같이 겪는다.
+        ⚠️ 처음엔 "왜 영어로 나오는지"를 설명하는 문구를 달았는데, 오너가 바로 잡았다:
+        "이걸 주 사용자인 고령자가 봐서 뭐하게?" — 왜 영어인지 알아도 고령자는 여전히
+        못 읽는다. 우리 번역 원칙을 설명하는 건 우리 편의고, 독자에게는 쓸모가 없다.
+        그래서 **설명이 아니라 행동 지침**으로 바꿨다 — "이 화면을 그대로 담당 의사·
+        간호사에게 보여주고 상담하라"는 것. 영어를 못 읽어도 할 수 있는 행동이다.
+        사전(src/i18n)에 한 번만 넣어 모든 언어가 공유한다. 영어판(locale === 'en')
+        에는 안 띄운다 — 그 페이지는 원문과 언어가 같아서 이 문제 자체가 없다.
+      */}
+      <div id="trialsFeed">
+      {locale !== 'en' && <p class="lang-notice"><Tr k="clinical.englishNotice" /></p>}
+
+      <div id="countryPanels">
+        {
+          byCountry.map((c) => (
+            <div class="country-panel" data-country={c.code} hidden={c.code !== defaultCountry}>
+              {c.data.shown.length === 0 ? (
+                <p class="empty"><Tr k="clinical.noTrials" /></p>
+              ) : (
+                <div class="trial-list">
+                  {c.data.shown.map((trial) => (
+                    <details class="trial-card">
+                      <summary>
+                        <span class="badge"><Tr k="clinical.recruiting" /></span>
+                        <h3>{trial.titleTranslated ?? trial.title}</h3>
+                      </summary>
+                      <a class="view-link" href={trial.url} target="_blank" rel="noopener">
+                        <Tr k="clinical.viewOriginal" /> ({trial.nctId})
+                      </a>
+                      <dl>
+                        {phaseLabel(trial.phaseKey) && (
+                          <>
+                            <dt><Tr k="clinical.phase" /></dt>
+                            <dd>
+                              {phaseLabel(trial.phaseKey)}
+                              <details class="phase-help">
+                                <summary aria-label={t(locale, 'clinical.phaseHelp' as DictKey)}>?</summary>
+                                <p>
+                                  {phaseDesc(trial.phaseKey)}
+                                  <a href={phaseGlossaryUrl}><Tr k="clinical.phaseMore" /></a>
+                                </p>
+                              </details>
+                            </dd>
+                          </>
+                        )}
+                        {durationText(trial) && (
+                          <>
+                            <dt><Tr k="clinical.duration" /></dt>
+                            <dd>{durationText(trial)}</dd>
+                          </>
+                        )}
+                        {trial.sponsor && (
+                          <>
+                            <dt><Tr k="clinical.sponsor" /></dt>
+                            <dd>{trial.sponsor}</dd>
+                          </>
+                        )}
+                        <dt><Tr k="clinical.location" /></dt>
+                        <dd>
+                          <ul class="cell-list">
+                            {trial.locations.slice(0, 5).map((l) => (
+                              <li>
+                                {l.facility}
+                                {l.city && ` (${l.city})`}
+                              </li>
+                            ))}
+                          </ul>
+                          {trial.locations.length > 5 && (
+                            <p class="more">{tv(locale, 'clinical.moreLocations', { n: String(trial.locations.length - 5) })}</p>
+                          )}
+                        </dd>
+                        {trial.contacts.length > 0 && (
+                          <>
+                            <dt><Tr k="clinical.contact" /></dt>
+                            <dd>
+                              <ul class="cell-list">
+                                {trial.contacts.map((c) => (
+                                  <li>{[c.name, c.phone, c.email].filter(Boolean).join(' · ')}</li>
+                                ))}
+                              </ul>
+                            </dd>
+                          </>
+                        )}
+                      </dl>
+                    </details>
+                  ))}
+                </div>
+              )}
+              {c.data.total > c.data.shown.length && (
+                <button
+                  class="load-more"
+                  data-feed="trials"
+                  data-country={c.code}
+                  data-shown={c.data.shown.length}
+                >
+                  <Tr k="search.loadMore" /> ({c.data.shown.length}/{c.data.total})
+                </button>
+              )}
+            </div>
+          ))
+        }
+      </div>
+
+      </div>
+
+      <div id="researchFeed" hidden>
+        <p class="research-tagline"><Tr k="research.tagline" /></p>
+
+        <div id="researchPanels">
+          {
+            byCountry.map((c) => (
+              <div class="research-panel" data-country={c.code} hidden={c.code !== defaultCountry}>
+                {c.research.shown.length === 0 ? (
+                  <p class="empty"><Tr k="research.noPapers" /></p>
+                ) : (
+                  <div class="research-list">
+                    {c.research.shown.map((paper) => {
+                      const badges = badgesFor(paper.pubTypes);
+                      return (
+                        <details class="research-card">
+                          <summary>
+                            <div class="badges">
+                              {badges.map((b) => <span class="badge"><Tr k={b} /></span>)}
+                            </div>
+                            <h3>{paper.titleTranslated ?? paper.title}</h3>
+                            <p class="research-meta">
+                              <Tr k="research.journal" />: {paper.journal} · <Tr k="research.published" />: {pubDateText(paper)}
+                            </p>
+                          </summary>
+                          <div class="research-abstract">
+                            {(paper.abstractTranslated ?? paper.abstract).map((sec) => (
+                              <div class="abstract-section">
+                                {sec.label && <p class="abstract-label">{sec.label}</p>}
+                                {paragraphizeAbstract(sec.text).map((p) => (
+                                  <p class="abstract-text">{p}</p>
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                          <p class="paid-notice"><Tr k="research.paidNotice" /></p>
+                          <div class="research-links">
+                            <a href={paper.pubmedUrl} target="_blank" rel="noopener"><Tr k="research.readAbstract" /></a>
+                            {paper.fullTextUrl && (
+                              <a href={paper.fullTextUrl} target="_blank" rel="noopener"><Tr k="research.readFullText" /></a>
+                            )}
+                          </div>
+                        </details>
+                      );
+                    })}
+                  </div>
+                )}
+                {c.research.total > c.research.shown.length && (
+                  <button
+                    class="load-more"
+                    data-feed="research"
+                    data-country={c.code}
+                    data-shown={c.research.shown.length}
+                  >
+                    <Tr k="search.loadMore" /> ({c.research.shown.length}/{c.research.total})
+                  </button>
+                )}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      </div>
+
+      <div id="searchResults" hidden>
+        <p id="searchResultCount" class="search-result-count"></p>
+        <div class="trial-list" id="searchResultList"></div>
+        <p class="empty" id="searchEmpty" hidden><Tr k="search.noResults" /></p>
+        <button class="load-more" id="searchLoadMore" hidden><Tr k="search.loadMore" /></button>
+      </div>
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+{/*
+  클라이언트에서 검색·더보기 결과로 새 카드를 그릴 때 쓰는 라벨 모음 — 사전(src/i18n)
+  값을 여기 한 번만 내려보낸다. functions/api/*.js(순수 JS, i18n 접근 불가)가 아니라
+  이 페이지가 서버에서 번역해 내려주는 것이라 한글을 새로 하드코딩하지 않는다.
+*/}
+<script type="application/json" id="clientLabels" set:html={JSON.stringify({
+  locale,
+  phaseGlossaryUrl,
+  phaseLabels: Object.fromEntries(['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => [k, phaseLabel(k)])),
+  phaseDescs: Object.fromEntries(['EARLY_PHASE1', 'PHASE1', 'PHASE2', 'PHASE3', 'PHASE4', 'NA'].map((k) => [k, phaseDesc(k)])),
+  pubtypeLabels: Object.fromEntries(Object.entries(PUBTYPE_BADGE).map(([raw, key]) => [raw, t(locale, key)])),
+  ui: {
+    recruiting: t(locale, 'clinical.recruiting' as DictKey),
+    closed: t(locale, 'clinical.closed' as DictKey),
+    viewOriginal: t(locale, 'clinical.viewOriginal' as DictKey),
+    phase: t(locale, 'clinical.phase' as DictKey),
+    phaseHelp: t(locale, 'clinical.phaseHelp' as DictKey),
+    phaseMore: t(locale, 'clinical.phaseMore' as DictKey),
+    duration: t(locale, 'clinical.duration' as DictKey),
+    estimated: t(locale, 'clinical.estimated' as DictKey),
+    sponsor: t(locale, 'clinical.sponsor' as DictKey),
+    journal: t(locale, 'research.journal' as DictKey),
+    published: t(locale, 'research.published' as DictKey),
+    readAbstract: t(locale, 'research.readAbstract' as DictKey),
+    readFullText: t(locale, 'research.readFullText' as DictKey),
+    paidNotice: t(locale, 'research.paidNotice' as DictKey),
+    loadMore: t(locale, 'search.loadMore' as DictKey),
+    noResults: t(locale, 'search.noResults' as DictKey),
+    resultCount: t(locale, 'search.resultCount' as DictKey),
+    resultCountForQuery: t(locale, 'search.resultCountForQuery' as DictKey),
+    dateYearMonth: t(locale, 'date.yearMonth' as DictKey),
+    dateYearOnly: t(locale, 'date.yearOnly' as DictKey),
+  },
+})} />
+
+<style>
+  /* ⚠️ 이 블록은 스코프가 걸린다(기본값) — 여기 있는 클래스는 절대 클라이언트 JS가
+     innerHTML로 새로 만들어 넣는 요소에 쓰지 않는다(카드 내부용은 아래 두 번째
+     <style is:global> 블록으로). 이 블록의 클래스(검색창·탭·필터 등 페이지 뼈대)는
+     서버가 그릴 때부터 항상 존재해서 스코프가 정상 작동하고, 사이트 전체에 걸쳐
+     쓰이는 Header/Footer 같은 공용 컴포넌트와 이름이 겹칠 위험도 없다
+     (scripts/check-style-collisions.mjs 가 배포 전에 확인한다). */
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+
+  /*
+   * 국가 선택 — 헤더 메뉴(.nav-links a)와 같은 밑줄 방식. 알약 배경을 쓰지 않는다.
+   * WHO 국가 목록·위키백과 언어 전환도 이런 평범한 텍스트 링크였다(2026-08-08 조사).
+   */
+  .country-select {
+    display: flex;
+    /* 줄바꿈하지 않는다 — 모바일에서 두 줄로 접히는 대신 옆으로 스와이프해서 본다
+       (오너 지시 2026-08-08). 데스크톱은 폭이 넉넉해 스크롤이 실제로 일어나지 않는다. */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 22px;
+    margin: 22px 0 30px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .country-select::-webkit-scrollbar {
+    display: none;
+  }
+  .country-link {
+    flex-shrink: 0;
+    position: relative;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-sub);
+    white-space: nowrap;
+  }
+  .country-link .n {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .country-link.active {
+    color: var(--primary);
+  }
+  .country-link.active::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -17px;
+    height: 2px;
+    background: var(--primary);
+  }
+
+  /*
+   * 임상시험/연구 전환 — 국가 탭(완전히 다른 데이터로 전환)과 달리 이건 필터라서
+   * 알약 스타일을 쓴다(오너 확인 2026-08-08).
+   */
+  .feed-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 18px 0 26px;
+  }
+  .pill {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--text-sub);
+    background: var(--bg);
+    border: 1.5px solid var(--outline);
+    border-radius: 20px;
+    padding: 8px 16px;
+  }
+  .pill.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #fff;
+    font-weight: 700;
+  }
+  .pill .n {
+    font-size: 12.5px;
+    opacity: 0.85;
+  }
+
+  .lang-notice {
+    /* .feed-tabs 의 margin-bottom(26px)이 이미 알약 밑 여백을 정한다 — 여기서 또
+       -8px 를 빼서 임상시험만 더 좁아졌다(2026-08-08 오너 스크린샷 지적, research-
+       tagline 은 +8px 를 더해 오히려 더 벌어져 있었다). margin-top:0 으로 통일해
+       두 보조문구 다 같은 26px 하나만 따르게 한다. */
+    margin: 0 0 24px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-sub);
+    opacity: 0.85;
+  }
+
+  .trial-list {
+    display: flex;
+    flex-direction: column;
+    /* 20px → 8px. 카드 자체 padding(20px 0, 위아래 20+20)과 합쳐 총 48px —
+       news/lifestyle/institutions의 목록 행 간격(24px+24px=48px)과 통일한다
+       (2026-08-08 오너 지적: 사이트 전체 목록 간격이 페이지마다 제각각이었다).
+       research-list도 같은 48px를 따른다(아래). */
+    gap: 8px;
+  }
+</style>
+
+<style is:global>
+  /* ⚠️ is:global 필수 — 검색 결과·"더보기"로 새로 생기는 카드(.trial-card/.research-card
+     와 그 내부)는 클라이언트 JS(trialCardHtml/researchCardHtml)가 나중에 innerHTML로
+     끼워 넣는다. Astro는 템플릿에 실제로 적힌 태그에만 스코프 속성(data-astro-cid-*)을
+     붙이므로, 스코프가 걸린 채로는 이 규칙들이 새로 생긴 카드에 전혀 안 먹는다 — 그래서
+     한동안 브라우저 기본 <details> 모양(▶ 삼각형·스타일 없는 제목)으로만 보였다
+     (2026-08-08 오너 스크린샷으로 확인).
+     ⚠️⚠️ 이 블록에는 "카드 내부에서만 쓰는" 클래스만 넣는다 — 전체 <style>을 통째로
+     global 로 풀었다가 톱바 검색 버튼(.search-btn, Header.astro)과 클래스명이 겹쳐서
+     돋보기 아이콘이 사라지는 사고를 냈다(2026-08-08). 새 클래스를 여기 추가하기 전에
+     src/components·src/layouts 안에 같은 이름이 있는지 반드시 검색할 것 —
+     scripts/check-style-collisions.mjs 가 배포 전에 자동으로 검사해 막는다. */
+  /*
+   * ⚠️ 줄간격/여백 규칙(2026-08-08 확정, 오너 격분 후) — 카드 안에서 텍스트 줄들
+   * 사이의 margin-top을 종류마다 임의로 다르게 정해서(6px, 10px, 12px 뒤섞임)
+   * 임상시험 카드와 연구 카드가 서로 다르게 보였다. 앞으로 이 페이지(그리고 카드형
+   * UI를 새로 만들 때는 다른 페이지도)에서 아래 두 값만 쓴다 — 셋째 값을 새로
+   * 지어내지 말 것:
+   *   - 8px  : 같은 블록 안에서 이어지는 "짧은 텍스트 줄" 사이(제목→부제, 제목→더보기 토글 등)
+   *   - 12px : summary(요약) 밖으로 나가는 "새 내용 블록"의 시작(view-link, dl, abstract 등)
+   * 새 텍스트 줄을 추가할 때 "몇 px로 할까"를 새로 고민하지 말고 이 둘 중 어떤 관계인지만
+   * 판단할 것.
+   */
+  .trial-card {
+    display: block;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--outline);
+    color: var(--text);
+  }
+  .trial-card:first-child {
+    padding-top: 0;
+  }
+  /*
+   * 제목만 보이고 내용은 펼쳐야 보인다(오너 확정 2026-08-08). 네이티브 details/summary —
+   * 임상 단계 물음표 팝오버와 같은 방식, 새 토글 JS를 만들지 않는다.
+   * 아이콘만으로 상태를 표시하지 않는다(아이콘만 버튼 금지 규칙) — 글자로 "더 보기/접기"를 단다.
+   */
+  /* ⚠️ 전부 > (직계 자식)로 건다 — 안 그러면 요약 안의 임상 단계 물음표(phase-help)도
+     똑같이 summary라서 여기 걸려 "더 보기/접기" 글자가 새어 들어간다(2026-08-08 발견). */
+  .trial-card > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  .trial-card > summary::-webkit-details-marker {
+    display: none;
+  }
+  .trial-card > summary::after {
+    /* "자세히 보기"로 연구 카드와 통일(오너 지적 2026-08-08: "더보기"·"자세히 보기"로
+       서로 다르게 부르고 있었다). margin-top 값도 아래 "간격 규칙" 참고 — 8px로 통일. */
+    content: 'En savoir plus ▾';
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .trial-card[open] > summary::after {
+    content: 'Fermer ▴';
+  }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  /* 모집 종료 — 색으로도 모집중과 바로 구분되게(초록 대신 회색). 검색에서 상태 필터로
+     "모집 종료"를 골랐을 때만 실제로 뜬다(2026-08-16, 오너 지시로 상태 구분 추가). */
+  .badge-closed {
+    color: var(--text-sub);
+  }
+  .trial-card h3 {
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text);
+    /* 한글 어절 중간에서 줄바꿈되던 것을 막는다(오너 지적 2026-08-08) — 이 사이트 다른
+       제목들과 같은 규칙(AppPromo.astro, index.astro). */
+  }
+  .trial-card dl {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 6px 12px;
+    font-size: 13.5px;
+    line-height: 1.6;
+  }
+  .trial-card dt {
+    color: var(--text-sub);
+    font-weight: 600;
+  }
+  .trial-card dd {
+    margin: 0;
+    color: var(--text);
+    word-break: break-word;
+  }
+  /* 위치·문의는 항목이 여러 개일 수 있다 — 한 줄로 이어붙이지 않고 목록으로 나눈다 */
+  .trial-card .cell-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .trial-card .more {
+    /* 4px → 8px. 위치 목록 뒤에 오는 "+N곳 더"도 짧은 텍스트 줄 사이 관계다
+       (2026-08-08 전수조사에서 발견). */
+    margin: 8px 0 0;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    opacity: 0.8;
+  }
+  .view-link {
+    display: inline-block;
+    margin-top: 12px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .view-link:hover {
+    color: var(--primary);
+  }
+
+  /* 임상 단계 물음표 — 눌러서 여는 팝오버. dt 안에 넣어도 <dl> 레이아웃이 깨지지 않게
+     display:inline-block, position:relative로 그 안에서만 절대 배치한다. */
+  .phase-help {
+    display: inline-block;
+    position: relative;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+  .phase-help summary {
+    list-style: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--surface-high);
+    color: var(--text-sub);
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+  }
+  .phase-help summary::-webkit-details-marker {
+    display: none;
+  }
+  .phase-help[open] summary {
+    color: var(--on-primary-container);
+    background: var(--primary);
+  }
+  .phase-help p {
+    position: absolute;
+    top: 22px;
+    left: 0;
+    z-index: 5;
+    width: 230px;
+    margin: 0;
+    padding: 10px 12px;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    font-size: 12.5px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--text);
+    white-space: normal;
+  }
+  .phase-help p a {
+    /* ⚠️ inline-block만으로는 설명 글이 짧아 박스 폭을 다 안 채우면 그 줄에 그대로
+       붙어버린다 — 설명 길이에 따라 줄바꿈이 들쭉날쭉했다(2026-08-16 오너 지적).
+       Term.astro와 같은 원인(2026-08-08) — block으로 폭과 무관하게 새 줄에서 시작. */
+    display: block;
+    margin-top: 8px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+</style>
+
+<style>
+  /* 스코프 있음 — .empty/.research-tagline/.research-list 는 서버가 그릴 때부터
+     항상 존재해 클라이언트 JS가 새로 만들지 않는다. */
+  .empty {
+    font-size: 15px;
+    color: var(--text-sub);
+    padding: 32px 0;
+    text-align: center;
+  }
+
+  .research-tagline {
+    margin-top: 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-sub);
+  }
+  .research-list {
+    display: flex;
+    flex-direction: column;
+    /* 24px → 8px. trial-list와 같은 이유로 48px 총합에 맞춘다(카드 padding 20+20).
+       margin-top: 24px는 별개 값(보조문구→첫 카드 간격)이라 그대로 둔다 — 이미
+       .lang-notice/.research-tagline과 24px로 맞춰 확인된 값이다. */
+    gap: 8px;
+    margin-top: 24px;
+  }
+</style>
+
+<style is:global>
+  /* is:global — 카드 내부용(위쪽 .trial-card 블록과 같은 이유). */
+  .research-card {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .research-card:first-child {
+    padding-top: 0;
+  }
+  .research-card > summary {
+    cursor: pointer;
+    list-style: none;
+  }
+  .research-card > summary::-webkit-details-marker {
+    display: none;
+  }
+  .research-card > summary::after {
+    content: 'En savoir plus ▾';
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .research-card[open] > summary::after {
+    content: 'Fermer ▴';
+  }
+  .research-card .badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .research-card h3 {
+    margin-top: 8px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--text);
+  }
+  .research-meta {
+    /* "짧은 텍스트 줄 사이 간격 = 8px" 규칙(2026-08-08, 아래 참고)에 맞춰 6px에서 조정. */
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .research-abstract {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text);
+  }
+  /*
+   * 배경/방법/결과/논의 — 세로 녹색줄은 항목명(제목) 줄에만 붙는다(오너 확정 2026-08-08).
+   * 내용 문단까지 줄이 이어지지 않는다. 논문마다 초록 구조가 비슷하니 전부 이 틀을 쓴다.
+   */
+  .abstract-label {
+    border-left: 3px solid var(--primary);
+    padding-left: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .abstract-text {
+    /* 4px → 8px. 항목명(배경/방법/결과/논의) 뒤에 오는 내용 문단도 짧은 텍스트 줄
+       사이 관계다(2026-08-08 전수조사에서 발견). */
+    margin-top: 8px;
+    padding-left: 17px;
+  }
+  .paid-notice {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.85;
+  }
+  .research-links {
+    margin-top: 12px;
+    display: flex;
+    gap: 16px;
+  }
+  .research-links a {
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .research-links a:hover {
+    color: var(--primary);
+  }
+
+  @media (max-width: 480px) {
+    .trial-card dl {
+      grid-template-columns: 1fr;
+      gap: 2px 0;
+    }
+    .trial-card dt {
+      margin-top: 8px;
+    }
+  }
+</style>
+
+<style>
+  /* 스코프 있음 — 검색+필터 뼈대. 국가 탭보다 위(오너 지시 2026-08-08). */
+  .search-bar {
+    margin: 20px 0 8px;
+    padding: 16px;
+    background: var(--surface-low);
+    border-radius: 12px;
+  }
+  .search-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    flex: 1 1 200px;
+    min-width: 0;
+    height: 40px;
+    padding: 0 12px;
+    border: 1.5px solid var(--outline);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+  }
+  .search-select,
+  .search-filters select,
+  .search-filters input {
+    height: 40px;
+    padding: 0 10px;
+    border: 1.5px solid var(--outline);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13.5px;
+  }
+  .search-btn,
+  .search-btn-ghost {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .search-btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+  }
+  .search-btn-ghost {
+    background: none;
+    border: 1.5px solid var(--outline);
+    color: var(--text-sub);
+  }
+  /* 필터 뒤 맨 밑에 오는 검색/초기화 버튼 줄. 예전엔 검색어·국가 옆(search-row)에
+     붙어서 필터보다 위에 있었다(오너 지적 2026-08-16). */
+  .search-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .search-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  /* [hidden]이 display:flex 에 덮여쓰던 것을 되돌린다(2026-08-08 실측 — 임상시험/연구
+     필터가 동시에 보였음). display 속성을 직접 쓰는 요소는 항상 [hidden] 도 같이 챙길 것. */
+  .search-filters[hidden] {
+    display: none;
+  }
+  .date-filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  .date-filter-range {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  /*
+   * 연/월 select — 예전엔 네이티브 <input type="date">였는데, 달력 UI가 페이지 lang이 아니라
+   * 브라우저/OS 언어를 따라가는 문제가 있었고(2026-08-08 처음 발견, 2026-08-16 오너 재지적),
+   * 그걸 텍스트 타이핑으로 고쳤다가 "노인이 YYYY-MM-DD를 어떻게 아냐"고 다시 지적받았다
+   * (2026-08-16). 탭/선택만으로 되는 select로 최종 확정 — 오너 승인(연도+월 정밀도, 일 단위는
+   * 필요 없음).
+   */
+  .date-select-group {
+    display: flex;
+    gap: 4px;
+  }
+  /* 76px/58px이었을 때 "2026년"의 "년"이 네이티브 드롭다운 화살표에 가려 잘렸다
+     (오너 스크린샷 지적 2026-08-16). 폭만 늘리면(76→92 등) 360px 화면에서 가로
+     스크롤이 생겨서(실측: scrollWidth 372px), 안 쓰는 좌우 패딩을 줄여 그 여유를
+     글자 쪽으로 돌리고 폭 증가는 최소로 뒀다 — `.search-filters select`(패딩
+     0 10px) 보다 우선하려면 타입+클래스를 같이 써야 한다(Astro 스코프에서도
+     compound 선택자가 홑클래스보다 특이도가 높다). */
+  .search-filters select.date-select-y {
+    width: 84px;
+    padding: 0 6px;
+  }
+  .search-filters select.date-select-m {
+    width: 60px;
+    padding: 0 6px;
+  }
+
+  .load-more {
+    display: block;
+    margin: 20px auto 0;
+    height: 44px;
+    padding: 0 24px;
+    background: var(--surface-low);
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .load-more[hidden] {
+    display: none;
+  }
+  .search-result-count {
+    /* 16px → 24px. .lang-notice/.research-tagline과 똑같이 "첫 카드 바로 앞 문구"
+       관계인데 값이 달랐다(2026-08-08 오너 스크린샷 지적).
+       margin-top: 16px — .search-bar 자체 margin-bottom(8px, 국가탭과도 공유하는
+       값이라 여기서 못 바꾼다)과 합쳐 24px가 되게 해서, 위쪽 여백=아래쪽 여백(24=24)
+       으로 대칭을 맞춘다(오너 지적: "위 간격이랑 밑 간격이랑 동일해야한다고!" —
+       독립된 안내문구는 위·아래가 같아야 한다는 규칙, feedback_symmetric_spacing_
+       standalone_line 참고).
+       line-height: 1.6 — .lang-notice/.research-tagline과 같은 값. 원래 선언이
+       없어서 브라우저 기본값(normal)을 쓰고 있었다 — 검색어가 길어져 두 줄이 되면
+       줄간격이 다른 보조문구들과 달라 보였을 것이다. */
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--text-sub);
+    margin-top: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 480px) {
+    .search-row,
+    .search-actions {
+      flex-direction: column;
+    }
+    .search-input,
+    .search-select,
+    .search-btn,
+    .search-btn-ghost {
+      width: 100%;
+      /* flex-direction 이 column 이 되면 flex-basis(200px)가 가로 대신 높이에 적용돼
+         입력창이 200px 높이로 늘어졌다(2026-08-08 실측) — flex 자체를 꺼서 막는다. */
+      flex: none;
+    }
+
+    /* 기본 = 검색어 칸만 한 줄. 탭하면(.expanded) 나라·버튼·필터가 펼쳐진다
+       (오너 지시 2026-08-08: "검색어 박스만 한줄로 보였다가 검색어 누르면 펼쳐지게"). */
+    #searchBar:not(.expanded) .search-select,
+    #searchBar:not(.expanded) .search-btn,
+    #searchBar:not(.expanded) .search-btn-ghost,
+    #searchBar:not(.expanded) .search-filters,
+    #searchBar:not(.expanded) .search-actions {
+      display: none;
+    }
+
+    /* 필터 항목 수가 줄마다 달라(2개·3개) 마지막 줄이 혼자 남으면 오른쪽에 빈 공간이
+       생기고, 고정 80px 칸에는 "연도부터" 문구가 잘렸다(2026-08-08 오너 스크린샷 지적).
+       모든 필터 항목을 flex-grow 로 늘어나게 해 혼자 남아도 그 줄을 끝까지 채운다 —
+       항목이 2개든 3개든 같은 규칙 하나로 처리되어 케이스별 예외가 없다. */
+    .search-filters > * {
+      flex: 1 1 140px;
+      min-width: 0;
+    }
+    /* 기간·연도 필터는 라벨+입력 두 칸을 담아서 다른 항목과 줄을 나눠 쓰면 비좁아진다
+       (2026-08-08 실측 — "임상 단계 전체"와 한 줄을 나눠 쓰면서 날짜칸이 아이콘만
+       남을 정도로 눌렸다). 이웃 필터 개수와 무관하게 항상 혼자 한 줄 전체를 쓰게 한다.
+       ⚠️ 반드시 `.search-filters > .date-filter`로 쓸 것 — Astro 스코프가 결합자
+       양쪽에 [data-astro-cid-*]를 붙여서, 위 `.search-filters > *`가 홑클래스
+       `.date-filter`보다 우선순위가 더 높다(2026-08-08 실측 — flex:100%를 줬는데도
+       조용히 안 먹고 140px로 눌린 채 넘어갔다). 부모까지 같이 써서 우선순위를 맞춘다. */
+    .search-filters > .date-filter {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+    }
+    .date-filter-range {
+      flex: 1 1 100%;
+      width: 100%;
+    }
+    #filterYearFrom,
+    #filterYearTo {
+      flex: 1;
+      width: auto;
+      min-width: 110px;
+    }
+    /*
+     * 연/월 select 4개(from Y·M, to Y·M)가 고정폭이라 화면을 다 못 채우고 오른쪽에
+     * 빈 공간이 남았다(오너 스크린샷 지적 2026-08-16: "연도월 입력하는게 오른쪽
+     * 빈공간 안생기게 채워라"). group 자체와 그 안의 select 모두 늘어나게 해서
+     * .date-filter-range 전체 폭(기간 줄, 100%)을 끝까지 채운다 — Y가 M보다
+     * 비율상 더 넓게(3:2) 자라 "2026년"처럼 더 긴 글자를 우선 확보한다. nowrap은
+     * 유지해 두 group이 세로로 갈라지지 않게 한다(예전엔 여기서 gap 없앤 게 아니라
+     * flex-grow를 아예 꺼서 고정폭이었다).
+     */
+    .date-select-group {
+      flex: 1;
+      flex-wrap: nowrap;
+    }
+    .search-filters select.date-select-y {
+      flex: 3 1 84px;
+      width: auto;
+    }
+    .search-filters select.date-select-m {
+      flex: 2 1 60px;
+      width: auto;
+    }
+  }
+</style>
+
+<script>
+  const tabs = document.querySelectorAll<HTMLButtonElement>('#countryTabs .country-link');
+  const trialPanels = document.querySelectorAll<HTMLDivElement>('#countryPanels .country-panel');
+  const researchPanels = document.querySelectorAll<HTMLDivElement>('#researchPanels .research-panel');
+  const trialsFeedCount = document.querySelector<HTMLSpanElement>('#trialsFeedCount');
+  const researchFeedCount = document.querySelector<HTMLSpanElement>('#researchFeedCount');
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      tabs.forEach((t) => t.classList.remove('active'));
+      tab.classList.add('active');
+      const country = tab.dataset.country;
+      trialPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.country !== country;
+      });
+      researchPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.country !== country;
+      });
+      if (trialsFeedCount) trialsFeedCount.textContent = tab.dataset.total ?? '0';
+      if (researchFeedCount) researchFeedCount.textContent = tab.dataset.researchTotal ?? '0';
+    });
+  });
+
+  /* 임상시험/연구 전환 — 국가 탭과는 별개 축. 국가 탭은 두 피드 모두에 영향을 준다. */
+  const feedTabs = document.querySelectorAll<HTMLButtonElement>('#feedTabs .pill');
+  const trialsFeed = document.querySelector<HTMLDivElement>('#trialsFeed');
+  const researchFeed = document.querySelector<HTMLDivElement>('#researchFeed');
+
+  feedTabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      feedTabs.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const feed = btn.dataset.feed;
+      if (trialsFeed) trialsFeed.hidden = feed !== 'trials';
+      if (researchFeed) researchFeed.hidden = feed !== 'research';
+    });
+  });
+
+  /* 임상 단계 물음표 팝오버(<details>) — 바깥을 눌러도 안 닫히던 것을 고친다.
+     네이티브 <details> 는 summary 를 다시 눌러야만 닫힌다. */
+  document.addEventListener('click', (e) => {
+    document.querySelectorAll<HTMLDetailsElement>('.phase-help[open]').forEach((d) => {
+      if (!d.contains(e.target as Node)) d.removeAttribute('open');
+    });
+  });
+
+  /*
+   * 방문자 나라를 국가 탭 맨 앞(전체 다음)으로 보내고 그 탭을 활성화한다(오너 확정
+   * 2026-08-08: "한국이 메인이 아니다"). `/api/geo`(Cloudflare Pages Function, CF-IPCountry
+   * 헤더)로 알아내고, 못 알아내거나 목록에 없는 나라면 조용히 "전체" 기본값을 유지한다.
+   */
+  (async () => {
+    try {
+      const res = await fetch('/api/geo');
+      const { country } = (await res.json()) as { country: string | null };
+      const code = country?.toLowerCase();
+      const validCodes = ['kr', 'us', 'jp', 'fr', 'de', 'it', 'au'];
+      if (!code || !validCodes.includes(code)) return;
+
+      const allBtn = document.querySelector<HTMLButtonElement>('#countryTabs [data-country="all"]');
+      const myBtn = document.querySelector<HTMLButtonElement>(`#countryTabs [data-country="${code}"]`);
+      if (!allBtn || !myBtn) return;
+
+      allBtn.after(myBtn);
+      myBtn.click();
+    } catch {
+      /* 지오로케이션 실패 시 조용히 "전체" 기본값 유지 — 오류를 화면에 보여주지 않는다. */
+    }
+  })();
+</script>
+
+<script>
+  import { paragraphizeAbstract } from '../../../lib/abstractFormat';
+
+  /*
+   * 검색+더보기 — functions/api/trials.js, functions/api/research.js 를 방문 중에 실시간
+   * 호출한다(오너 확정 2026-08-08). 새 카드를 그릴 때 쓰는 라벨은 #clientLabels(위 JSON,
+   * 서버에서 사전 값을 미리 번역해 내려준 것)에서 가져온다 — 여기서 한글을 새로 짓지 않는다.
+   */
+  interface ClientLabels {
+    locale: string;
+    phaseGlossaryUrl: string;
+    phaseLabels: Record<string, string>;
+    phaseDescs: Record<string, string>;
+    pubtypeLabels: Record<string, string>;
+    ui: Record<string, string>;
+  }
+  const LABELS: ClientLabels = JSON.parse(document.getElementById('clientLabels')!.textContent!);
+  // 서버 렌더와 같은 함수 — 여기서 새로 짓지 않는다(모듈 스크립트라 import 가능).
+
+  /* 서버쪽 MONTH_FR 과 같은 값이어야 한다 — 검색·더보기로 그린 카드와 처음부터 구운 카드의
+     날짜 표기가 달라지면 안 된다. 프랑스어 월 이름은 소문자로 쓴다. */
+  const MONTH_FR = [
+    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+  ];
+
+  function esc(s: string) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function durationTextClient(t: { startDate: string | null; startDateEstimated: boolean; completionDate: string | null; completionDateEstimated: boolean }) {
+    const est = LABELS.ui.estimated;
+    const start = t.startDate ? t.startDate + (t.startDateEstimated ? ` (${est})` : '') : null;
+    const end = t.completionDate ? t.completionDate + (t.completionDateEstimated ? ` (${est})` : '') : null;
+    if (start && end) return `${start} ~ ${end}`;
+    return start ?? end;
+  }
+
+  /* ⚠️ "년"/"월"을 여기 직접 쓰지 않는다 — LABELS.ui.dateYearMonth/dateYearOnly(사전 값,
+     서버에서 미리 번역해 내려줌)를 거친다. 예전엔 여기 한글을 직접 박아 놨었다
+     (2026-08-08 오너 전수조사로 발견 — src/pages는 check-i18n.mjs 검사에서 빠져 있어서
+     안 잡혔다). pubDateText(서버쪽 동일 함수)와 항상 같은 방식을 쓸 것. */
+  function pubDateTextClient(paper: { pubYear: string | null; pubMonth: number | null }) {
+    if (!paper.pubYear) return '';
+    if (!paper.pubMonth) return LABELS.ui.dateYearOnly.replace('{y}', paper.pubYear);
+    const month = MONTH_FR[paper.pubMonth - 1] ?? String(paper.pubMonth);
+    return LABELS.ui.dateYearMonth.replace('{y}', paper.pubYear).replace('{m}', month);
+  }
+
+  function trialCardHtml(trial: any): string {
+    const title = esc(trial.titleTranslated ?? trial.title);
+    const phaseLabel = trial.phaseKey ? LABELS.phaseLabels[trial.phaseKey] : null;
+    const phaseDesc = trial.phaseKey ? LABELS.phaseDescs[trial.phaseKey] : null;
+    const duration = durationTextClient(trial);
+    let dl = '';
+    if (phaseLabel) {
+      dl += `<dt>${esc(LABELS.ui.phase)}</dt><dd>${esc(phaseLabel)}
+        <details class="phase-help"><summary aria-label="${esc(LABELS.ui.phaseHelp)}">?</summary>
+        <p>${esc(phaseDesc ?? '')} <a href="${LABELS.phaseGlossaryUrl}">${esc(LABELS.ui.phaseMore)}</a></p>
+        </details></dd>`;
+    }
+    if (duration) dl += `<dt>${esc(LABELS.ui.duration)}</dt><dd>${esc(duration)}</dd>`;
+    if (trial.sponsor) dl += `<dt>${esc(LABELS.ui.sponsor)}</dt><dd>${esc(trial.sponsor)}</dd>`;
+    const isRecruiting = trial.status === 'RECRUITING';
+    const badgeClass = isRecruiting ? 'badge' : 'badge badge-closed';
+    const badgeLabel = isRecruiting ? LABELS.ui.recruiting : LABELS.ui.closed;
+    return `<details class="trial-card">
+      <summary><span class="${badgeClass}">${esc(badgeLabel)}</span><h3>${title}</h3></summary>
+      <a class="view-link" href="${trial.url}" target="_blank" rel="noopener">${esc(LABELS.ui.viewOriginal)} (${esc(trial.nctId)})</a>
+      <dl>${dl}</dl>
+    </details>`;
+  }
+
+  function researchCardHtml(paper: any): string {
+    const title = esc(paper.titleTranslated ?? paper.title);
+    const badges = (paper.pubTypes ?? []).map((pt: string) => LABELS.pubtypeLabels[pt]).filter(Boolean);
+    const badgesHtml = badges.map((b: string) => `<span class="badge">${esc(b)}</span>`).join('');
+    const sections = paper.abstractTranslated ?? paper.abstract ?? [];
+    const abstractHtml = sections
+      .map((sec: any) => {
+        const paras: string[] = paragraphizeAbstract(sec.text);
+        const parasHtml = paras.map((p) => `<p class="abstract-text">${esc(p)}</p>`).join('');
+        return `<div class="abstract-section">${sec.label ? `<p class="abstract-label">${esc(sec.label)}</p>` : ''}${parasHtml}</div>`;
+      })
+      .join('');
+    return `<details class="research-card">
+      <summary>
+        <div class="badges">${badgesHtml}</div>
+        <h3>${title}</h3>
+        <p class="research-meta">${esc(LABELS.ui.journal)}: ${esc(paper.journal)} · ${esc(LABELS.ui.published)}: ${esc(pubDateTextClient(paper))}</p>
+      </summary>
+      <div class="research-abstract">${abstractHtml}</div>
+      <p class="paid-notice">${esc(LABELS.ui.paidNotice)}</p>
+      <div class="research-links">
+        <a href="${paper.pubmedUrl}" target="_blank" rel="noopener">${esc(LABELS.ui.readAbstract)}</a>
+        ${paper.fullTextUrl ? `<a href="${paper.fullTextUrl}" target="_blank" rel="noopener">${esc(LABELS.ui.readFullText)}</a>` : ''}
+      </div>
+    </details>`;
+  }
+
+  /* 국가 탭 브라우징 화면의 "더 보기" — 그 나라·그 피드만 다음 페이지를 이어붙인다. */
+  document.querySelectorAll<HTMLButtonElement>('#browseMode .load-more').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const feed = btn.dataset.feed as 'trials' | 'research';
+      const country = btn.dataset.country!;
+      const shown = Number(btn.dataset.shown ?? '0');
+      btn.disabled = true;
+      try {
+        const params = new URLSearchParams({ country, offset: String(shown), locale: LABELS.locale });
+        const res = await fetch(`/api/${feed === 'trials' ? 'trials' : 'research'}?${params}`);
+        const json = await res.json();
+        const items = json.items ?? [];
+        const panel = btn.closest(feed === 'trials' ? '.country-panel' : '.research-panel');
+        const list = panel?.querySelector(feed === 'trials' ? '.trial-list' : '.research-list');
+        if (list) list.insertAdjacentHTML('beforeend', items.map((it: any) => (feed === 'trials' ? trialCardHtml(it) : researchCardHtml(it))).join(''));
+        const newShown = shown + items.length;
+        const total = json.total ?? newShown;
+        if (newShown >= total) {
+          btn.remove();
+        } else {
+          btn.dataset.shown = String(newShown);
+          btn.textContent = `${LABELS.ui.loadMore} (${newShown}/${total})`;
+          btn.disabled = false;
+        }
+      } catch {
+        btn.disabled = false;
+      }
+    });
+  });
+
+  /* 검색+필터 */
+  const searchQuery = document.getElementById('searchQuery') as HTMLInputElement;
+  const searchCountrySel = document.getElementById('searchCountry') as HTMLSelectElement;
+  const searchSubmitBtn = document.getElementById('searchSubmit') as HTMLButtonElement;
+  const searchClearBtn = document.getElementById('searchClear') as HTMLButtonElement;
+  const filtersTrialsEl = document.getElementById('filtersTrials')!;
+  const filtersResearchEl = document.getElementById('filtersResearch')!;
+  const browseModeEl = document.getElementById('browseMode')!;
+  const searchResultsEl = document.getElementById('searchResults')!;
+  const searchResultListEl = document.getElementById('searchResultList')!;
+  const searchResultCountEl = document.getElementById('searchResultCount')!;
+  const searchEmptyEl = document.getElementById('searchEmpty') as HTMLParagraphElement;
+  const searchLoadMoreBtn = document.getElementById('searchLoadMore') as HTMLButtonElement;
+
+  /* 모바일 = 검색어 칸만 한 줄로 보이다가, 탭하면 나라·필터가 펼쳐진다(오너 지시 2026-08-08). */
+  const searchBarEl = document.getElementById('searchBar')!;
+  searchQuery.addEventListener('focus', () => {
+    searchBarEl.classList.add('expanded');
+  });
+
+  function currentFeed(): 'trials' | 'research' {
+    return document.querySelector<HTMLButtonElement>('#feedTabs .pill.active')?.dataset.feed === 'research' ? 'research' : 'trials';
+  }
+
+  /* 필터 패널도 임상시험/연구 전환에 맞춰 같이 바뀐다. */
+  document.querySelectorAll<HTMLButtonElement>('#feedTabs .pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const feed = btn.dataset.feed;
+      filtersTrialsEl.hidden = feed !== 'trials';
+      filtersResearchEl.hidden = feed !== 'research';
+    });
+  });
+
+  /*
+   * 날짜 필터는 연/월 select 두 쌍(시작·종료)이다. 예전엔 <input type="date">였는데 달력 UI가
+   * 브라우저/OS 언어를 따라가는 문제가 있었고(2026-08-08), 텍스트 타이핑으로 고쳤다가
+   * "노인이 YYYY-MM-DD를 아냐"고 다시 지적받았다(2026-08-16). select 로 최종 확정.
+   *
+   * search_trials RPC(Supabase)는 date 타입 두 개를 받아 `start_date >= p_date_from and
+   * start_date <= p_date_to`로 비교한다(직접 함수 정의 확인, 2026-08-16). 그래서 "부터"는
+   * 그 달의 1일로, "까지"는 그 달의 마지막 날로 만들어 넘긴다 — 연/월만 골라도 그 달 전체가
+   * 포함되게 하기 위함이다.
+   */
+  function pad2(n: number): string {
+    return String(n).padStart(2, '0');
+  }
+  function monthStart(y: string, m: string): string | null {
+    if (!y || !m) return null;
+    return `${y}-${pad2(Number(m))}-01`;
+  }
+  function monthEnd(y: string, m: string): string | null {
+    if (!y || !m) return null;
+    const lastDay = new Date(Number(y), Number(m), 0).getDate();
+    return `${y}-${pad2(Number(m))}-${pad2(lastDay)}`;
+  }
+
+  function buildParams(offset: number): URLSearchParams {
+    const feed = currentFeed();
+    const params = new URLSearchParams({ locale: LABELS.locale, country: searchCountrySel.value, offset: String(offset) });
+    const q = searchQuery.value.trim();
+    if (q) params.set('q', q);
+    if (feed === 'trials') {
+      const status = (document.getElementById('filterStatus') as HTMLSelectElement).value;
+      const phase = (document.getElementById('filterPhase') as HTMLSelectElement).value;
+      const dateFromY = (document.getElementById('filterDateFromY') as HTMLSelectElement).value;
+      const dateFromM = (document.getElementById('filterDateFromM') as HTMLSelectElement).value;
+      const dateToY = (document.getElementById('filterDateToY') as HTMLSelectElement).value;
+      const dateToM = (document.getElementById('filterDateToM') as HTMLSelectElement).value;
+      const sponsor = (document.getElementById('filterSponsor') as HTMLInputElement).value.trim();
+      if (status) params.set('status', status);
+      if (phase) params.set('phase', phase);
+      const dateFrom = monthStart(dateFromY, dateFromM);
+      const dateTo = monthEnd(dateToY, dateToM);
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+      if (sponsor) params.set('sponsor', sponsor);
+    } else {
+      const pubtype = (document.getElementById('filterPubtype') as HTMLSelectElement).value;
+      const journal = (document.getElementById('filterJournal') as HTMLSelectElement).value;
+      const yearFrom = (document.getElementById('filterYearFrom') as HTMLSelectElement).value.trim();
+      const yearTo = (document.getElementById('filterYearTo') as HTMLSelectElement).value.trim();
+      if (pubtype) params.set('pubtype', pubtype);
+      if (journal) params.set('journal', journal);
+      if (yearFrom) params.set('year_from', yearFrom);
+      if (yearTo) params.set('year_to', yearTo);
+    }
+    return params;
+  }
+
+  let searchOffset = 0;
+
+  async function runSearch(reset: boolean) {
+    const feed = currentFeed();
+    if (reset) {
+      searchOffset = 0;
+      searchResultListEl.innerHTML = '';
+      // ⚠️ 결과 목록이 항상 .trial-list 고정이라 연구 결과에 임상시험 목록 간격(20px)이
+      // 그대로 붙어서 "형식이 다르게 보인다"는 지적을 받았다(2026-08-08) — 피드에 맞는
+      // 클래스로 매번 바꾼다.
+      searchResultListEl.className = feed === 'trials' ? 'trial-list' : 'research-list';
+    }
+    const params = buildParams(searchOffset);
+    const res = await fetch(`/api/${feed === 'trials' ? 'trials' : 'research'}?${params}`);
+    const json = await res.json();
+    const total = json.total ?? 0;
+    const items = json.items ?? [];
+    searchResultListEl.insertAdjacentHTML('beforeend', items.map((it: any) => (feed === 'trials' ? trialCardHtml(it) : researchCardHtml(it))).join(''));
+    searchOffset += items.length;
+
+    /* 피드 이름("임상시험"/"연구")은 검색 버튼을 누르기 전 이미 선택해 둔 탭이라 사용자가
+       이미 아는 정보다 — 반면 "무엇을 검색해서 이 결과가 나왔는지"는 화면을 내리면 검색창이
+       안 보여서 잊어버리기 쉽다(오너 지적 2026-08-08: "임상시험 탭이 중요한거냐 아니면
+       검색어를 보여주는게 중요하겠냐"). 그래서 피드 이름 대신 검색어를 보여준다 — 검색어 없이
+       필터만으로 검색했을 때는 검색어 자리를 비운다. */
+    const query = searchQuery.value.trim();
+    searchEmptyEl.hidden = total > 0;
+    searchResultCountEl.textContent =
+      total > 0
+        ? query
+          ? LABELS.ui.resultCountForQuery.replace('{q}', query).replace('{n}', String(total))
+          : LABELS.ui.resultCount.replace('{n}', String(total))
+        : '';
+    searchLoadMoreBtn.hidden = searchOffset >= total;
+    if (!searchLoadMoreBtn.hidden) searchLoadMoreBtn.textContent = `${LABELS.ui.loadMore} (${searchOffset}/${total})`;
+  }
+
+  searchSubmitBtn.addEventListener('click', () => {
+    browseModeEl.hidden = true;
+    searchResultsEl.hidden = false;
+    searchClearBtn.hidden = false;
+    runSearch(true);
+  });
+  searchQuery.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchSubmitBtn.click();
+  });
+  searchClearBtn.addEventListener('click', () => {
+    browseModeEl.hidden = false;
+    searchResultsEl.hidden = true;
+    searchClearBtn.hidden = true;
+    searchQuery.value = '';
+    searchResultListEl.innerHTML = '';
+  });
+  searchLoadMoreBtn.addEventListener('click', () => runSearch(false));
+
+  /*
+   * 톱바 검색(Header.astro)에서 임상시험·연구 결과를 누르면 ?q=...&feed=... 로 이
+   * 페이지에 넘어온다 — 상세페이지가 없는 항목이라 이 페이지의 실시간 검색을 그대로
+   * 재사용한다(오너 지시 2026-08-16). 검색어를 채우고 필요하면 피드를 바꾼 뒤 실행한다.
+   */
+  const initialParams = new URLSearchParams(window.location.search);
+  const initialQuery = initialParams.get('q');
+  if (initialQuery) {
+    searchQuery.value = initialQuery;
+    searchBarEl.classList.add('expanded');
+    if (initialParams.get('feed') === 'research') {
+      document.querySelector<HTMLButtonElement>('#feedTabs .pill[data-feed="research"]')?.click();
+    }
+    searchSubmitBtn.click();
+  }
+</script>

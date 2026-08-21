@@ -59,6 +59,20 @@ const MAIL_ORDER_NO_EN = '2026-Seoul Gangdong-1129';
  */
 const SUPPORT_TEL = '070-4513-1894';
 export const SUPPORT_EMAIL = 'admin@ourmine.co.kr';
+
+/*
+ * 개인정보 보호책임자 — 개인정보보호법 제30조상 **처리방침 필수 기재항목**이다(제31조의
+ * '지정' 의무는 소상공인 예외가 있지만, 그 경우 법이 사업주·대표자를 보호책임자로 본다.
+ * 즉 예외에 해당해도 방침에 적는 것 자체는 빠질 수 없다).
+ *
+ * 오너 확정 2026-08-21: 한민석 대표 · **연락처는 이메일만** 둔다(전화번호는 넣지 않는다).
+ * 이름 표기는 사업자 정보(KO/EN)와 같은 방식으로 언어별 표기를 따로 둔다 —
+ * 영어 화면에 국문 표기가 나가면 안 된다(이 파일 위쪽 주석의 사고 참고).
+ */
+/* i18n-exempt:start — 실제 등록된 사람 이름의 국문 표기다(위 KO 와 같은 이유). */
+const PRIVACY_OFFICER_KO = '한민석';
+/* i18n-exempt:end */
+const PRIVACY_OFFICER_EN = 'Minseok Han';
 export const COMPANY_SITE = 'https://www.ourmine.co.kr';
 
 const isKo = (locale: string) => locale.startsWith('ko');
@@ -74,4 +88,9 @@ export function mailOrderNo(locale: string): string {
 /** 한국어에서만 전화번호를 돌려준다. 그 외 언어는 null → 화면에서 항목 자체를 그리지 않는다. */
 export function supportTel(locale: string): string | null {
   return isKo(locale) ? SUPPORT_TEL : null;
+}
+
+/** 개인정보 보호책임자 이름. 직책·라벨은 언어별 방침 페이지가 각자 자기 언어로 쓴다. */
+export function privacyOfficer(locale: string): string {
+  return isKo(locale) ? PRIVACY_OFFICER_KO : PRIVACY_OFFICER_EN;
 }

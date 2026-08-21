@@ -13,7 +13,7 @@
  * 내용은 오너 승인을 받은 초안 그대로다(2026-08-06). 문구 수정은 오너 확인 후.
  */
 import { getRelativeLocaleUrl } from 'astro:i18n';
-import { business, BIZ_NO, SUPPORT_EMAIL } from '../../lib/business';
+import { business, BIZ_NO, SUPPORT_EMAIL, privacyOfficer } from '../../lib/business';
 import Layout from '../../layouts/Layout.astro';
 import Header from '../../components/Header.astro';
 import Footer from '../../components/Footer.astro';
@@ -30,6 +30,7 @@ const toc = [
   { id: 'third-party', label: 'Article 4 — Disclosure and processors' },
   { id: 'rights', label: 'Article 5 — Your rights' },
   { id: 'change', label: 'Article 6 — Changes to this policy' },
+  { id: 'officer', label: 'Article 7 — Personal data protection officer' },
 ];
 ---
 
@@ -142,6 +143,16 @@ const toc = [
 
             <h2 id="change">Article 6 (Changes to this policy)</h2>
             <p>When this policy changes, we will post the change and its effective date on the website.</p>
+
+            {/* 개인정보보호법 제30조상 처리방침 필수 기재항목(오너 확정 2026-08-21).
+                연락처는 이메일만 — 전화번호는 넣지 않는다. */}
+            <h2 id="officer">Article 7 (Personal data protection officer)</h2>
+            <p>The person responsible for overseeing the handling of personal data is:</p>
+            <ul>
+              <li>Name: {privacyOfficer(locale)}</li>
+              <li>Title: Representative</li>
+              <li>Contact: <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a></li>
+            </ul>
           </div>
 
           {/* 사업자 정보는 lib/business.ts 가 정본이다 — 영어 화면에 국문 표기가 나가면 안 된다.

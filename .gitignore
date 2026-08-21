@@ -34,3 +34,8 @@ site/docs/ui-screenshots
 .env
 .env.local
 .wrangler
+
+# wrangler 배포 시 --cwd 로 쓰는 임시 작업 폴더(매 배포마다 새로 생김)
+.deploy-staging
+# Playwright MCP 가 남기는 스냅샷·스크린샷(디버깅 산출물)
+.playwright-mcp

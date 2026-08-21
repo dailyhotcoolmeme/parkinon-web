@@ -103,6 +103,14 @@ const badgesFor = (pubTypes: string[]) => pubTypes.map((p) => PUBTYPE_BADGE[p]).
 const CURRENT_YEAR = new Date().getFullYear();
 const DATE_YEARS = Array.from({ length: CURRENT_YEAR - 2000 + 3 }, (_, i) => CURRENT_YEAR + 2 - i);
 const DATE_MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+/*
+ * 연구(논문) 연도 필터도 같은 원칙(탭/선택, 타이핑 금지)을 적용한다(오너 지시 2026-08-16:
+ * "연구에서 검색하는거에 연도 입력하는거는 왜 타이핑이냐?"). 임상시험의 DATE_YEARS는
+ * 2000년부터지만, 논문은 실측(2026-08-16) 최소 발행년도가 1970년이라 그대로 못 쓴다 —
+ * 별도 범위를 둔다. 논문은 미래 추정일이 없으므로 임상시험처럼 +2년 여유를 둘 필요도 없다.
+ */
+const RESEARCH_MIN_YEAR = 1970;
+const RESEARCH_YEARS = Array.from({ length: CURRENT_YEAR - RESEARCH_MIN_YEAR + 1 }, (_, i) => CURRENT_YEAR - i);
 
 /* 발표일도 번역 대상이다(오너 확정 2026-08-08) — PubMed 영어 월 축약("Aug")을 그대로
    보여주지 않고 언어판에 맞게 새로 조립한다.
@@ -167,8 +175,6 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
             <option value="all">{t(locale, 'country.all' as DictKey)}</option>
             {TRIAL_COUNTRIES.map((c) => <option value={c.code}>{t(locale, `country.${c.code}` as DictKey)}</option>)}
           </select>
-          <button id="searchSubmit" class="search-btn"><Tr k="search.submit" /></button>
-          <button id="searchClear" class="search-btn-ghost" hidden><Tr k="search.clear" /></button>
         </div>
         <div class="search-filters" id="filtersTrials">
           <select id="filterStatus">
@@ -221,10 +227,28 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
           </select>
           <label class="date-filter">
             <Tr k="search.filter.year" />
-            <input type="number" id="filterYearFrom" placeholder={t(locale, 'search.filter.yearFrom' as DictKey)} />
-            <span>~</span>
-            <input type="number" id="filterYearTo" placeholder={t(locale, 'search.filter.yearTo' as DictKey)} />
+            <span class="date-filter-range">
+              <select id="filterYearFrom" class="date-select date-select-y">
+                <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                {RESEARCH_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+              </select>
+              <span>~</span>
+              <select id="filterYearTo" class="date-select date-select-y">
+                <option value="">{t(locale, 'search.filter.dateYearAny' as DictKey)}</option>
+                {RESEARCH_YEARS.map((y) => <option value={y}>{tv(locale, 'search.filter.dateYearUnit' as DictKey, { n: String(y) })}</option>)}
+              </select>
+            </span>
           </label>
+        </div>
+        {/*
+          검색·초기화 버튼은 모든 필터 뒤, 맨 밑에 둔다(오너 지시 2026-08-16: "검색버튼
+          초기화 버튼이 중간이 아니라 맨 밑에 있어야 한다") — 필터를 다 고른 다음
+          누르는 동작이라 필터보다 위에 있으면 순서가 거꾸로다. 임상시험/연구 두 필터
+          영역 중 어느 쪽이 보이든 공통으로 맨 아래 한 번만 나온다.
+        */}
+        <div class="search-actions">
+          <button id="searchSubmit" class="search-btn"><Tr k="search.submit" /></button>
+          <button id="searchClear" class="search-btn-ghost" hidden><Tr k="search.clear" /></button>
         </div>
       </div>
 
@@ -963,6 +987,14 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     border: 1.5px solid var(--outline);
     color: var(--text-sub);
   }
+  /* 필터 뒤 맨 밑에 오는 검색/초기화 버튼 줄. 예전엔 검색어·국가 옆(search-row)에
+     붙어서 필터보다 위에 있었다(오너 지적 2026-08-16). */
+  .search-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
   .search-filters {
     display: flex;
     gap: 8px;
@@ -997,15 +1029,19 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     display: flex;
     gap: 4px;
   }
-  .date-select-y {
-    width: 76px;
+  /* 76px/58px이었을 때 "2026년"의 "년"이 네이티브 드롭다운 화살표에 가려 잘렸다
+     (오너 스크린샷 지적 2026-08-16). 폭만 늘리면(76→92 등) 360px 화면에서 가로
+     스크롤이 생겨서(실측: scrollWidth 372px), 안 쓰는 좌우 패딩을 줄여 그 여유를
+     글자 쪽으로 돌리고 폭 증가는 최소로 뒀다 — `.search-filters select`(패딩
+     0 10px) 보다 우선하려면 타입+클래스를 같이 써야 한다(Astro 스코프에서도
+     compound 선택자가 홑클래스보다 특이도가 높다). */
+  .search-filters select.date-select-y {
+    width: 84px;
+    padding: 0 6px;
   }
-  .date-select-m {
-    width: 58px;
-  }
-  #filterYearFrom,
-  #filterYearTo {
-    width: 80px;
+  .search-filters select.date-select-m {
+    width: 60px;
+    padding: 0 6px;
   }
 
   .load-more {
@@ -1042,7 +1078,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   }
 
   @media (max-width: 480px) {
-    .search-row {
+    .search-row,
+    .search-actions {
       flex-direction: column;
     }
     .search-input,
@@ -1060,7 +1097,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     #searchBar:not(.expanded) .search-select,
     #searchBar:not(.expanded) .search-btn,
     #searchBar:not(.expanded) .search-btn-ghost,
-    #searchBar:not(.expanded) .search-filters {
+    #searchBar:not(.expanded) .search-filters,
+    #searchBar:not(.expanded) .search-actions {
       display: none;
     }
 
@@ -1093,10 +1131,26 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       width: auto;
       min-width: 110px;
     }
-    /* Y·M select 는 좁은 화면에서도 고정폭을 유지한다(76px+58px) — flex:1로 늘리면
-       숫자만 있는 select 가 불필요하게 넓어져 group 4개가 줄 밖으로 밀려난다. */
+    /*
+     * 연/월 select 4개(from Y·M, to Y·M)가 고정폭이라 화면을 다 못 채우고 오른쪽에
+     * 빈 공간이 남았다(오너 스크린샷 지적 2026-08-16: "연도월 입력하는게 오른쪽
+     * 빈공간 안생기게 채워라"). group 자체와 그 안의 select 모두 늘어나게 해서
+     * .date-filter-range 전체 폭(기간 줄, 100%)을 끝까지 채운다 — Y가 M보다
+     * 비율상 더 넓게(3:2) 자라 "2026년"처럼 더 긴 글자를 우선 확보한다. nowrap은
+     * 유지해 두 group이 세로로 갈라지지 않게 한다(예전엔 여기서 gap 없앤 게 아니라
+     * flex-grow를 아예 꺼서 고정폭이었다).
+     */
     .date-select-group {
+      flex: 1;
       flex-wrap: nowrap;
+    }
+    .search-filters select.date-select-y {
+      flex: 3 1 84px;
+      width: auto;
+    }
+    .search-filters select.date-select-m {
+      flex: 2 1 60px;
+      width: auto;
     }
   }
 </style>
@@ -1376,8 +1430,8 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     } else {
       const pubtype = (document.getElementById('filterPubtype') as HTMLSelectElement).value;
       const journal = (document.getElementById('filterJournal') as HTMLSelectElement).value;
-      const yearFrom = (document.getElementById('filterYearFrom') as HTMLInputElement).value.trim();
-      const yearTo = (document.getElementById('filterYearTo') as HTMLInputElement).value.trim();
+      const yearFrom = (document.getElementById('filterYearFrom') as HTMLSelectElement).value.trim();
+      const yearTo = (document.getElementById('filterYearTo') as HTMLSelectElement).value.trim();
       if (pubtype) params.set('pubtype', pubtype);
       if (journal) params.set('journal', journal);
       if (yearFrom) params.set('year_from', yearFrom);
@@ -1440,4 +1494,20 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
     searchResultListEl.innerHTML = '';
   });
   searchLoadMoreBtn.addEventListener('click', () => runSearch(false));
+
+  /*
+   * 톱바 검색(Header.astro)에서 임상시험·연구 결과를 누르면 ?q=...&feed=... 로 이
+   * 페이지에 넘어온다 — 상세페이지가 없는 항목이라 이 페이지의 실시간 검색을 그대로
+   * 재사용한다(오너 지시 2026-08-16). 검색어를 채우고 필요하면 피드를 바꾼 뒤 실행한다.
+   */
+  const initialParams = new URLSearchParams(window.location.search);
+  const initialQuery = initialParams.get('q');
+  if (initialQuery) {
+    searchQuery.value = initialQuery;
+    searchBarEl.classList.add('expanded');
+    if (initialParams.get('feed') === 'research') {
+      document.querySelector<HTMLButtonElement>('#feedTabs .pill[data-feed="research"]')?.click();
+    }
+    searchSubmitBtn.click();
+  }
 </script>

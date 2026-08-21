@@ -19,6 +19,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Layout from '../../../layouts/Layout.astro';
 import Header from '../../../components/Header.astro';
 import Footer from '../../../components/Footer.astro';
+import AdFitBanner from '../../../components/article/AdFitBanner.astro';
 import yogaImg from '../../../assets/images/yoga.jpg';
 import { VIDEO_DATA, DIFFICULTIES } from '../../../lib/exerciseVideos.ko';
 import { EXERCISE_SOURCE } from '../../../lib/exerciseSource.ko';
@@ -57,6 +58,13 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
         <a href={getRelativeLocaleUrl(locale, '')}>홈</a><span class="sep">/</span><span>운동 영상</span>
       </nav>
 
+      <div class="ad-slot-mobile">
+        <AdFitBanner unit="DAN-3XSXyjQZO20EXhAU" width={300} height={250} />
+      </div>
+      <div class="ad-slot-pc">
+        <AdFitBanner unit="DAN-uNXspgUS7sxUF0Xi" width={728} height={90} />
+      </div>
+
       <ExerciseSourceNote source={EXERCISE_SOURCE} />
 
       <div class="hub-tabs" id="diffTabs">
@@ -92,12 +100,30 @@ const thumbUrl = (id: string) => `https://img.youtube.com/vi/${id}/hqdefault.jpg
         }
       </div>
     </main>
+
+    <aside class="ad-rail right">
+      <AdFitBanner unit="DAN-gNuNjB3TJiRLLR61" width={160} height={600} />
+    </aside>
   </div>
 
   <Footer />
 </Layout>
 
 <style>
+  .ad-slot-mobile {
+    display: block;
+  }
+  .ad-slot-pc {
+    display: none;
+  }
+  @media (min-width: 1280px) {
+    .ad-slot-mobile {
+      display: none;
+    }
+    .ad-slot-pc {
+      display: block;
+    }
+  }
   .breadcrumb {
     font-size: 13px;
     color: var(--text-sub);

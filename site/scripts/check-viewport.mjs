@@ -72,7 +72,23 @@ const PAGES = [
     states: [{ name: 'default', run: async () => {} }],
   },
   { slug: 'en-article', path: '/en/institutions/us-ssdi-disability-benefits/', states: [{ name: 'default', run: async () => {} }] },
-  { slug: 'ko-home', path: '/ko/', states: [{ name: 'default', run: async () => {} }] },
+  {
+    // 톱바 검색(Header.astro) — 글+임상시험+연구 결과가 패널 안에 뜬다(2026-08-16 추가).
+    slug: 'ko-home',
+    path: '/ko/',
+    states: [
+      { name: 'default', run: async () => {} },
+      {
+        name: 'header-search-results',
+        run: async (page) => {
+          await page.click('#searchBtn');
+          await page.fill('#searchInput', '파킨슨');
+          await page.click('.search-panel-submit');
+          await page.waitForSelector('#searchPanelResults:not([hidden])');
+        },
+      },
+    ],
+  },
 ];
 
 const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.svg': 'image/svg+xml' };

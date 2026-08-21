@@ -86,6 +86,7 @@ const ko: Dict = {
   'search.placeholder': '제목으로 검색',
   'search.submit': '검색',
   'search.clear': '초기화',
+  'search.sectionArticles': '글',
   'search.loadMore': '더 보기',
   'search.noResults': '검색 결과가 없습니다.',
   'search.resultCount': '검색 결과 {n}건',
@@ -103,8 +104,6 @@ const ko: Dict = {
   'search.filter.anyPubtype': '연구 유형 전체',
   'search.filter.anyJournal': '게재지 전체',
   'search.filter.year': '발표 연도',
-  'search.filter.yearFrom': '연도부터',
-  'search.filter.yearTo': '연도까지',
 
   'date.yearMonth': '{y}년 {m}월',
   'date.yearOnly': '{y}년',

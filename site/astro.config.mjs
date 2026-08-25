@@ -92,11 +92,21 @@ export default defineConfig({
        * 다른 기능 배포 도중 영어·일본어 페이지가 통째로 사이트맵에 실려 나간 사고가 있었다.
        * robots.txt.ts 의 Disallow: /en/, /ja/ 와 같은 이유 — 둘 다 같이 고쳐야 한다.
        */
+      /*
+       * ⚠️⚠️ 이 로케일 목록은 **robots.txt.ts 의 Disallow · merge-deploy.mjs 의
+       * BLOCKED_LOCALES 와 항상 같아야 한다.** 셋 중 하나만 고치면 모순이 생긴다.
+       *
+       * 2026-08-24 실제 사고: 프랑스어를 추가하면서 robots.txt 와 merge-deploy 에는
+       * fr 를 넣었는데 **여기만 빠뜨렸다.** 그 결과 프로덕션에 있지도 않은 /fr/ 주소
+       * 59개가 사이트맵에 실려 나갔고, 구글이 "사이트맵에 있는데 robots.txt 가 막고
+       * 있다"며 색인 오류 메일을 보냈다(Search Console, 2026-08-23).
+       * 세 곳을 함께 검사하는 스크립트: scripts/check-blocked-locales.mjs
+       */
       filter: (page) =>
         !page.includes('/preview/') &&
         !page.includes('/tools') &&
         !page.includes('search-index.json') &&
-        !/\/(en|ja)\//.test(page),
+        !/\/(en|ja|fr)\//.test(page),
     }),
   ],
 });

@@ -97,6 +97,25 @@ function mdxBodyToPlainMarkdown(raw) {
     return hrefMatch ? `[${bold}](${hrefMatch[1]})` : bold;
   });
   s = s.replace(/<b>([\s\S]*?)<\/b>/g, (_m, inner) => `**${inner.trim()}**`);
+
+  /*
+   * 사이트 본문에서 쓰는 **레이아웃용 HTML** 을 앱이 그릴 수 있는 순수 마크다운으로 바꾼다.
+   * react-native-markdown-display 는 raw HTML 을 렌더링하지 않아, 안 바꾸면 태그가
+   * **글자 그대로 화면에 보인다**(오너 발견 2026-08-25: 소식 #8 에서 `<ul class="cell-list">`,
+   * `<div class="table-scroll">` 이 그대로 노출됐다).
+   *
+   * ⚠️ 새 레이아웃 태그를 본문에 쓰기 시작하면 **여기에도 같이 추가해야 한다.** 사이트는
+   *   MDX 라 HTML 이 그대로 통하지만 앱은 아니다 — 웹에서 잘 보인다고 끝난 게 아니다.
+   */
+  /* 표 가로 스크롤 래퍼 — 앱에서는 표 자체가 스크롤되므로 껍데기만 벗긴다(안쪽 표는 남긴다). */
+  s = s.replace(/<div class="table-scroll">\s*/g, '').replace(/\s*<\/div>/g, '');
+  /* 셀 안 목록(.cell-list) — 마크다운 목록으로. <li> 안의 인라인 마크업은 이미 위에서 변환됐다. */
+  s = s.replace(/<ul class="cell-list">([\s\S]*?)<\/ul>/g, (_m, inner) => {
+    const items = [...inner.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(
+      (m) => `- ${m[1].replace(/\s+/g, ' ').trim()}`
+    );
+    return `\n${items.join('\n')}\n`;
+  });
   // 사이트 내부 상대링크([글자](/ko/...))는 앱 안에서 그대로 열 수 없다 — 절대 URL로 바꾼다.
   s = s.replace(/\]\((\/[^)]+)\)/g, (_m, relPath) => `](${SITE_ORIGIN}${relPath})`);
   s = s.replace(/\n{3,}/g, '\n\n').trim();
@@ -247,6 +266,21 @@ async function main() {
       ? fm.publishedAt.toISOString().slice(0, 10)
       : String(fm.publishedAt ?? '').slice(0, 10);
     const plainBody = mdxBodyToPlainMarkdown(stripInlineFigures(body));
+
+    /*
+     * 변환에서 빠진 태그가 남아 있으면 **앱 화면에 글자 그대로 보인다.** 두 번 겪었다
+     * (2026-08-19 `<figure>`, 2026-08-25 `<ul class="cell-list">`·`<div class="table-scroll">`)
+     * — 둘 다 오너가 앱에서 발견해 알려줬다. 여기서 먼저 걸러 같은 일을 되풀이하지 않는다.
+     * 마크다운 표의 `|`, 인용의 `>` 같은 것은 태그가 아니므로 걸리지 않는다.
+     */
+    const leftover = plainBody.match(/<\/?[A-Za-z][^>\n]*>/g);
+    if (leftover) {
+      const kinds = [...new Set(leftover.map((t) => t.replace(/\s.*/, '').replace('>', '')))];
+      console.error(`\n✗ ${slug}: 변환되지 않은 태그가 남아 있다 — 앱에 그대로 노출된다`);
+      console.error(`  ${kinds.join(' ')}`);
+      console.error('  mdxBodyToPlainMarkdown() 에 변환 규칙을 추가할 것.');
+      process.exit(1);
+    }
 
     const { id: postId, created } = await upsertPost({
       slug,

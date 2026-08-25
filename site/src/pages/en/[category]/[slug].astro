@@ -96,7 +96,7 @@ const catHref = getRelativeLocaleUrl(locale, category);
             </ul>
           </div>
 
-          <div class="article-body">
+          <div class:list={['article-body', category === 'news' && 'news-body']}>
             <Content />
           </div>
 
@@ -407,6 +407,17 @@ const catHref = getRelativeLocaleUrl(locale, category);
     font-weight: 700;
     font-size: 14.5px;
     color: var(--text-sub);
+  }
+  /*
+   * 소식 글 표만 **첫 번째 열을 가운데 정렬**한다(오너 지시 2026-08-25).
+   * 첫 열은 "종류 / 물리치료 / 작업치료 / 언어치료"처럼 짧은 분류명이 들어가는 자리라
+   * 왼쪽 정렬이면 넓은 칸 안에서 글자가 한쪽에 몰려 보인다. 앱(PostDetailScreen 의
+   * newsMarkdownRules)에도 같은 규칙이 걸려 있어 웹·앱이 같은 얼굴이다.
+   * 제도·생활 글의 표는 첫 열에 긴 문장이 들어가는 경우가 많아 대상에서 뺀다.
+   */
+  .article-body.news-body :global(th:first-child),
+  .article-body.news-body :global(td:first-child) {
+    text-align: center;
   }
   /*
    * 셀 안에 항목이 여러 개일 때는 <ul class="cell-list"> 로 쓴다.

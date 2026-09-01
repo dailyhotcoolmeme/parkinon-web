@@ -111,7 +111,12 @@ staging 에 복사할 것.
 - ⬜ `newly-diagnosed-first-steps` 의 en·fr 판이 아직 **한국파킨슨병협회(kpda.co.kr)** 를
   출처로 달고 있다. ja 판은 난병정보센터·JPDA 로 제대로 갈아 끼웠다. 이제 해외 독자에게
   실제로 보이므로 정리 필요
-- ⬜ 프랑스어 `aidant naturel`(CRA 공식 명칭)과 금지어 가드 충돌 — 예외 처리 여부
+- ✅ 프랑스어 `aidant naturel` 과 금지어 가드 충돌 — **해결(2026-09-01)**.
+  `scripts/check-en-terms.mjs` 에 `OFFICIAL_NAMES` 를 두어 제도의 **공식 명칭 전체**가
+  통째로 일치할 때만 검사에서 뺀다(`Crédit canadien pour aidant naturel` /
+  `Canada Caregiver Credit`). 그냥 `aidant naturel` 이라고만 쓰면 **여전히 걸린다** —
+  "옛 표기를 쓰려면 공식 명칭을 정확히 다 쓰라"는 뜻이 되어 원래 의도와 맞다.
+  양쪽(통과·차단) 다 실제로 넣어 보고 확인했다.
 
 ---
 

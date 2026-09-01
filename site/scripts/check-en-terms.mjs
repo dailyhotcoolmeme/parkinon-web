@@ -36,6 +36,24 @@ const BANNED_JA = [
  * 영어와 달라서(프랑스어 표현으로 안내해야 한다) 언어별로 따로 둔다.
  * 돌봄 제공자는 퀘벡 표준 표기인 "proche aidant" 을 쓴다("aidant naturel" 은 옛 표기).
  */
+/*
+ * 제도·급여의 **공식 명칭**은 금지어 검사에서 뺀다.
+ *
+ * 왜 필요한가: 프랑스어 금지어에 `aidant naturel`(옛 표기)이 있는데, 캐나다 연방
+ * 세액공제의 **법적 이름 자체가** "Crédit canadien pour aidant naturel" 이다. 제도 글에서
+ * 공식 명칭을 임의로 바꿔 적으면 독자가 그 이름으로 검색하거나 서류를 찾을 수 없다 —
+ * 정확성이 표현 규범보다 앞선다.
+ *
+ * ⚠️ 빠져나가는 구멍이 되지 않게 **전체 공식 명칭이 통째로 일치할 때만** 뺀다.
+ *    그냥 `aidant naturel` 이라고만 쓰면 여전히 걸린다. 즉 "옛 표기를 쓰려면 공식 명칭을
+ *    정확히 다 쓰라"는 뜻이 되고, 그게 원래 바라던 바다.
+ *    퀘벡 주 세액공제는 현행 표기(`proche aidant`)를 쓰므로 여기 넣을 필요가 없다.
+ */
+const OFFICIAL_NAMES = [
+  /Cr[ée]dit canadien pour aidant naturel/gi,
+  /Canada Caregiver Credit/gi,
+];
+
 const BANNED_FR = [
   { re: /\bpatients?\b/i, fix: 'personne(s) atteinte(s) de la maladie de Parkinson' },
   { re: /\baidants? naturels?\b/i, fix: 'proche(s) aidant(s)' },
@@ -139,6 +157,7 @@ function proseOnly(raw) {
   text = text.replace(/\/(en|fr|ja)\/[a-z0-9/-]+/g, ' ');   // 내부 링크 경로
   text = text.replace(/\b(quote|attribution|name|url)\s*=\s*"[^"]*"/gs, ' '); // 컴포넌트 인용 prop
   text = text.replace(/\{\/\*[\s\S]*?\*\/\}/g, ' ');                  // MDX 주석 — 지시문에 금지어를 설명할 수 있다
+  for (const re of OFFICIAL_NAMES) text = text.replace(re, ' ');      // 제도의 공식 명칭(아래 참고)
   return text;
 }
 

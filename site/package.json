@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "node scripts/check-style-collisions.mjs && node scripts/check-blocked-locales.mjs && astro check && astro build && node scripts/check-built-html.mjs && node scripts/check-i18n.mjs && node scripts/check-en-terms.mjs && node scripts/check-glossary-terms.mjs && node scripts/check-viewport.mjs && node scripts/root-gate.mjs",
+    "build": "node scripts/check-style-collisions.mjs && node scripts/check-blocked-locales.mjs && astro check && astro build && node scripts/check-built-html.mjs && node scripts/check-i18n.mjs && node scripts/check-en-terms.mjs && node scripts/check-glossary-terms.mjs && node scripts/check-locale-scope.mjs && node scripts/check-viewport.mjs && node scripts/root-gate.mjs",
     "preview": "astro preview",
-    "deploy:dev": "node scripts/check-style-collisions.mjs && node scripts/check-blocked-locales.mjs && astro check && astro build && node scripts/check-built-html.mjs && node scripts/check-i18n.mjs && node scripts/check-en-terms.mjs && node scripts/check-glossary-terms.mjs && node scripts/check-viewport.mjs && node scripts/root-gate.mjs && wrangler pages deploy dist --project-name=parkinon-site-dev --commit-dirty=true && node scripts/set-news-app-feature.mjs && node scripts/sync-news-posts.mjs",
+    "deploy:dev": "node scripts/check-style-collisions.mjs && node scripts/check-blocked-locales.mjs && astro check && astro build && node scripts/check-built-html.mjs && node scripts/check-i18n.mjs && node scripts/check-en-terms.mjs && node scripts/check-glossary-terms.mjs && node scripts/check-locale-scope.mjs && node scripts/check-viewport.mjs && node scripts/root-gate.mjs && wrangler pages deploy dist --project-name=parkinon-site-dev --commit-dirty=true && node scripts/set-news-app-feature.mjs && node scripts/sync-news-posts.mjs",
     "check:pseudo": "PSEUDO_I18N=1 astro build && echo \"가짜 언어 빌드 완료 — dist 를 열어 레이아웃을 볼 것\"",
     "sync-news": "node scripts/sync-news-posts.mjs",
     "set-app-feature": "node scripts/set-news-app-feature.mjs",

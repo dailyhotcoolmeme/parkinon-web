@@ -157,22 +157,20 @@ export const SHOTS_BY_LOCALE: Record<string, LocaleShots> = {
   },
 };
 
-/*
- * 앱이 그 언어를 지원하는가.
- *
- * ⚠️ 아래 resolveAppShot 은 모르는 언어를 **한국어 화면으로 대체**한다. 그 자체는 의도된
- * 안전장치지만, 앱이 아예 지원하지 않는 언어(스페인어·포르투갈어)에서는 **스페인어 독자에게
- * 한국어 앱 화면을 보여주는** 꼴이 된다. 그래서 그런 언어에서는 앱 홍보를 아예 그리지 않는다
- * (2026-09-02, es/pt 추가하면서). 앱이 그 언어를 지원하게 되면 SHOTS_BY_LOCALE 에 한 줄
- * 추가하는 것만으로 자동으로 다시 나온다.
- *
- * 앱 지원 언어의 정본은 `parkinon-app/src/i18n/locales/`(ko·en·ja·fr) 다.
- */
-export const hasAppShots = (locale: string) => locale in SHOTS_BY_LOCALE;
-
 /** 그 언어에서 실제로 보여줄 화면과, 문구에 쓸 기능값을 함께 돌려준다. */
 export function resolveAppShot(locale: string, feature?: AppFeature) {
-  const set = SHOTS_BY_LOCALE[locale] ?? SHOTS_BY_LOCALE.ko;
+  /*
+   * ⚠️ 모르는 언어는 **영어**로 떨어뜨린다. 한국어가 아니다.
+   *
+   * 2026-09-02 까지 여기가 `?? SHOTS_BY_LOCALE.ko` 였다. 그래서 스페인어·포르투갈어를
+   * 추가하자마자 **그 독자에게 한국어 앱 화면**이 나갈 뻔했다. 이 파일 맨 위 주석에도,
+   * i18n 사전(`i18n/index.ts` 의 FALLBACK_LOCALE)에도 "한국어로는 절대 안 내려간다"고
+   * 적혀 있는데 여기만 그 규칙을 어기고 있었다 — 규칙이 아니라 코드가 틀렸던 자리다.
+   *
+   * 앱은 영어판이 해외 공통이므로, 앱 화면이 없는 언어에서는 영어 화면을 보여준다.
+   * 앱 홍보 자체를 숨기지 않는다 — 그 언어 독자도 앱은 쓸 수 있다.
+   */
+  const set = SHOTS_BY_LOCALE[locale] ?? SHOTS_BY_LOCALE.en;
   const base = set.fallbackLocale ? SHOTS_BY_LOCALE[set.fallbackLocale] : undefined;
 
   // 그 언어판에 없는 기능이면 값을 버린다 → 이미지도 문구도 기본 홍보로.

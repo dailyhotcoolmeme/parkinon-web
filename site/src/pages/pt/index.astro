@@ -10,15 +10,59 @@ import { inLocale, inCategory, sortByDateDesc, slugOf, categoryOf, categoryLabel
 import heroImg from '../../assets/images/hero.jpg';
 
 /*
- * ⚠️ 앱 소개 섹션이 없다 — 일부러 뺐다(2026-09-02).
- * 앱은 ko·en·ja·fr 만 지원한다(`parkinon-app/src/i18n/locales/`). 스페인어·포르투갈어
- * 화면이 없으니 다른 언어 스크린샷을 빌려다 쓰면 **이 언어 독자에게 남의 언어 앱 화면**을
- * 보여주는 꼴이 된다. 글 안의 앱 추천 박스(AppPromo)도 같은 이유로 자동으로 숨는다
- * (`lib/appShots.ts` 의 hasAppShots). 앱이 이 언어를 지원하게 되면 그때 되살린다.
+ * 앱 화면은 **영어판**을 쓴다 — 앱이 아직 스페인어/포르투갈어를 지원하지 않기 때문이다
+ * (`parkinon-app/src/i18n/locales/` = ko·en·ja·fr). 앱 자체는 이 언어 독자도 쓸 수 있으므로
+ * 홍보를 숨기지 않고, 화면만 영어판으로 보여준다. 한국어 화면으로는 절대 내려가지 않는다
+ * (lib/appShots.ts 의 resolveAppShot 과 같은 규칙).
+ * 캡션·설명은 이 언어로 옮긴다 — 스크린샷 속 글자가 영어인 것과 별개다.
  */
+import shot1 from '../../assets/images/appshots/en/01_medications.png';
+import shot2 from '../../assets/images/appshots/en/02_tracking.png';
+import shot3 from '../../assets/images/appshots/en/03_exercise.png';
+import shot4 from '../../assets/images/appshots/en/04_reminders.png';
+import shot5 from '../../assets/images/appshots/en/05_add_medication.png';
+import shot6 from '../../assets/images/appshots/en/06_premium.png';
 
+import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
 import { t, type DictKey } from '../../i18n';
 const locale = Astro.currentLocale ?? 'pt';
+
+const appShots = [
+  { img: shot1, cap: 'Registro de medicamentos', alt: 'Aplicativo ParkinON — registrando o medicamento' },
+  { img: shot2, cap: 'Corpo e humor', alt: 'Aplicativo ParkinON — registrando o estado do corpo e o humor' },
+  { img: shot3, cap: 'Registro de exercícios', alt: 'Aplicativo ParkinON — registrando o exercício' },
+  { img: shot4, cap: 'Lembretes e acompanhamento', alt: 'Aplicativo ParkinON — lembretes de dose e horários de acompanhamento' },
+  { img: shot5, cap: 'Cadastrar seus medicamentos', alt: 'Aplicativo ParkinON — cadastrar e gerenciar medicamentos' },
+  { img: shot6, cap: 'Histórico e diário da família', alt: 'Aplicativo ParkinON — menu de histórico e diário da família' },
+];
+
+const featureList = [
+  {
+    emoji: '💊',
+    title: 'Registro de medicamentos',
+    desc: 'A gente avisa na hora de tomar o medicamento.<br/>Você marca e o histórico se monta sozinho.',
+  },
+  {
+    emoji: '😊',
+    title: 'Corpo e humor',
+    desc: 'Anote como o corpo e o humor ficam depois de cada dose, no seu próprio horário de medicamentos.<br/>Quando esses registros se acumulam, viram algo concreto para levar à consulta na hora de ajustar as doses.',
+  },
+  {
+    emoji: '🏃',
+    title: 'Registro de exercícios',
+    desc: 'Anotar o que você fez hoje ajuda a não desistir.<br/>Quem acompanha também vê o quanto você tem se movimentado.',
+  },
+  {
+    emoji: '👨‍👩‍👧',
+    title: 'Vínculo com a família',
+    desc: 'Quando você registra alguma coisa, quem acompanha é avisado.<br/>Dá para ver se o medicamento foi tomado e como você está, e ajudar sem precisar perguntar.<br/>Mesmo morando longe, a família sabe como você está.',
+  },
+  {
+    emoji: '📔',
+    title: 'Diário da família',
+    desc: 'Deixe uma nota curta sobre o seu dia, que depois pode virar um livro digital.<br/>A família também pode escrever, e assim vocês se apoiam.',
+  },
+];
 
 
 
@@ -157,6 +201,55 @@ const axisCards = [
         </div>
       </section>
 
+      <section class="cta">
+        <div class="cta-text">
+          <h2>Leve com você para qualquer lugar, com o aplicativo ParkinON</h2>
+          <p>Seus registros do dia e seus lembretes, na mão. Letra grande e uma tela limpa, para continuar fácil de usar.</p>
+          <div class="store-badges">
+            <a class="store-badge" href={PLAY_STORE_URL} target="_blank" rel="noopener">
+              <svg class="icon" viewBox="0 0 24 24" fill="#fff"><polygon points="5,3 5,21 20,12"></polygon></svg>
+              <span class="big">Google Play</span>
+            </a>
+            <a class="store-badge" href={appleStoreUrl(locale)} target="_blank" rel="noopener">
+              <svg class="icon" viewBox="0 0 384 512" fill="#fff"
+                ><path
+                  d="M318 268c-1-56 46-83 48-84-26-38-67-43-81-44-34-3-67 20-84 20-18 0-44-20-73-19-37 1-72 22-91 55-39 68-10 168 28 223 19 27 41 57 71 56 28-1 39-18 74-18 34 0 45 18 74 18 31-1 50-27 69-54 22-31 31-61 31-63-1 0-59-23-60-90zM258 63c16-19 27-46 24-73-23 1-51 15-68 34-15 17-28 44-25 70 26 2 53-13 69-31z"
+                ></path></svg
+              >
+              <span class="big">App Store</span>
+            </a>
+          </div>
+          <div class="feature-list">
+            {
+              featureList.map((f) => (
+                <div>
+                  <div class="f-head">
+                    <span class="f-emoji">{f.emoji}</span>
+                    <b>{f.title}</b>
+                  </div>
+                  <p class="f-desc" set:html={f.desc} />
+                </div>
+              ))
+            }
+          </div>
+          <button type="button" class="app-preview-toggle" id="appPreviewToggle" aria-expanded="false" aria-controls="appPreviewPanel">
+            <span>See app screens</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"></path></svg>
+          </button>
+          <div class="app-preview-panel" id="appPreviewPanel">
+            <div class="app-shots">
+              {
+                appShots.map((s) => (
+                  <div class="shot">
+                    <div class="shot-cap">{s.cap}</div>
+                    <Image src={s.img} alt={s.alt} />
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 

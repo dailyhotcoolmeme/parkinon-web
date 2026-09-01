@@ -62,19 +62,31 @@ const localeLinks = (await localeLinksFor(Astro.url.pathname)).filter((l) => lan
     {localeLinks.length > 1 && (
       <div class="footer-col">
         <h4><Tr k="footer.language" /></h4>
-        <div class="footer-langs">
+        {/*
+          콤보박스(select)로 고른다 — 오너 지시 2026-09-01. 60대 이상이 주 독자라
+          타이핑 없이 탭·선택으로만 끝나는 형태를 쓴다. 네이티브 select 라 모바일에서는
+          OS 기본 선택 화면이 떠서 손가락으로 고르기 쉽다.
+
+          값은 이동할 주소 그대로다. 고르는 즉시 이동하고, 같은 쿠키(pon_lang)를 남겨
+          루트 자동 전환이 다음 방문에 이 선택을 존중하게 한다.
+        */}
+        <select class="footer-lang-select" aria-label={t(locale, 'footer.language')}>
           {localeLinks.map((l) => (
-            <a
-              href={l.href}
-              lang={l.code}
-              hreflang={l.code}
-              data-lang={l.code}
-              aria-current={l.code === locale ? 'true' : undefined}
-            >
+            <option value={l.href} data-lang={l.code} lang={l.code} selected={l.code === locale}>
               {langName.get(l.code)}
-            </a>
+            </option>
           ))}
-        </div>
+        </select>
+        {/* 스크립트가 막혀 있으면 select 는 아무 일도 못 한다 — 그때도 언어를 바꿀 길은 남겨둔다. */}
+        <noscript>
+          <div class="footer-langs">
+            {localeLinks.map((l) => (
+              <a href={l.href} lang={l.code} hreflang={l.code}>
+                {langName.get(l.code)}
+              </a>
+            ))}
+          </div>
+        </noscript>
       </div>
     )}
   </div>
@@ -108,14 +120,17 @@ const localeLinks = (await localeLinksFor(Astro.url.pathname)).filter((l) => lan
   스크립트가 막혀 있어도 링크 자체는 그냥 동작한다 — 기억만 안 될 뿐이다.
 */}
 <script is:inline>
-  document.querySelectorAll('.footer-langs a[data-lang]').forEach(function (a) {
-    a.addEventListener('click', function () {
+  document.querySelectorAll('select.footer-lang-select').forEach(function (sel) {
+    sel.addEventListener('change', function () {
+      var opt = sel.options[sel.selectedIndex];
+      if (!opt) return;
       try {
         document.cookie =
-          'pon_lang=' + a.dataset.lang + '; path=/; max-age=31536000; samesite=lax';
+          'pon_lang=' + opt.dataset.lang + '; path=/; max-age=31536000; samesite=lax';
       } catch (e) {
-        /* 쿠키가 막혀 있어도 이동은 그대로 진행된다 */
+        /* 쿠키가 막혀 있어도 이동은 그대로 진행한다 — 기억만 안 될 뿐이다 */
       }
+      window.location.href = opt.value;
     });
   });
 </script>
@@ -136,17 +151,25 @@ const localeLinks = (await localeLinksFor(Astro.url.pathname)).filter((l) => lan
     gap: 16px;
   }
   /*
-   * 언어 전환 — 이름이 짧아 세로로 쌓으면 빈 공간만 길어진다. 가로로 흘리되 좁아지면 접힌다.
-   * 지금 보고 있는 언어는 눌러도 제자리라, 색으로 "여기"라고만 표시하고 링크는 그대로 둔다.
+   * 언어 콤보박스. 임상시험 검색의 select(높이 40 · 테두리 1.5px · 반경 8)와 같은 얼굴로 맞춘다.
+   * 푸터 배경이 --surface-low 라 --bg 를 깔아야 입력 요소로 보인다.
    */
+  .footer-lang-select {
+    height: 40px;
+    max-width: 200px;
+    padding: 0 10px;
+    border: 1.5px solid var(--outline);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+  }
+  /* 스크립트가 막혔을 때만 나오는 대체 링크 */
   .footer-langs {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 14px;
-  }
-  .footer-langs a[aria-current='true'] {
-    color: var(--brand-on-dark, #9ad39f);
-    font-weight: 700;
   }
   @media (max-width: 760px) {
     .footer-top {

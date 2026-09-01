@@ -15,13 +15,17 @@ import type { APIRoute } from 'astro';
  * /app/ 는 색인에서 뺀다 — 6자리 코드 입력용 로그인 화면이라 검색에 잡힐 콘텐츠가 없다.
  * /ko/tools/ 도 뺀다 — 헤더·푸터엔 안 걸려 있는 "공개 여부 미정" 페이지다(nav.ts 참고).
  *
- * ⚠️ /en/·/ja/·/fr/ 도 뺀다(2026-08-16 오너 지시, 강력 조치 지시) — "애드센스 심사는
- * 한국어만 보이게" 해둔 상태였는데, merge-deploy.mjs 가 사이트 전체(모든 언어)를 통째로
- * 프로덕션에 올리는 구조라 다른 기능 배포(임상시험 검색 API, 톱바 검색 등) 도중 영어
- * 88개·일본어 63개 URL 이 통째로 sitemap 에 실려 나간 사고가 있었다. 애드센스 통과
- * 전까지는 한국어 외 언어는 프로덕션에 **아예 배포되지 않는다**(merge-deploy.mjs 가
- * en/ja/fr 디렉터리 자체를 복사에서 뺀다 — 이 robots.txt 규칙은 2중 안전장치다).
- * 이 규칙은 오너가 애드센스 통과를 확인해줄 때까지 지우지 말 것.
+ * ⚠️ 언어 차단은 **지금 없다(2026-09-01)**. 2026-08-16 ~ 08-31 에는 여기에
+ * `Disallow: /en/` `/ja/` `/fr/` 가 있었다 — "애드센스 심사는 한국어만 보이게" 해둔
+ * 상태에서 merge-deploy.mjs 가 사이트 전체를 통째로 올리는 구조라, 다른 기능 배포 도중
+ * 영어 88개·일본어 63개 URL 이 sitemap 에 실려 나간 사고가 있었기 때문이다.
+ * 2026-08-30 애드센스가 parkinon.com 을 거절했고 재심사를 한참 뒤로 미루기로 하면서,
+ * 오너 지시로 en/ja/fr 을 모두 열었다.
+ *
+ * 다시 막을 때는 여기에 Disallow 를 되살리는 것만으로는 부족하다 — astro.config.mjs 의
+ * sitemap 필터, scripts/merge-deploy.mjs 와 scripts/guard-production-locales.mjs 의
+ * BLOCKED_LOCALES 까지 **네 곳을 같은 값으로** 고쳐야 한다.
+ * 검사 스크립트: site/scripts/check-blocked-locales.mjs
  */
 export const GET: APIRoute = ({ site }) => {
   const indexable = site?.host === 'parkinon.com';
@@ -31,9 +35,6 @@ export const GET: APIRoute = ({ site }) => {
 Allow: /
 Disallow: /app/
 Disallow: /ko/tools/
-Disallow: /en/
-Disallow: /ja/
-Disallow: /fr/
 Disallow: /*/search-index.json
 
 Sitemap: ${new URL('sitemap-index.xml', site).href}

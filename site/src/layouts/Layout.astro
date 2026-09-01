@@ -103,13 +103,21 @@ const xDefault = translations?.ko;
  * dev 배포(parkinon-site-dev.pages.dev)가 검색에 잡히면 본 사이트와 중복 콘텐츠가 된다.
  * 정식 도메인으로 빌드할 때만 색인을 허용한다 → PUBLIC_SITE_URL=https://parkinon.com
  *
- * ⚠️ 언어도 같이 본다(2026-08-16 오너 지시) — "애드센스 심사는 한국어만 보이게" 해둔
- * 상태인데, merge-deploy.mjs 가 전체 언어를 한 번에 프로덕션에 올리는 구조라 다른 기능
- * 배포 도중 영어·일본어 페이지가 색인 가능한 채로 나간 사고가 있었다. robots.txt(Disallow:
- * /en/, /ja/)는 크롤링 자체를 막지만, 이미 알려진 URL은 그것만으로 검색결과에서 안
- * 빠질 수 있다 — meta noindex 가 실제 디인덱싱에 더 확실한 수단이라 여기도 같이 막는다.
+ * 2026-08-16 ~ 08-31 에는 여기에 `&& locale === 'ko'` 가 붙어 있었다 — "애드센스 심사는
+ * 한국어만 보이게" 해둔 기간이라 해외 언어에는 noindex 를 걸었다. 08-30 애드센스가
+ * parkinon.com 을 거절했고 재심사를 한참 뒤로 미루기로 하면서, 오너 지시로 전 언어를
+ * 열었다(2026-09-01) → 이제 색인은 도메인만 본다.
  */
-const indexable = Astro.site?.host === 'parkinon.com' && locale === 'ko';
+const indexable = Astro.site?.host === 'parkinon.com';
+
+/*
+ * 광고(카카오 애드핏) 호출 조건은 색인과 **따로** 둔다.
+ * - dev 배포에서는 테스트용 무효 노출이 잡히지 않게 아예 안 부른다.
+ * - 애드핏은 국내 광고주 네트워크라 해외 언어 페이지에 띄워봐야 채워지지 않는다.
+ *   그래서 언어를 연 뒤에도 광고는 **한국어 페이지에서만** 나가게 유지한다
+ *   (2026-09-01 — 해외 언어 광고를 어떻게 할지는 오너가 따로 정할 사안).
+ */
+const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
 ---
 
 <!doctype html>
@@ -151,10 +159,9 @@ const indexable = Astro.site?.host === 'parkinon.com' && locale === 'ko';
     <slot />
     {/*
       카카오 애드핏 로더. 애드핏 SDK 가이드 권장대로 </body> 바로 위에서 한 번만 불러온다.
-      애드센스 심사 통과 전까지 한국어·프로덕션에서만(=indexable) 광고 호출이 나가게 한다 —
-      개발 서버(parkinon-site-dev.pages.dev)에서 테스트용 무효 노출이 잡히지 않게 하기 위함.
+      조건은 위 adsEnabled 참고 — 프로덕션 + 한국어 페이지에서만 부른다.
     */}
-    {indexable && (
+    {adsEnabled && (
       <script async type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js"></script>
     )}
   </body>

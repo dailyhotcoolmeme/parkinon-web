@@ -53,20 +53,29 @@ rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
 /*
- * ⚠️ 애드센스 통과 전까지 한국어 외 언어는 프로덕션에 아예 올리지 않는다(2026-08-16
- * 오너 지시, "강력하게 조치해라"). 예전엔 robots.txt/noindex 로 "검색엔진에는 안 보이게"만
- * 해뒀는데, 그래도 URL 자체는 실제로 떠 있어서 다른 기능 배포에 딸려 en 88개·ja 63개가
- * sitemap 에 그대로 실려 나간 사고가 있었다(임상시험 검색 API·톱바 검색 배포 도중).
- * 이번엔 아예 파일 자체를 복사에서 뺀다 — noindex 를 깜빡해도, sitemap 필터를 깜빡해도
- * 사고가 안 나는 구조. site/astro.config.mjs 의 i18n.locales 와 맞춰 관리한다.
+ * 프로덕션에서 제외할 언어 목록. **지금은 비어 있다 = 전 언어를 올린다.**
  *
- * 이 배열을 지우거나 줄이는 건 오너가 애드센스 통과를 확인해준 뒤에만 할 것 —
- * scripts/guard-production-locales.mjs(배포 커맨드를 가로채는 훅)도 같은 목록을 본다.
+ * 연혁:
+ * - 2026-08-16 오너 지시로 en/ja/fr 을 막았다("애드센스 심사는 한국어만 보이게",
+ *   "강력하게 조치해라"). 그전엔 robots.txt/noindex 로 "검색엔진에만 안 보이게" 했는데,
+ *   URL 자체는 떠 있어서 다른 기능 배포에 딸려 en 88개·ja 63개가 sitemap 에 실려 나간
+ *   사고가 있었다. 그래서 파일 자체를 복사에서 빼는 방식으로 바꿨다.
+ * - 2026-08-30 애드센스가 parkinon.com 을 **거절**했다. 재심사는 한참 뒤로 미루기로 했고,
+ *   그때까지 사이트를 잠가 둘 이유가 없어져 **2026-09-01 오너 지시로 전 언어를 열었다.**
+ *   (재심사 준비 때 다시 잠글 수 있으므로 구조는 그대로 남겨 둔다.)
+ *
+ * 다시 막을 때는 **네 곳을 함께** 고쳐야 한다 — site/scripts/check-blocked-locales.mjs
+ * 가 네 곳이 같은지 검사한다. 한 곳만 고치면 "사이트맵엔 있는데 robots.txt 가 막는"
+ * 모순이 생겨 구글이 색인 오류를 보낸다(2026-08-24 실제 사고).
  */
-const BLOCKED_LOCALES = ['en', 'ja', 'fr'];
-console.log(`   (애드센스 통과 전까지 프로덕션에서 제외: ${BLOCKED_LOCALES.join(', ')})`);
+const BLOCKED_LOCALES = [];
+console.log(
+  BLOCKED_LOCALES.length
+    ? `   (프로덕션에서 제외: ${BLOCKED_LOCALES.join(', ')})`
+    : '   (전 언어 배포 — 제외 없음)'
+);
 
-// Astro 가 루트를 맡는다 — 단, 위 차단 언어 디렉터리는 복사하지 않는다.
+// Astro 가 루트를 맡는다 — 차단 언어가 있으면 그 디렉터리만 복사에서 뺀다.
 cpSync(ASTRO_DIST, OUT, {
   recursive: true,
   filter: (src) => {

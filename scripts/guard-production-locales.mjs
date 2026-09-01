@@ -1,18 +1,22 @@
 #!/usr/bin/env node
 /*
  * PreToolUse(Bash) 훅 — parkinon-web(프로덕션) 배포 명령을 가로채서, 배포 대상 디렉터리
- * 안에 애드센스 통과 전까지 막아둔 언어(en/ja/fr) 폴더가 있으면 배포 자체를 차단한다.
+ * 안에 "막아둔 언어" 폴더가 있으면 배포 자체를 차단한다.
+ *
+ * **지금 목록은 비어 있다 = 아무 언어도 막지 않는다(2026-09-01).** 애드센스가 8/30 에
+ * parkinon.com 을 거절했고 재심사를 한참 뒤로 미루기로 하면서, 오너 지시로 en/ja/fr 을
+ * 모두 열었다. 훅 자체는 남겨 둔다 — 재심사 준비 때 배열만 다시 채우면 바로 작동한다.
  *
  * ★왜 있나(2026-08-16, 오너 지시 "강력하게 조치해라. 훅으로도"): merge-deploy.mjs 가
- * en/ja/fr 을 복사에서 빼도록 이미 고쳤지만, 그건 "그 스크립트를 정확히 쓸 때만" 지켜지는
+ * 차단 언어를 복사에서 빼도록 고쳐 놨어도, 그건 "그 스크립트를 정확히 쓸 때만" 지켜지는
  * 규칙이다. 코드만 믿었다가 임상시험 검색 API·톱바 검색 배포 도중 다른 경로로 실수가
  * 반복된 적이 있다(BC카드 국내 전용 안내를 해외 언어에 번역해 넣은 사고와 같은 종류).
  * 훅은 Claude 가 규칙을 잊어도, 세션이 새로 시작돼도 계속 작동한다.
  *
- * 이 목록은 scripts/merge-deploy.mjs 의 BLOCKED_LOCALES 와 같이 관리한다 — 오너가
- * 애드센스 통과를 확인해줄 때만 줄인다.
+ * 이 목록은 scripts/merge-deploy.mjs 의 BLOCKED_LOCALES 와 항상 같아야 한다 —
+ * site/scripts/check-blocked-locales.mjs 가 네 곳을 함께 검사한다.
  */
-const BLOCKED_LOCALES = ['en', 'ja', 'fr'];
+const BLOCKED_LOCALES = [];
 
 import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';

@@ -182,6 +182,7 @@ const ja: Dict = {
 
   'footer.quickLinks': 'クイックリンク',
   'footer.support': 'サポート',
+  'footer.language': '言語',
   'footer.privacyWeb': 'プライバシーポリシー',
   'footer.termsApp': 'アプリ利用規約',
   'footer.privacyApp': 'アプリのプライバシーポリシー',

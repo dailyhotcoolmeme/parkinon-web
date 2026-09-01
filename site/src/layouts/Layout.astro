@@ -3,6 +3,7 @@ import { getImage } from 'astro:assets';
 import ogSource from '../assets/images/hero.jpg';
 import logoImg from '../assets/images/logo.png';
 import { t } from '../i18n';
+import { localeLinksFor } from '../lib/i18nLinks';
 
 type Locale = 'ko' | 'en' | 'fr' | 'ja';
 
@@ -20,10 +21,10 @@ interface Props {
   breadcrumbs?: { name: string; path: string }[];
   article?: { headline: string; datePublished: string; description?: string };
   /*
-   * 이 글의 다른 언어판 경로. 예: { ko: '/ko/institutions', en: '/en/institutions' }
-   * ⚠️ **실제로 존재하는 언어만** 넘길 것. 없는 번역까지 hreflang 을 걸면 상호 링크가
-   * 성립하지 않아 Google 이 주석 전체를 무시할 수 있다(현지화 버전 문서).
-   * 번역이 하나뿐이면(=한국어만) hreflang 을 아예 내보내지 않는다.
+   * hreflang 을 **손으로** 지정할 때만 쓴다. 보통은 넘기지 않는다 —
+   * 안 넘기면 아래에서 `lib/i18nLinks.ts` 가 경로를 보고 알아서 계산한다.
+   * ⚠️ 넘길 거면 **실제로 존재하는 언어만** 넣을 것. 없는 번역까지 hreflang 을 걸면
+   * 상호 링크가 성립하지 않아 Google 이 주석 전체를 무시한다(현지화 버전 문서).
    */
   translations?: Partial<Record<Locale, string>>;
 }
@@ -95,9 +96,22 @@ if (article) {
   });
 }
 
-// hreflang: 자기 자신 포함 전부 나열 + x-default(기본 언어). 절대 URL 이어야 한다.
-const alternates = translations && Object.keys(translations).length > 1 ? Object.entries(translations) : [];
-const xDefault = translations?.ko;
+/*
+ * hreflang: 자기 자신 포함 전부 나열 + x-default. 절대 URL 이어야 한다.
+ *
+ * ⚠️ 예전에는 페이지가 `translations` prop 을 넘겨주기를 기다렸는데, **넘기는 페이지가
+ * 하나도 없어서 2026-09-01 까지 사이트 전체에 hreflang 이 한 줄도 안 나갔다**(라이브에서
+ * `rel="alternate"` 0개 확인). 그래서 지금은 **경로를 보고 스스로 계산한다** — 페이지가
+ * 늘어도 따로 챙길 것이 없다. prop 으로 넘어온 값이 있으면 그쪽을 우선한다(예외 처리용).
+ *
+ * `exact: false`(번역이 없어 그 언어의 홈으로 보내는 경우)는 **넣지 않는다.** 같은 내용이
+ * 아닌 주소를 번역판이라고 알리면 상호 링크가 성립하지 않아 Google 이 주석 전체를 무시한다.
+ */
+const autoLinks = translations ? [] : await localeLinksFor(Astro.url.pathname);
+const autoPairs = autoLinks.filter((l) => l.exact).map((l) => [l.code, l.href] as [string, string]);
+const pairs = translations ? Object.entries(translations) : autoPairs;
+const alternates = pairs.length > 1 ? pairs : [];
+const xDefault = translations?.ko ?? autoPairs.find(([c]) => c === 'ko')?.[1];
 
 /*
  * dev 배포(parkinon-site-dev.pages.dev)가 검색에 잡히면 본 사이트와 중복 콘텐츠가 된다.

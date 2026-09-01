@@ -177,6 +177,7 @@ const ko: Dict = {
 
   'footer.quickLinks': '바로가기',
   'footer.support': '고객지원',
+  'footer.language': '언어',
   'footer.privacyWeb': '개인정보처리방침',
   'footer.termsApp': '앱 이용약관',
   'footer.privacyApp': '앱 개인정보처리방침',

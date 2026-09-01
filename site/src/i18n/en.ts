@@ -209,6 +209,7 @@ const en = {
 
   'footer.quickLinks': 'Quick links',
   'footer.support': 'Support',
+  'footer.language': 'Language',
   'footer.privacyWeb': 'Privacy policy',
   'footer.termsApp': 'App terms of service',
   'footer.privacyApp': 'App privacy policy',

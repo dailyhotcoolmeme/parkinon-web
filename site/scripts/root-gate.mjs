@@ -1,10 +1,15 @@
 /*
- * 대문(`/`)을 언제 보여줄지 정한다. 빌드 끝에 돈다.
+ * 루트(`/`) 처리를 빌드 결과에 맞춰 정리한다. 빌드 끝에 돈다.
  *
- * 언어가 하나뿐이면 대문은 방해만 된다 — 버튼이 하나뿐인 문을 지나게 하는 셈이다.
- * 그때는 `_redirects` 에 `/ → /ko/` 를 넣어 대문을 건너뛰고, 사이트맵에서도 `/` 를 뺀다
- * (리다이렉트되는 주소를 사이트맵에 올리면 Search Console 이 문제로 잡는다).
- * 두 번째 언어가 생기면 둘 다 되돌려 대문이 드러나게 한다.
+ * ⚠️ 2026-09-01 변경 — 이제 `/` 는 **어느 경우에도 사람에게 대문을 바로 보여주지 않는다.**
+ *   `functions/index.ts`(Pages Function)가 쿠키 → 브라우저 언어 → 접속 국가 순으로 보고
+ *   해당 언어판으로 302 로 넘긴다(오너 지시). 대문 페이지 자체는 `?lang=choose` 로 남아 있다.
+ *
+ *   그래서 이 스크립트가 하는 일은 두 가지로 줄었다.
+ *   1) 언어가 하나뿐이면 `_redirects` 에 `/ → /xx/` 를 넣는다 — Function 이 없거나
+ *      `_routes.json` 에서 `/` 가 빠지는 사고가 나도 대문에 갇히지 않게 하는 이중 안전장치다.
+ *   2) **사이트맵에서 `/` 를 항상 뺀다.** 302 로 넘어가는 주소를 사이트맵에 올리면
+ *      Search Console 이 "페이지에 리디렉션이 있음"으로 잡는다.
  *
  * 사람이 기억해서 손으로 넣고 빼면 반드시 잊는다. 그래서 **빌드된 결과물을 보고** 판단한다.
  */
@@ -74,17 +79,15 @@ if (existsSync(sitemap)) {
   const xml = await readFile(sitemap, 'utf8');
   // 언어 접두사가 없는 맨 뿌리 주소 하나만 노린다: <url><loc>https://…/</loc>…</url>
   const rootEntry = /<url>\s*<loc>https?:\/\/[^/]+\/<\/loc>.*?<\/url>/s;
-  if (skipGate && rootEntry.test(xml)) {
+  // `/` 는 언제나 다른 주소로 넘어간다(언어 하나면 _redirects, 여럿이면 Function) → 항상 뺀다.
+  if (rootEntry.test(xml)) {
     await writeFile(sitemap, xml.replace(rootEntry, ''));
     sitemapNote = ' · 사이트맵에서 / 제외';
-  } else if (!skipGate && !rootEntry.test(xml)) {
-    // 대문을 쓰는데 사이트맵에 없다면 Astro 쪽 설정이 바뀐 것이다. 조용히 넘기지 않는다.
-    console.warn('⚠️ 대문을 쓰는데 사이트맵에 / 가 없다 — astro.config 의 sitemap 설정을 확인할 것');
   }
 }
 
 console.log(
   skipGate
-    ? `✓ 대문 건너뜀 — 언어가 ${only} 하나뿐이라 / → /${only}/ 로 보낸다${sitemapNote}`
-    : `✓ 대문 사용 — 언어 ${locales.length}개(${locales.join(', ')}), / 가 대문을 보여준다`
+    ? `✓ 루트 정리 — 언어가 ${only} 하나뿐이라 _redirects 로 / → /${only}/${sitemapNote}`
+    : `✓ 루트 정리 — 언어 ${locales.length}개(${locales.join(', ')}), / 는 Function 이 언어별로 302${sitemapNote}`
 );

@@ -61,6 +61,21 @@ const compact = GATE_LANGUAGES.length >= 5;
     </div>
   </main>
 
+
+{/*
+  대문에서 고른 언어도 기억한다 — 푸터 전환기와 같은 쿠키(pon_lang). 이 쿠키가 있으면
+  루트(`/`) Function 이 다음 방문부터 자동 전환보다 이 값을 우선한다.
+*/}
+<script is:inline>
+  document.querySelectorAll('.langs a[hreflang]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      try {
+        document.cookie =
+          'pon_lang=' + a.getAttribute('hreflang') + '; path=/; max-age=31536000; samesite=lax';
+      } catch (e) {}
+    });
+  });
+</script>
 </Layout>
 
 <style>

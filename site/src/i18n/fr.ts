@@ -183,6 +183,7 @@ const fr: Dict = {
 
   'footer.quickLinks': 'Liens rapides',
   'footer.support': 'Assistance',
+  'footer.language': 'Langue',
   'footer.privacyWeb': 'Politique de confidentialité',
   'footer.termsApp': 'Conditions d’utilisation de l’appli',
   'footer.privacyApp': 'Politique de confidentialité de l’appli',

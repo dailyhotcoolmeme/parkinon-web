@@ -25,7 +25,7 @@
  * 잘 안 보내서 대개 5)번 영어로 떨어지는데, 그것이 x-default 와도 어긋나지 않는다.
  */
 
-const SUPPORTED = ['ko', 'en', 'ja', 'fr'] as const;
+const SUPPORTED = ['ko', 'en', 'ja', 'fr', 'es', 'pt'] as const;
 type Lang = (typeof SUPPORTED)[number];
 const FALLBACK: Lang = 'en';
 
@@ -33,12 +33,38 @@ const FALLBACK: Lang = 'en';
 const COUNTRY_TO_LANG: Record<string, Lang> = {
   KR: 'ko',
   JP: 'ja',
+  // 프랑스어권
   FR: 'fr',
   BE: 'fr',
   CH: 'fr',
   CA: 'fr', // 퀘벡. 영어권 캐나다는 Accept-Language 로 대부분 먼저 걸린다.
   MC: 'fr',
   LU: 'fr',
+  // 포르투갈어권 — 브라질이 대상이다(포르투갈은 EEA 라 광고를 안 내보낸다)
+  BR: 'pt',
+  PT: 'pt',
+  AO: 'pt',
+  MZ: 'pt',
+  // 스페인어권 — 중남미가 대상이다(스페인은 EEA)
+  MX: 'es',
+  AR: 'es',
+  CO: 'es',
+  CL: 'es',
+  PE: 'es',
+  VE: 'es',
+  EC: 'es',
+  GT: 'es',
+  CU: 'es',
+  BO: 'es',
+  DO: 'es',
+  HN: 'es',
+  PY: 'es',
+  SV: 'es',
+  NI: 'es',
+  CR: 'es',
+  PA: 'es',
+  UY: 'es',
+  ES: 'es',
 };
 
 function isLang(v: string): v is Lang {

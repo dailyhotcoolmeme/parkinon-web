@@ -1,0 +1,510 @@
+---
+/*
+ * 글 상세 — 마크다운(MDX) 파일 하나가 이 라우트로 렌더된다.
+ * 폴더 이름이 카테고리, 파일 이름이 slug 다. (src/content/articles/institutions/xxx.mdx → /ko/institutions/xxx)
+ *
+ * 디자인은 2026-08-06 오너 승인 시안 그대로다(/ko/preview/article-design).
+ * 순서: 히어로 → 세 줄 요약 → 본문 → 출처 → **앱 추천(글 끝난 뒤)** → 관련 글.
+ */
+import { getCollection, render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { Image } from 'astro:assets';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import SourceBox from '../../../components/article/SourceBox.astro';
+import AppPromo from '../../../components/article/AppPromo.astro';
+import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale, findRelatedArticles } from '../../../lib/articles';
+import { t, tv } from '../../../i18n';
+
+export async function getStaticPaths() {
+  // 이 라우트는 /fr/ 아래다 → 프랑스어 글만 만든다. 다른 언어는 각자 라우트가 맡는다.
+  const all = await getCollection('articles', inLocale('pt'));
+  return all.map((entry) => ({
+    params: { category: categoryOf(entry), slug: slugOf(entry) },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const locale = Astro.currentLocale ?? 'pt';
+const category = categoryOf(entry);
+const slug = slugOf(entry);
+const catLabel = categoryLabel(locale, category);
+
+const { Content, headings } = await render(entry);
+const toc = headings.filter((h) => h.depth === 2).map((h) => ({ id: h.slug, label: h.text }));
+
+// 같은 카테고리의 다른 글 — 사이드 목록과 하단 관련 글에 쓴다(지어내지 않고 실제 글만)
+const siblings = sortByDateDesc(
+  await getCollection('articles', inCategory(locale, category))
+).filter((e) => e.id !== entry.id);
+
+const sideLinks = siblings.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`),
+}));
+const related = findRelatedArticles(entry, siblings);
+
+const catHref = getRelativeLocaleUrl(locale, category);
+---
+
+<Layout
+  title={`${entry.data.title} — ${t(locale, 'brand.name')}`}
+  description={entry.data.description}
+  ogType="article"
+  article={{
+    headline: entry.data.title,
+    datePublished: entry.data.publishedAt.toISOString().slice(0, 10),
+    description: entry.data.description,
+  }}
+  breadcrumbs={[
+    { name: t(locale, 'breadcrumb.home'), path: `/${locale}/` },
+    { name: catLabel, path: `/${locale}/${category}/` },
+    { name: entry.data.title, path: `/${locale}/${category}/${slug}/` },
+  ]}
+>
+  <Header active={category} />
+
+  <div class="layout">
+    <main class="col">
+      <section class="a-hero" style={`background-image:url(${entry.data.hero.src});`}>
+        <div class="a-hero-inner">
+          <span class="a-tag">{entry.data.tag}</span>
+          <h1>{entry.data.title}</h1>
+          <div class="a-meta">
+            <span>{formatDate(entry.data.publishedAt)}</span>
+            {entry.data.basisDate && <span class="basis">{entry.data.basisDate}</span>}
+          </div>
+        </div>
+      </section>
+
+      <div class="content-body detail-body">
+        <nav class="breadcrumb">
+          <a href={getRelativeLocaleUrl(locale, '')}>{t(locale, 'breadcrumb.home')}</a><span class="sep">/</span>
+          <a href={catHref}>{catLabel}</a><span class="sep">/</span>
+          <span>{entry.data.title}</span>
+        </nav>
+
+        <article>
+          <div class="a-summary">
+            <h2>{t(locale, 'article.summaryTitle')}</h2>
+            <ul>
+              {entry.data.summary.map((line) => <li set:html={line} />)}
+            </ul>
+          </div>
+
+          <div class:list={['article-body', category === 'news' && 'news-body']}>
+            <Content />
+          </div>
+
+          <SourceBox
+            basisDate={entry.data.basisDate}
+            sources={entry.data.sources}
+            contact={entry.data.contact}
+          />
+
+          {!entry.data.hideAppPromo && <AppPromo feature={entry.data.appFeature} />}
+
+          {
+            related.length > 0 && (
+              <div class="a-related">
+                <h2>{t(locale, 'article.relatedTitle')}</h2>
+                <div class="a-related-grid">
+                  {related.map((e) => (
+                    <a href={getRelativeLocaleUrl(locale, `${category}/${slugOf(e)}`)}>
+                      <Image src={e.data.thumbnail ?? e.data.hero} alt="" widths={[240, 360]} sizes="240px" />
+                      <span class="t">{e.data.title}</span>
+                      <span class="d">{formatDate(e.data.publishedAt)}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </article>
+
+        <ArticleSide toc={toc} links={sideLinks} linksTitle={tv(locale, 'side.moreIn', { category: catLabel })} />
+      </div>
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  /*
+   * 히어로 — 작업 영역(main.col) 안쪽에서만 edge-to-edge. 화면 전체로 뻗지 않는다.
+   * 위쪽 마진 -28px 는 main.col의 top padding(28px)을 상쇄해 톱바에 바로 붙인다 —
+   * 허브 히어로(.hub-hero-full)는 이미 이렇게 되어 있었는데 상세 페이지만 빠져 있었다
+   * (2026-08-09 오너 지적: 히어로 위에 흰 여백이 떠 있었다).
+   */
+  .a-hero {
+    position: relative;
+    width: auto;
+    margin: -28px calc(-1 * var(--gutter)) 28px;
+    min-height: 300px;
+    display: flex;
+    align-items: flex-end;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--surface-low);
+  }
+  .a-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(10, 20, 12, 0.82), rgba(10, 20, 12, 0.15) 65%, rgba(10, 20, 12, 0) 90%);
+  }
+  /*
+   * 위 여백은 아래(28px)와 대칭으로 둔다. 히어로가 flex-end(아래 정렬)라 제목이 짧을 때는
+   * 이 값이 눈에 띄지 않지만, 제목이 길어져 내용이 min-height(300px)를 넘기면 위로 밀리면서
+   * 태그 배지가 히어로 위쪽 경계에 딱 붙는다(2026-08-19 오너 발견 — 프랑스어 제목이 모바일
+   * 8줄까지 길어져 드러났다). ko·en·ja 도 같은 CSS라 제목이 길어지면 똑같이 재현된다.
+   */
+  .a-hero-inner {
+    position: relative;
+    z-index: 1;
+    padding: 28px var(--gutter);
+    max-width: 860px;
+  }
+  .a-tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 800;
+    color: #fff;
+    background: var(--primary);
+    padding: 5px 12px;
+    border-radius: 4px;
+  }
+  .a-hero-inner h1 {
+    margin-top: 14px;
+    font-size: 34px;
+    line-height: 1.35;
+    color: #fff;
+  }
+  .a-meta {
+    margin-top: 12px;
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .a-meta .basis {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 3px 10px;
+    border-radius: 999px;
+  }
+  @media (max-width: 640px) {
+    .a-hero {
+      min-height: 240px;
+    }
+    .a-hero-inner h1 {
+      font-size: 25px;
+    }
+  }
+
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    max-width: 760px;
+    margin: 0 0 18px;
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  article {
+    max-width: 760px;
+  }
+
+  /* 세 줄 요약 */
+  .a-summary {
+    background: var(--secondary-container);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .a-summary h2 {
+    font-size: 14px;
+    color: var(--on-secondary-container);
+    letter-spacing: 0.02em;
+  }
+  .a-summary ul {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .a-summary li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  .a-summary li::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+
+  /*
+   * 본문(MDX)에서 나오는 태그들. MDX 출력물은 이 컴포넌트의 스코프 밖이라 :global 로 잡는다.
+   */
+  .article-body {
+    margin-top: 34px;
+  }
+  .article-body :global(hr) {
+    border: none;
+    border-top: 2px solid var(--outline);
+    margin: 40px 0;
+  }
+  /*
+   * ⚠️ 여백은 **위·아래를 같은 값으로 짝지어** 정한다 (2026-08-14 오너 지적).
+   * 예전에는 모든 요소가 margin-top 만 갖고 있어서, 어떤 요소의 **아래 간격을 "다음에 오는
+   * 것"이 정했다** — 같은 인용 박스인데 아래가 문단이면 14px, 표·강조박스면 18px, 제목이면
+   * 44px 로 제각각이었다. 세로 여백은 인접 형제끼리 합쳐지므로(둘 중 큰 값), 요소 자신이
+   * 위·아래를 같이 들고 있으면 옆에 무엇이 오든 그 값이 유지된다.
+   * 제목(h2·h3)만 일부러 비대칭으로 둔다 — 위가 넓어야 절이 나뉘어 보인다.
+   * 규칙: memory `feedback_symmetric_spacing_standalone_line`
+   */
+  .article-body :global(h2) {
+    font-size: 21px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 44px;
+    margin-bottom: 14px;
+    scroll-margin-top: 88px;
+  }
+  .article-body :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .article-body :global(h3) {
+    font-size: 17.5px;
+    font-weight: 800;
+    color: var(--text);
+    margin-top: 28px;
+  }
+  .article-body :global(p) {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 14px;
+  }
+  .article-body :global(a) {
+    color: var(--primary);
+    text-decoration: underline;
+  }
+  .article-body :global(ul),
+  .article-body :global(ol) {
+    margin-top: 14px;
+    margin-bottom: 14px;
+    padding-left: 22px;
+  }
+  .article-body :global(li) {
+    font-size: 16px;
+    line-height: 1.85;
+    color: var(--text);
+    margin-top: 6px;
+  }
+  /*
+   * 본문 강조 — 굵게 + 옅은 초록 배경(오너 요청 2026-08-06 "눈에 들어오게").
+   * box-decoration-break: 강조가 줄바꿈으로 잘릴 때 양쪽 끝이 모두 둥글게 유지된다.
+   */
+  .article-body :global(strong) {
+    font-weight: 800;
+    background: var(--secondary-container);
+    padding: 1px 5px;
+    border-radius: 4px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /*
+   * 면책 문구(`> ...` 블록쿼트) — 지금까지 정의된 스타일이 없어서 브라우저 기본
+   * blockquote(기울임+왼쪽 여백만)로 나가고 있었다(2026-08-08 오너 지적: "이거 문구는
+   * 도대체 어떤 레이어로 들어가는거냐? 좀 규칙을 정할것들은 정하라고"). .a-summary와
+   * 같은 박스 언어(배경색+둥근 모서리, 왼쪽 색상바 없음 — feedback_no_left_accent_bar)를
+   * 따르되, 더 조용한 느낌으로 옅게 둔다 — 강조 박스가 아니라 마지막에 조용히 붙는
+   * 안내문이라서.
+   */
+  .article-body :global(blockquote) {
+    margin: 24px 0;
+    padding: 14px 16px;
+    background: var(--surface-low);
+    border-radius: 10px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--text-sub);
+  }
+  .article-body :global(blockquote p) {
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
+    color: inherit;
+  }
+
+  /* 표 — 색 박스 콜아웃 대신 표로 정리한다(오너 지적 2026-08-06) */
+  /*
+   * 표가 화면보다 넓을 때 표 안에서만 가로로 스크롤한다. 감싸는 <div class="table-scroll">
+   * 는 astro.config.mjs 의 rehypeTableScroll 이 붙인다 — 없으면 넓은 표가 문서 전체 폭을
+   * 늘려 좁은 화면에서 페이지가 반쪽으로 찌그러진다(2026-08-14). 스크롤바는 숨긴다.
+   */
+  .article-body :global(.table-scroll) {
+    margin: 18px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .article-body :global(.table-scroll::-webkit-scrollbar) {
+    display: none;
+  }
+  .article-body :global(table) {
+    width: 100%;
+    margin-top: 18px;
+    border-collapse: collapse;
+    font-size: 15.5px;
+  }
+  .article-body :global(.table-scroll > table) {
+    margin-top: 0;
+  }
+  /*
+   * 열이 4개 이상인 표만 내용 폭대로 벌려서 가로 스크롤한다.
+   * 그냥 두면 표가 감싸개 폭(100%)에 맞춰 눌리면서 칸 안의 글자가 한 글자씩 세로로
+   * 쪼개진다(일본어는 글자 사이 어디서나 끊기므로 최소 폭이 한 글자다). 반대로 모든 표를
+   * 내용 폭대로 벌리면 2열짜리 설명 표까지 687~1448px가 되어 전부 옆으로 밀어야 읽힌다
+   * (2026-08-14 실측 비교). 그래서 숫자 표(4열 이상)만 벌린다.
+   */
+  .article-body :global(.table-scroll > table:has(thead th:nth-child(4))) {
+    width: max-content;
+    min-width: 100%;
+  }
+  .article-body :global(th),
+  .article-body :global(td) {
+    border: 1px solid var(--outline);
+    padding: 12px 14px;
+    text-align: left;
+    line-height: 1.7;
+    vertical-align: top;
+    color: var(--text);
+  }
+  .article-body :global(th) {
+    background: var(--surface-low);
+    font-weight: 700;
+    font-size: 14.5px;
+    color: var(--text-sub);
+  }
+  /*
+   * 소식 글 표만 **첫 번째 열을 가운데 정렬**한다(오너 지시 2026-08-25).
+   * 첫 열은 "종류 / 물리치료 / 작업치료 / 언어치료"처럼 짧은 분류명이 들어가는 자리라
+   * 왼쪽 정렬이면 넓은 칸 안에서 글자가 한쪽에 몰려 보인다. 앱(PostDetailScreen 의
+   * newsMarkdownRules)에도 같은 규칙이 걸려 있어 웹·앱이 같은 얼굴이다.
+   * 제도·생활 글의 표는 첫 열에 긴 문장이 들어가는 경우가 많아 대상에서 뺀다.
+   */
+  .article-body.news-body :global(th:first-child),
+  .article-body.news-body :global(td:first-child) {
+    text-align: center;
+  }
+  /*
+   * 셀 안에 항목이 여러 개일 때는 <ul class="cell-list"> 로 쓴다.
+   * <br> 로 나열하면 모바일에서 한 항목이 접힐 때 항목 간격(7px)과 접힌 줄 간격(7px)이
+   * 같아져서 구분이 안 된다(오너 지적 2026-08-06, 390px 실측).
+   */
+  .article-body :global(.cell-list) {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .article-body :global(.cell-list li) {
+    position: relative;
+    margin: 0;
+    padding-left: 13px;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+  .article-body :global(.cell-list li)::before {
+    content: '';
+    position: absolute;
+    left: 1px;
+    top: 9px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-sub);
+  }
+
+  /* 본문 중간 사진 */
+  .article-body :global(figure.photo) {
+    margin: 28px 0;
+  }
+  .article-body :global(figure.photo img) {
+    width: 100%;
+    height: auto;
+    border-radius: 14px;
+  }
+  .article-body :global(figure.photo figcaption) {
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+
+  /* 관련 글 카드 */
+  .a-related {
+    margin-top: 48px;
+  }
+  .a-related h2 {
+    font-size: 17px;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .a-related-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+  }
+  .a-related-grid :global(img) {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  .a-related-grid .t {
+    display: block;
+    margin-top: 10px;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .a-related-grid a:hover .t {
+    color: var(--primary);
+  }
+  .a-related-grid .d {
+    display: block;
+    margin-top: 5px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+  }
+  @media (max-width: 640px) {
+    .a-related-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

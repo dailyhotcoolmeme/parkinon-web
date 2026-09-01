@@ -1,0 +1,169 @@
+---
+import { getCollection } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Layout from '../../../layouts/Layout.astro';
+import Header from '../../../components/Header.astro';
+import Footer from '../../../components/Footer.astro';
+import ArticleSide from '../../../components/ArticleSide.astro';
+import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
+import familyImg from '../../../assets/images/family.jpg';
+
+const locale = Astro.currentLocale ?? 'es';
+
+/*
+ * 목록은 **글 파일에서 자동으로** 만든다. 손으로 배열을 적지 말 것 —
+ * 예전에는 글을 하나 추가할 때 글 페이지·허브 목록·사이드 패널 세 군데를 고쳐야 했고,
+ * 하나만 빠뜨려도 링크가 죽었다. (website-plan.md "글 저장 방식과 발행 흐름")
+ */
+const posts = sortByDateDesc(
+  await getCollection('articles', inCategory(locale, 'institutions'))
+);
+
+const sideLinks = posts.slice(0, 6).map((e) => ({
+  title: e.data.title,
+  date: formatDate(e.data.publishedAt),
+  href: getRelativeLocaleUrl(locale, `institutions/${slugOf(e)}`),
+}));
+
+---
+
+<Layout
+  title="Ayudas y apoyos — ParkinON"
+  breadcrumbs={[
+    { name: 'Inicio', path: '/es/' },
+    { name: 'Ayudas y apoyos', path: '/es/institutions/' },
+  ]}
+>
+  <Header active="institutions" />
+
+  <div class="layout">
+    <main class="col">
+      <section class="hub-hero-full" style={`background-image:url(${familyImg.src});`}>
+        <div class="hub-hero-full-inner">
+          <h1>Ayudas y apoyos</h1>
+          <p>
+            Un résumé des programmes publics offerts aux personnes atteintes de la maladie de Parkinson et à leur
+            famille au Canada — conditions d’admissibilité, prestations offertes et démarches à suivre. Ces
+            programmes sont révisés chaque année, la date de vérification est indiquée sur chaque page.
+          </p>
+        </div>
+      </section>
+
+      <nav class="breadcrumb">
+        <a href={getRelativeLocaleUrl(locale, '')}>Inicio</a><span class="sep">/</span><span>Ayudas y apoyos</span>
+      </nav>
+
+      {/*
+       * 필터탭 없음(오너 지적 2026-08-09: "태그마다 글이 1개씩인데 나누는 이유가 뭐냐").
+       * 태그 하나에 글이 여러 편 쌓이기 전까지는 탭이 거를 게 없어 클릭만 늘린다.
+       * 각 줄의 태그 라벨은 그대로 남겨 분류는 보이게 하고, 목록만 한 번에 쭉 보여준다.
+       */}
+      <div class="content-body">
+        <div class="hub-list" id="hubList">
+          {
+            posts.map((post) => (
+              <a
+                class="hub-row"
+                href={getRelativeLocaleUrl(locale, `institutions/${slugOf(post)}`)}
+              >
+                <span class="tag">{post.data.tag}</span>
+                <h3>{post.data.title}</h3>
+                <p>{post.data.description}</p>
+                <div class="hashtags">
+                  {post.data.hashtags.map((h) => <span>{h}</span>)}
+                </div>
+                <p class="meta">{formatDate(post.data.publishedAt)}</p>
+              </a>
+            ))
+          }
+        </div>
+
+        <ArticleSide links={sideLinks} linksTitle="Autres articles sur les aides et le soutien" />
+      </div>
+
+    </main>
+  </div>
+
+  <Footer />
+</Layout>
+
+<style>
+  .breadcrumb {
+    font-size: 13px;
+    color: var(--text-sub);
+    margin-bottom: 18px;
+  }
+  .breadcrumb a:hover {
+    color: var(--primary);
+  }
+  .breadcrumb .sep {
+    margin: 0 6px;
+    opacity: 0.6;
+  }
+
+  .hub-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .hub-row {
+    display: block;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--outline);
+  }
+  .hub-row:first-child {
+    padding-top: 0;
+  }
+  .hub-row .tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .hub-row h3 {
+    font-size: 18.5px;
+    margin-top: 10px;
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .hub-row p {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-sub);
+    max-width: 70ch;
+  }
+  .hub-row .meta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-sub);
+    opacity: 0.75;
+  }
+  .hashtags {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--primary);
+  }
+  .hashtags span {
+    margin-right: 7px;
+  }
+  .hub-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+  }
+  .hub-more .btn {
+    height: 48px;
+    padding: 0 28px;
+    background: var(--surface-low);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 14px;
+  }
+</style>
+

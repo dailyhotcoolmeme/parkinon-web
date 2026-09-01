@@ -17,7 +17,7 @@
  */
 import { getCollection } from 'astro:content';
 
-export const LOCALES = ['ko', 'en', 'ja', 'fr'] as const;
+export const LOCALES = ['ko', 'en', 'ja', 'fr', 'es', 'pt'] as const;
 export type Locale = (typeof LOCALES)[number];
 
 /** 네 언어에 모두 있는 정적 경로(언어 접두사 뒤 부분). 빈 문자열은 그 언어의 홈이다. */

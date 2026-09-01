@@ -53,7 +53,7 @@ export default defineConfig({
   // (dev 배포는 기본값, 정식 오픈 때 PUBLIC_SITE_URL=https://parkinon.com 로 빌드)
   site: process.env.PUBLIC_SITE_URL ?? 'https://parkinon-site-dev.pages.dev',
   i18n: {
-    locales: ['ko', 'en', 'fr', 'ja'],
+    locales: ['ko', 'en', 'fr', 'ja', 'es', 'pt'],
     defaultLocale: 'ko',
     routing: {
       prefixDefaultLocale: true,

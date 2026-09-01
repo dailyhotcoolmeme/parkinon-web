@@ -43,5 +43,17 @@ export const GATE_LANGUAGES: GateLanguage[] = [
     tagline: 'Rendre chaque jour avec la maladie de Parkinson un peu plus facile',
     href: '/fr/',
   },
+  {
+    code: 'es',
+    name: 'Español',
+    tagline: 'Para que cada día con la enfermedad de Parkinson sea un poco más llevadero',
+    href: '/es/',
+  },
+  {
+    code: 'pt',
+    name: 'Português',
+    tagline: 'Para tornar cada dia com a doença de Parkinson um pouco mais leve',
+    href: '/pt/',
+  },
 ];
 /* i18n-exempt:end */

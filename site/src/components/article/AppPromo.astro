@@ -10,7 +10,7 @@
  */
 import { Image } from 'astro:assets';
 import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
-import { resolveAppShot, type AppFeature } from '../../lib/appShots';
+import { resolveAppShot, hasAppShots, type AppFeature } from '../../lib/appShots';
 import { t, type DictKey } from '../../i18n';
 
 /*
@@ -27,6 +27,11 @@ interface Props {
 const locale = Astro.currentLocale ?? 'ko';
 const { feature: featureProp, title: titleProp, body: bodyProp } = Astro.props;
 
+/*
+ * 앱이 지원하지 않는 언어(스페인어·포르투갈어)에서는 앱 홍보를 아예 그리지 않는다.
+ * 그리면 그 독자에게 **한국어 앱 화면**이 나간다(resolveAppShot 의 기본 대체가 ko 다).
+ */
+const appAvailable = hasAppShots(locale);
 const { shot: appShot, feature: feat } = resolveAppShot(locale, featureProp);
 
 const shotAlt = feat ? t(locale, `app.${feat}.alt` as DictKey) : t(locale, 'app.shotAlt');
@@ -34,6 +39,7 @@ const title = titleProp ?? (feat ? t(locale, `app.${feat}.title` as DictKey) : t
 const body = bodyProp ?? (feat ? t(locale, `app.${feat}.body` as DictKey) : t(locale, 'app.promoBody'));
 ---
 
+{appAvailable && (
 <aside class="app">
   <div class="shot">
     <Image src={appShot} alt={shotAlt} widths={[200, 300, 420]} sizes="(max-width: 640px) 132px, 210px" />
@@ -59,6 +65,7 @@ const body = bodyProp ?? (feat ? t(locale, `app.${feat}.body` as DictKey) : t(lo
     </a>
   </div>
 </aside>
+)}
 
 <style>
   /*

@@ -157,6 +157,19 @@ export const SHOTS_BY_LOCALE: Record<string, LocaleShots> = {
   },
 };
 
+/*
+ * 앱이 그 언어를 지원하는가.
+ *
+ * ⚠️ 아래 resolveAppShot 은 모르는 언어를 **한국어 화면으로 대체**한다. 그 자체는 의도된
+ * 안전장치지만, 앱이 아예 지원하지 않는 언어(스페인어·포르투갈어)에서는 **스페인어 독자에게
+ * 한국어 앱 화면을 보여주는** 꼴이 된다. 그래서 그런 언어에서는 앱 홍보를 아예 그리지 않는다
+ * (2026-09-02, es/pt 추가하면서). 앱이 그 언어를 지원하게 되면 SHOTS_BY_LOCALE 에 한 줄
+ * 추가하는 것만으로 자동으로 다시 나온다.
+ *
+ * 앱 지원 언어의 정본은 `parkinon-app/src/i18n/locales/`(ko·en·ja·fr) 다.
+ */
+export const hasAppShots = (locale: string) => locale in SHOTS_BY_LOCALE;
+
 /** 그 언어에서 실제로 보여줄 화면과, 문구에 쓸 기능값을 함께 돌려준다. */
 export function resolveAppShot(locale: string, feature?: AppFeature) {
   const set = SHOTS_BY_LOCALE[locale] ?? SHOTS_BY_LOCALE.ko;

@@ -25,7 +25,16 @@
  * 잘 안 보내서 대개 5)번 영어로 떨어지는데, 그것이 x-default 와도 어긋나지 않는다.
  */
 
-const SUPPORTED = ['ko', 'en', 'ja', 'fr', 'es', 'pt'] as const;
+/*
+ * ⚠️ **글이 실제로 있는 언어만** 넣는다. 골격(라우트·사전)만 있고 글이 0편인 언어를 여기
+ * 넣으면, 그 언어권 방문자를 **빈 사이트**로 보내게 된다 — 2026-09-02 에 포르투갈어에서
+ * 실제로 그랬다(브라질 접속 → 글 0편인 /pt/). 영어로 보내는 편이 낫다.
+ *
+ * 이 목록은 사이트의 콘텐츠와 어긋나면 안 된다 —
+ * `site/scripts/check-root-function-locales.mjs` 가 빌드 때 대조한다.
+ * 포르투갈어는 생활 요령 번역이 들어가는 순간 여기에 'pt' 를 추가하면 된다.
+ */
+const SUPPORTED = ['ko', 'en', 'ja', 'fr', 'es'] as const;
 type Lang = (typeof SUPPORTED)[number];
 const FALLBACK: Lang = 'en';
 
@@ -40,11 +49,7 @@ const COUNTRY_TO_LANG: Record<string, Lang> = {
   CA: 'fr', // 퀘벡. 영어권 캐나다는 Accept-Language 로 대부분 먼저 걸린다.
   MC: 'fr',
   LU: 'fr',
-  // 포르투갈어권 — 브라질이 대상이다(포르투갈은 EEA 라 광고를 안 내보낸다)
-  BR: 'pt',
-  PT: 'pt',
-  AO: 'pt',
-  MZ: 'pt',
+  // 포르투갈어권 — 글이 아직 없어서 뺐다. pt 콘텐츠가 들어가면 BR/PT/AO/MZ 를 되살린다.
   // 스페인어권 — 중남미가 대상이다(스페인은 EEA)
   MX: 'es',
   AR: 'es',

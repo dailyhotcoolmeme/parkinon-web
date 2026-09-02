@@ -16,6 +16,7 @@
  *   그 언어에 파일이 있는지 확인하고, 정적 페이지만 아래 목록으로 판단한다.
  */
 import { getCollection } from 'astro:content';
+import { publishedLocales } from './publishedLocales';
 
 export const LOCALES = ['ko', 'en', 'ja', 'fr', 'es', 'pt'] as const;
 export type Locale = (typeof LOCALES)[number];
@@ -56,6 +57,12 @@ export async function localeLinksFor(pathname: string): Promise<LocaleLink[]> {
   const here = split(pathname);
   if (!here) return [];
 
+  /*
+   * 골격만 있고 글이 없는 언어는 아예 내보내지 않는다 — 빈 사이트로 보내는 링크가
+   * 되기 때문이다(2026-09-02, 포르투갈어에서 실제로 그랬다). 글이 생기면 자동으로 켜진다.
+   */
+  const live = await publishedLocales();
+
   const seg = here.rest.split('/').filter(Boolean);
   const head = seg[0] ?? '';
   const slug = seg.slice(1).join('/');
@@ -70,7 +77,7 @@ export async function localeLinksFor(pathname: string): Promise<LocaleLink[]> {
       )
     : null;
 
-  return LOCALES.map((code) => {
+  return LOCALES.filter((code) => live.has(code)).map((code) => {
     const home = `/${code}/`;
     if (isArticle) {
       const has = existing!.has(code);

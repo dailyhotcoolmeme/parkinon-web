@@ -237,9 +237,15 @@ const localeLinks = (await localeLinksFor(Astro.url.pathname)).filter((l) => lan
      * max-width(ch)로 폭을 제한했다가 한글 폭 계산이 어긋나 문장 안에서도 줄바꿈이
      * 되어 의도한 2줄이 아니라 4줄로 나온 적이 있다(2026-08-10) — <br/> 로 끊는
      * 지점을 이미 정확히 정했으니 폭은 그냥 열 너비에 맡긴다(추가 제한 불필요).
+     *
+     * ★ `white-space: nowrap` 을 뺐다(2026-09-02). <br/> 로 끊을 자리를 이미 정해
+     *   놓았으니 nowrap 은 아무 일도 하지 않는 대신, **한 줄이 화면보다 길어지는
+     *   언어에서 줄바꿈을 금지해 페이지 전체를 밀어냈다.** 스페인어는 390px 에서
+     *   19px, 320px 에서 89px 가로 스크롤이 생겼고 영어·프랑스어·일본어도 320px 에서
+     *   10~13px 밀렸다(한국어만 문장이 짧아 우연히 멀쩡했다). 가로 스크롤은 금지다.
+     *   nowrap 없이도 <br/> 은 그대로 두 줄로 끊고, 화면이 좁으면 그때만 접힌다.
      */
     margin-top: 10px;
-    white-space: nowrap;
     font-size: 11px;
     line-height: 1.6;
     color: var(--text-sub);

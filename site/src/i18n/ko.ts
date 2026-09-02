@@ -18,7 +18,7 @@ const ko: Dict = {
   'nav.institutions': '제도·지원',
   'nav.tools': '도구',
 
-  'country.all': '전체',
+  'country.all': '전체 국가',
   'country.kr': '한국',
   'country.us': '미국',
   'country.jp': '일본',
@@ -28,6 +28,7 @@ const ko: Dict = {
   'country.au': '호주',
   'country.ca': '캐나다',
   'country.nz': '뉴질랜드',
+  'country.es': '스페인',
   'country.br': '브라질',
   'country.mx': '멕시코',
   'country.cl': '칠레',

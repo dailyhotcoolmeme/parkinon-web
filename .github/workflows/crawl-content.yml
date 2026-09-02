@@ -6,7 +6,12 @@ name: 임상시험·연구 매일 크롤
 on:
   schedule:
     - cron: '0 18 * * *'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      retag_countries:
+        description: '연구 논문의 나라 표시를 전량 다시 붙인다(나라를 새로 추가했을 때만)'
+        type: boolean
+        default: false
 
 jobs:
   crawl:
@@ -34,3 +39,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/crawl/crawl-pubmed.mjs
+
+      # 나라 표시 다시 붙이기 — 손으로 돌릴 때(workflow_dispatch)만.
+      # COUNTRY_AFFILIATION 에 나라를 새로 추가한 뒤 한 번 돌리면 옛날 논문에도 붙는다.
+      # 매일 자동 실행에서는 건너뛴다(전량 재조회라 30분쯤 걸린다).
+      - name: 연구 나라 표시 재부착(수동 실행 시)
+        if: github.event_name == 'workflow_dispatch' && inputs.retag_countries
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/crawl/crawl-pubmed.mjs --retag-countries

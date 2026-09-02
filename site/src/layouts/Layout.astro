@@ -111,7 +111,16 @@ const autoLinks = translations ? [] : await localeLinksFor(Astro.url.pathname);
 const autoPairs = autoLinks.filter((l) => l.exact).map((l) => [l.code, l.href] as [string, string]);
 const pairs = translations ? Object.entries(translations) : autoPairs;
 const alternates = pairs.length > 1 ? pairs : [];
-const xDefault = translations?.ko ?? autoPairs.find(([c]) => c === 'ko')?.[1];
+/*
+ * x-default = 대문 `/`.
+ *
+ * 여기는 원래 **한국어**를 가리키고 있었다(2026-09-02까지). x-default 는 "어느 언어에도
+ * 안 맞는 사람에게 보여줄 주소"라서, 한국어를 가리키면 스페인어·포르투갈어를 쓰는 검색
+ * 이용자에게 한국어 페이지가 대표로 잡힌다 — 해외 시장을 먼저 보는 이 사이트에서는 정반대다.
+ * `/` 는 Accept-Language·나라를 보고 6개 언어로 302 하는 대문이고(`functions/index.ts`),
+ * 이것이 Google 이 문서에서 x-default 의 표준 예로 드는 바로 그 형태다.
+ */
+const xDefault = translations?.ko ?? (alternates.length > 0 ? '/' : undefined);
 
 /*
  * dev 배포(parkinon-site-dev.pages.dev)가 검색에 잡히면 본 사이트와 중복 콘텐츠가 된다.

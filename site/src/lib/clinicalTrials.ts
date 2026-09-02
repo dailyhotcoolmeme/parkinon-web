@@ -150,8 +150,15 @@ export function trialsForAll(all: Trial[]): CountryTrials {
  *
  * 중남미 6개국은 2026-09-02 에 추가했다 — 스페인어판을 열고 나서 오너가 지적했다:
  * 멕시코 사람이 임상시험 메뉴에 들어갔는데 자기 나라가 목록에 아예 없었다.
- * ClinicalTrials.gov 실측(모집중 기준): 브라질 23 · 칠레 14 · 멕시코 13 · 아르헨티나 11 ·
- * 콜롬비아 7 · 페루 6. 빈 탭이 아니라 실제로 볼 것이 있다.
+ *
+ * ⚠️ 건수는 **우리 DB 기준으로만** 말할 것(2026-09-02 정정). 처음에 "브라질 23 ·
+ *    칠레 14 · 멕시코 13 …" 이라고 적었는데, 그건 ClinicalTrials.gov 에
+ *    `query.locn=Mexico` 로 물어본 값이라 미국 New Mexico·이탈리아 Perugia 같은 것까지
+ *    섞인 수였다. 크롤러와 같은 조건(cond=Parkinson Disease + RECRUITING + conditions 에
+ *    실제로 "parkinson" 포함)으로 다시 세니 627건 전체가 우리 DB와 **정확히 일치**했다.
+ *    실제 값: 스페인 19 · 브라질 11 · 아르헨티나 3 · 멕시코 2 · 칠레 0 · 콜롬비아 0 · 페루 0.
+ *    → 칠레·콜롬비아·페루는 지금 0건이라 **지오 자동선택에서 건너뛴다**(빈 탭으로
+ *      떨어뜨리는 것보다 "전체"가 낫다). 건수가 생기면 자동으로 다시 잡힌다.
  */
 export const TRIAL_COUNTRIES = [
   { code: 'kr', apiName: 'South Korea', research: true },
@@ -161,6 +168,18 @@ export const TRIAL_COUNTRIES = [
   { code: 'de', apiName: 'Germany', research: true },
   { code: 'it', apiName: 'Italy', research: true },
   { code: 'au', apiName: 'Australia', research: true },
+  /*
+   * 스페인 — 스페인어권에서 **임상시험이 가장 많다**(우리 DB 기준 모집중 19건.
+   * 브라질 11 · 아르헨티나 3 · 멕시코 2 · 칠레·콜롬비아·페루 0). 처음엔 뺐었다.
+   * 광고를 EEA 에 안 내보내기로 한 결정(2026-09-02) 때문인데, 그건 광고와 제도 글
+   * 이야기였지 **임상시험 정보와는 상관이 없었다** — 정책을 잘못 넓혀 적용한 것이다.
+   *
+   * ⚠️ 코드는 반드시 **ISO 국가코드 `es`** 여야 한다. 처음에 `sp` 로 적었더니
+   *    지오 자동선택이 `/api/geo` 가 주는 ISO 코드(`ES`)와 안 맞아, 스페인에서
+   *    접속해도 자기 나라 탭이 안 잡히고 "전체"로 떨어졌다(2026-09-02 실측).
+   *    로케일 `es` 와 글자가 같을 뿐 서로 다른 축이다 — 헷갈려서 바꾸지 말 것.
+   */
+  { code: 'es', apiName: 'Spain', research: false },
   // 중남미 — 스페인어·포르투갈어판 독자의 나라
   { code: 'br', apiName: 'Brazil', research: false },
   { code: 'mx', apiName: 'Mexico', research: false },

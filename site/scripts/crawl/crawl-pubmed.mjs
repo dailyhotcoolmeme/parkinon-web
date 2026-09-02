@@ -38,14 +38,34 @@ const SEARCH_TERM =
   '("Clinical Trial, Phase III"[Publication Type]) OR ("Clinical Trial, Phase IV"[Publication Type])' +
   ')';
 
+/*
+ * 소속기관 주소에서 나라를 알아낸다. 값은 **`src/lib/clinicalTrials.ts` 의 국가 코드**와
+ * 같아야 화면의 「연구 결과」 탭이 채워진다(빈 값이면 그 나라 탭이 영원히 0건이다).
+ *
+ * ⚠️ 단순 부분일치라 **다른 나라 지명에 걸려드는 것을 손으로 막아야 한다.** 실제로 문제가
+ *    되는 것들(2026-09-02 확인):
+ *      "Mexico"   ← 미국 New Mexico (앨버커키·UNM 이 파킨슨 연구를 많이 낸다)
+ *      "Peru"     ← 이탈리아 Perugia
+ *      "Chile"    ← 안전(다른 지명 없음)
+ *      "Colombia" ← 안전(미국 Columbia / 캐나다 British Columbia 는 철자가 다르다)
+ *    그래서 `exclude` 를 둔다 — 그 문자열이 같은 주소에 있으면 그 소속은 세지 않는다.
+ */
 const COUNTRY_AFFILIATION = {
-  kr: ['South Korea', 'Republic of Korea'],
-  us: ['United States', 'USA'],
-  jp: ['Japan'],
-  fr: ['France'],
-  de: ['Germany'],
-  it: ['Italy'],
-  au: ['Australia'],
+  kr: { match: ['South Korea', 'Republic of Korea'] },
+  us: { match: ['United States', 'USA'] },
+  jp: { match: ['Japan'] },
+  fr: { match: ['France'] },
+  de: { match: ['Germany'] },
+  it: { match: ['Italy'] },
+  au: { match: ['Australia'] },
+  // 스페인어·포르투갈어판 독자의 나라 (2026-09-02 추가)
+  es: { match: ['Spain', 'España'] },
+  br: { match: ['Brazil', 'Brasil'] },
+  mx: { match: ['Mexico', 'México'], exclude: ['New Mexico', 'Nuevo México'] },
+  cl: { match: ['Chile'] },
+  ar: { match: ['Argentina'] },
+  co: { match: ['Colombia'] },
+  pe: { match: ['Peru', 'Perú'], exclude: ['Perugia'] },
 };
 
 const MONTH_NUMBER = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
@@ -123,7 +143,13 @@ function parseArticle(block) {
   const affiliations = [...block.matchAll(/<Affiliation>([\s\S]*?)<\/Affiliation>/g)].map((m) => decodeEntities(m[1]));
 
   const countries = Object.entries(COUNTRY_AFFILIATION)
-    .filter(([, aliases]) => aliases.some((alias) => affiliations.some((aff) => aff.includes(alias))))
+    .filter(([, { match, exclude }]) =>
+      affiliations.some(
+        (aff) =>
+          match.some((alias) => aff.includes(alias)) &&
+          !(exclude ?? []).some((bad) => aff.includes(bad)),
+      ),
+    )
     .map(([code]) => code);
 
   return {
@@ -188,7 +214,56 @@ async function fetchAndUpsert(pmids) {
   return inserted;
 }
 
+/*
+ * `--retag-countries` — 이미 받아 둔 논문의 **나라 표시만** 다시 붙인다.
+ *
+ * 평소 실행은 "아직 없는 PMID"만 받으므로, COUNTRY_AFFILIATION 에 나라를 새로 추가해도
+ * 옛날 논문에는 영원히 안 붙는다. 2026-09-02 에 스페인·중남미 6개국을 추가하면서 실제로
+ * 그랬다 — 추가만 하고 두면 그 나라 「연구 결과」 탭이 계속 0건이다. 이 모드는 전량을 다시
+ * 훑어 `paper_countries` 만 채운다(논문 본문·초록은 건드리지 않는다).
+ * upsert(ignoreDuplicates) 라 몇 번을 돌려도 중복이 안 쌓인다.
+ */
+async function retagCountries() {
+  console.log('Re-tagging countries for papers already stored...');
+  const pmids = [];
+  for (let from = 0; ; from += 1000) {
+    const { data: page, error } = await supabase.from('research_papers').select('pmid').range(from, from + 999);
+    if (error) throw new Error(`research_papers select failed: ${error.message}`);
+    if (!page || page.length === 0) break;
+    pmids.push(...page.map((r) => r.pmid));
+    if (page.length < 1000) break;
+  }
+  console.log(`${pmids.length} papers to re-tag.`);
+
+  const seen = {};
+  let done = 0;
+  for (let i = 0; i < pmids.length; i += 200) {
+    const chunk = pmids.slice(i, i + 200);
+    const params = new URLSearchParams({ db: 'pubmed', id: chunk.join(','), retmode: 'xml' });
+    const res = await ncbiFetch(`${API_BASE}/efetch.fcgi?${params}`);
+    const xml = await res.text();
+    const articles = xml.split('<PubmedArticle>').slice(1).map(parseArticle).filter((a) => a.pmid);
+    const rows = articles.flatMap((a) => a.countries.map((country_code) => ({ pmid: a.pmid, country_code })));
+    for (const r of rows) seen[r.country_code] = (seen[r.country_code] ?? 0) + 1;
+    if (rows.length) {
+      const { error } = await supabase
+        .from('paper_countries')
+        .upsert(rows, { onConflict: 'pmid,country_code', ignoreDuplicates: true });
+      if (error) throw new Error(`paper_countries upsert failed: ${error.message}`);
+    }
+    done += articles.length;
+    console.log(`  ...${done}/${pmids.length}`);
+    await sleep(400);
+  }
+  console.log('Country tags found: ' + JSON.stringify(seen));
+}
+
 async function main() {
+  if (process.argv.includes('--retag-countries')) {
+    await retagCountries();
+    return;
+  }
+
   console.log('Collecting current PMIDs matching criteria (year-bucketed)...');
   const allPmids = await fetchAllPmids();
   console.log(`Found ${allPmids.length} matching PMIDs total.`);

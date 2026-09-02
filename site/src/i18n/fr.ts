@@ -18,7 +18,7 @@ const fr: Dict = {
   'nav.institutions': 'Aides et soutien',
   'nav.tools': 'Outils',
 
-  'country.all': 'Tous',
+  'country.all': 'Tous les pays',
   'country.kr': 'Corée du Sud',
   'country.us': 'États-Unis',
   'country.jp': 'Japon',
@@ -28,6 +28,7 @@ const fr: Dict = {
   'country.au': 'Australie',
   'country.ca': 'Canada',
   'country.nz': 'Nouvelle-Zélande',
+  'country.es': 'Espagne',
   'country.br': 'Brésil',
   'country.mx': 'Mexique',
   'country.cl': 'Chili',

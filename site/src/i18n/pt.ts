@@ -25,7 +25,7 @@ const pt: Dict = {
   'nav.institutions': 'Direitos e apoios',
   'nav.tools': 'Ferramentas',
 
-  'country.all': 'Todos',
+  'country.all': 'Todos os países',
   'country.kr': 'Coreia do Sul',
   'country.us': 'Estados Unidos',
   'country.jp': 'Japão',
@@ -35,6 +35,7 @@ const pt: Dict = {
   'country.au': 'Austrália',
   'country.ca': 'Canadá',
   'country.nz': 'Nova Zelândia',
+  'country.es': 'Espanha',
   'country.br': 'Brasil',
   'country.mx': 'México',
   'country.cl': 'Chile',

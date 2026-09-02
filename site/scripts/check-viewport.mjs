@@ -27,7 +27,12 @@ const DIST = path.join(ROOT, 'dist');
 const SHOT_DIR = path.join(ROOT, 'docs/ui-screenshots');
 const PORT = 5799;
 
-const WIDTHS = [360, 390, 430, 768, 1024, 1440];
+/*
+ * 320 을 넣은 이유(2026-09-02): 푸터 안내문에 걸린 `white-space: nowrap` 때문에
+ * 320px 에서 영어 10px · 프랑스어/일본어 13px · **스페인어 89px** 가로 스크롤이 났는데
+ * 360 이상만 보고 있어서 다 통과했다. 중남미에는 320~360 짜리 저가 안드로이드가 아직 많다.
+ */
+const WIDTHS = [320, 360, 390, 430, 768, 1024, 1440];
 const HEIGHT = 900;
 
 /* 페이지마다: 기본 상태 + 클릭 등으로 만들 추가 상태. 각 상태에서 오버플로/좁음
@@ -72,6 +77,19 @@ const PAGES = [
     states: [{ name: 'default', run: async () => {} }],
   },
   { slug: 'en-article', path: '/en/institutions/us-ssdi-disability-benefits/', states: [{ name: 'default', run: async () => {} }] },
+  /*
+   * ⚠️ 2026-09-02 — 위 주석("언어마다 대표 화면을 넣어 둔다")대로 안 했다가 또 당했다.
+   *   스페인어·포르투갈어를 열면서 여기에 안 넣었더니, **스페인어 전 페이지가 390px 에서
+   *   19px, 320px 에서 89px 가로로 밀려 있는 것을 이 검사가 그대로 통과시켰다**
+   *   (원인은 푸터 안내문의 `white-space: nowrap` — 문장이 긴 언어에서만 터진다).
+   *   프랑스어도 여태 목록에 없었다. 언어를 늘리면 **여기 대표 한 장을 같이 늘릴 것.**
+   *   `check-viewport-locales.mjs` 가 빠진 언어가 있으면 빌드를 막는다.
+   */
+  { slug: 'es-home', path: '/es/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'es-news', path: '/es/news/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'es-clinical', path: '/es/clinical/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'fr-home', path: '/fr/', states: [{ name: 'default', run: async () => {} }] },
+  { slug: 'pt-home', path: '/pt/', states: [{ name: 'default', run: async () => {} }] },
   {
     // 톱바 검색(Header.astro) — 글+임상시험+연구 결과가 패널 안에 뜬다(2026-08-16 추가).
     slug: 'ko-home',

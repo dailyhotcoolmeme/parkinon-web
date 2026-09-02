@@ -39,7 +39,7 @@ const en = {
 
   // 임상시험 — 나라 이름·상(phase) 이름. clinicalTrials.ts(공용 로직)가 이 라벨을 쓴다.
   // ⚠️ 이 값들도 exercise.tagline 과 같은 이유로 사전에 있다 — 그대로 번역만 될 값이다.
-  'country.all': 'All',
+  'country.all': 'All countries',
   'country.kr': 'South Korea',
   'country.us': 'United States',
   'country.jp': 'Japan',
@@ -49,6 +49,7 @@ const en = {
   'country.au': 'Australia',
   'country.ca': 'Canada',
   'country.nz': 'New Zealand',
+  'country.es': 'Spain',
   'country.br': 'Brazil',
   'country.mx': 'Mexico',
   'country.cl': 'Chile',

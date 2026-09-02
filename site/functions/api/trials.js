@@ -7,6 +7,15 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
+/*
+ * ⚠️ 이 표는 `site/src/lib/clinicalTrials.ts` 의 TRIAL_COUNTRIES 와 **반드시 같아야 한다.**
+ * 화면에 처음 구워지는 30건은 빌드 타임(그쪽 파일)이 만들고, 검색·"더 보기"는 여기가
+ * 만든다. 두 곳이 어긋나면 조용히 틀린 결과가 나간다 —
+ * 2026-09-02 실측: 스페인·중남미 7개국을 저쪽에만 추가했더니 여기서는 코드를 못 찾아
+ * `?? null` 로 떨어져 **국가 필터가 통째로 사라지고 전 세계 시험이 "멕시코" 패널에
+ * 붙었다.** 눈에 안 띄는 종류의 사고라 `scripts/check-trial-countries.mjs` 로 두 목록이
+ * 같은지 빌드·배포마다 검사한다. 나라를 늘릴 땐 두 파일을 같이 고칠 것.
+ */
 const COUNTRY_API_NAME = {
   kr: 'South Korea',
   us: 'United States',
@@ -15,6 +24,13 @@ const COUNTRY_API_NAME = {
   de: 'Germany',
   it: 'Italy',
   au: 'Australia',
+  es: 'Spain',
+  br: 'Brazil',
+  mx: 'Mexico',
+  cl: 'Chile',
+  ar: 'Argentina',
+  co: 'Colombia',
+  pe: 'Peru',
 };
 
 export async function onRequestGet(context) {

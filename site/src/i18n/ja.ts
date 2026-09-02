@@ -26,7 +26,7 @@ const ja: Dict = {
   'nav.institutions': '制度・支援',
   'nav.tools': 'ツール',
 
-  'country.all': 'すべて',
+  'country.all': 'すべての国',
   'country.kr': '韓国',
   'country.us': 'アメリカ',
   'country.jp': '日本',
@@ -36,6 +36,7 @@ const ja: Dict = {
   'country.au': 'オーストラリア',
   'country.ca': 'カナダ',
   'country.nz': 'ニュージーランド',
+  'country.es': 'スペイン',
   'country.br': 'ブラジル',
   'country.mx': 'メキシコ',
   'country.cl': 'チリ',

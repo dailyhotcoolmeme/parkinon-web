@@ -80,8 +80,12 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
    *                  추가해서 중남미 독자가 자기 나라 시험을 실제로 볼 수 있다.
    */
   es: ['news', 'lifestyle', 'clinical'],
-  /* 포르투갈어판 — 아직 글이 없다. 콘텐츠가 들어오면 es 와 같은 기준으로 연다. */
-  pt: ['lifestyle', 'clinical'],
+  /*
+   * 포르투갈어판(브라질 중심) — 2026-09-02 에 열었다. 생활 요령 39편 + 소식 9편.
+   * 기준은 스페인어와 같다: exercise 는 영상이 한국어 자료라 빼고, institutions 는
+   * 브라질 제도 글이 아직 0편이라 뺀다(글이 들어가면 그때 연다).
+   */
+  pt: ['news', 'lifestyle', 'clinical'],
 };
 
 export interface NavItem {

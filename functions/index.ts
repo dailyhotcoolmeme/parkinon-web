@@ -34,7 +34,7 @@
  * `site/scripts/check-root-function-locales.mjs` 가 빌드 때 대조한다.
  * 포르투갈어는 생활 요령 번역이 들어가는 순간 여기에 'pt' 를 추가하면 된다.
  */
-const SUPPORTED = ['ko', 'en', 'ja', 'fr', 'es'] as const;
+const SUPPORTED = ['ko', 'en', 'ja', 'fr', 'es', 'pt'] as const;
 type Lang = (typeof SUPPORTED)[number];
 const FALLBACK: Lang = 'en';
 
@@ -49,7 +49,11 @@ const COUNTRY_TO_LANG: Record<string, Lang> = {
   CA: 'fr', // 퀘벡. 영어권 캐나다는 Accept-Language 로 대부분 먼저 걸린다.
   MC: 'fr',
   LU: 'fr',
-  // 포르투갈어권 — 글이 아직 없어서 뺐다. pt 콘텐츠가 들어가면 BR/PT/AO/MZ 를 되살린다.
+  // 포르투갈어권 — 2026-09-02 에 켰다(생활 요령 39편 + 소식 9편이 들어갔다).
+  BR: 'pt',
+  PT: 'pt',
+  AO: 'pt',
+  MZ: 'pt',
   // 스페인어권 — 중남미가 대상이다(스페인은 EEA)
   MX: 'es',
   AR: 'es',

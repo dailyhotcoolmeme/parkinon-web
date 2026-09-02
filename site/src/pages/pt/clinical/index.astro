@@ -37,14 +37,16 @@ const locale = Astro.currentLocale ?? 'pt';
  * 바꾸면 이 문자열도 같이 고쳐야 한다.
  *
  * ⚠️⚠️ 프랑스어판은 아직 lifestyle/glossary.mdx 자체가 없다(콘텐츠 번역 단계에서 작성
- * 예정) — 아래 앵커는 그 글의 실제 h2 제목을 "Que signifient les phases 1, 2 et 3 d'un
- * essai clinique ?" 로 쓴다고 가정하고 github-slugger 규칙(소문자화·아포스트로피 제거·
- * 공백→하이픈)을 손으로 적용한 **추정값**이다. ja/ko 판처럼 빌드 결과물(dist/fr/lifestyle/
- * glossary/index.html)에서 실제 id를 확인해 필요하면 고칠 것 — 지어낸 값을 확인 없이
- * 방치하지 말 것.
+ * 포르투갈어판 용어사전 「O que significam as fases 1, 2 e 3 de um estudo clínico」의 실제
+ * id 를 빌드 결과물(dist/pt/lifestyle/glossary/index.html)에서 읽어 넣었다.
+ *
+ * ⚠️ 이 파일은 프랑스어 라우트를 복제해서 만들었는데, **프랑스어 앵커가 그대로 남아 있었다**
+ *   (2026-09-02). 화면은 멀쩡해 보이고 링크만 아무 데도 안 가는 종류라 눈으로는 못 잡는다.
+ *   `check-glossary-anchors.mjs` 가 빌드에서 걸러 냈다 — 스페인어를 열 때도 똑같이 걸렸다.
+ *   라우트를 복제하면 **앵커부터 그 언어 것으로 바꿀 것.**
  */
 const phaseGlossaryUrl =
-  getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#que-signifient-les-phases-1-2-et-3-dun-essai-clinique';
+  getRelativeLocaleUrl(locale, 'lifestyle/glossary') + '#o-que-significam-as-fases-1-2-e-3-de-um-estudo-clínico';
 
 /*
  * 기본 국가 = "전체"(오너 확정 2026-08-08: "한국이 메인이 아니다" — 여러 번 반복된 지적).

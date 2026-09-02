@@ -66,6 +66,10 @@ const INSTITUTIONS = [
   // ── 중남미 ─ 스페인어판이 담당 ────────────────────────
   { allow: ['es'], where: '중남미', terms: [
     'IMSS', 'ISSSTE', 'INAPAM', 'ANSES', 'ChileAtiende', 'SENADIS', 'CONADIS', 'Fonasa',
+    // 멕시코 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
+    'IMSS-Bienestar', 'Pensión para el Bienestar', 'Módulo de Bienestar',
+    'Secretaría de Bienestar', 'Ley del Seguro Social', 'CURP',
+    'Unidad de Medicina Familiar', 'Reglas de Operación',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [

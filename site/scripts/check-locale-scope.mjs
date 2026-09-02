@@ -77,6 +77,12 @@ const INSTITUTIONS = [
     'Mi Argentina', 'SUBE', 'CNRT', 'Símbolo Internacional de Acceso',
     'Clave de la Seguridad Social', 'monotributista', 'CUIL',
     'ACEPAR', 'Hospital Nacional Alejandro Posadas',
+    // 칠레 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
+    'GES', 'AUGE', 'AUGE-GES', 'Isapre', 'Isapres', 'COMPIN', 'CESFAM', 'CECOSF',
+    'ClaveÚnica', 'RND', 'Registro Nacional de la Discapacidad', 'PBSI', 'PGU',
+    'Copago Cero', 'Dipreca', 'Capredena', 'Registro Social de Hogares',
+    'Superintendencia de Salud', 'Liga Chilena contra el Mal de Parkinson',
+    'Ley N° 20.422', 'Ley 20.422',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [

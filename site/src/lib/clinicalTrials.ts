@@ -147,6 +147,11 @@ export function trialsForAll(all: Trial[]): CountryTrials {
  *   3중 조인이라 예전에 빌드 타임아웃을 낸 적이 있다 — lib/pubmed.ts 위 주석 참고).
  *   `paper_countries` 에 자료가 없는 나라까지 조회하면 순수한 낭비이므로 끈다.
  *   그 나라 논문이 쌓이면 그때 켠다.
+ *   → 스페인·중남미 6개국은 2026-09-02 에 켰다. PubMed 크롤러의 소속기관 표에 그 나라가
+ *     없어서 자료가 0이었던 것이라, 나라를 추가하고 `--retag-countries` 로 기존 11,671편에
+ *     다시 붙였다(스페인 537 · 브라질 167 · 아르헨티나 79 · 칠레 40 · 멕시코 18 ·
+ *     페루 12 · 콜롬비아 12편). 켜기 전 「연구 결과」 탭은 전부 0건이었고, 화면에는
+ *     «지금은 기준에 맞는 새 연구가 없습니다» 라고 **사실과 다른 안내**가 나가고 있었다.
  *
  * 중남미 6개국은 2026-09-02 에 추가했다 — 스페인어판을 열고 나서 오너가 지적했다:
  * 멕시코 사람이 임상시험 메뉴에 들어갔는데 자기 나라가 목록에 아예 없었다.
@@ -179,14 +184,14 @@ export const TRIAL_COUNTRIES = [
    *    접속해도 자기 나라 탭이 안 잡히고 "전체"로 떨어졌다(2026-09-02 실측).
    *    로케일 `es` 와 글자가 같을 뿐 서로 다른 축이다 — 헷갈려서 바꾸지 말 것.
    */
-  { code: 'es', apiName: 'Spain', research: false },
+  { code: 'es', apiName: 'Spain', research: true },
   // 중남미 — 스페인어·포르투갈어판 독자의 나라
-  { code: 'br', apiName: 'Brazil', research: false },
-  { code: 'mx', apiName: 'Mexico', research: false },
-  { code: 'cl', apiName: 'Chile', research: false },
-  { code: 'ar', apiName: 'Argentina', research: false },
-  { code: 'co', apiName: 'Colombia', research: false },
-  { code: 'pe', apiName: 'Peru', research: false },
+  { code: 'br', apiName: 'Brazil', research: true },
+  { code: 'mx', apiName: 'Mexico', research: true },
+  { code: 'cl', apiName: 'Chile', research: true },
+  { code: 'ar', apiName: 'Argentina', research: true },
+  { code: 'co', apiName: 'Colombia', research: true },
+  { code: 'pe', apiName: 'Peru', research: true },
 ] as const;
 
 export type TrialCountryCode = (typeof TRIAL_COUNTRIES)[number]['code'];

@@ -70,6 +70,13 @@ const INSTITUTIONS = [
     'IMSS-Bienestar', 'Pensión para el Bienestar', 'Módulo de Bienestar',
     'Secretaría de Bienestar', 'Ley del Seguro Social', 'CURP',
     'Unidad de Medicina Familiar', 'Reglas de Operación',
+    // 아르헨티나 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
+    'CUD', 'Certificado Único de Discapacidad', 'Junta Evaluadora', 'ANDIS', 'PAMI',
+    'obra social', 'obras sociales', 'Ley 24.901', 'Ley 22.431', 'Ley 27.793',
+    'Certificado Médico Oficial', 'Pensión No Contributiva', 'mi ANSES',
+    'Mi Argentina', 'SUBE', 'CNRT', 'Símbolo Internacional de Acceso',
+    'Clave de la Seguridad Social', 'monotributista', 'CUIL',
+    'ACEPAR', 'Hospital Nacional Alejandro Posadas',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [
@@ -118,6 +125,17 @@ function proseOnly(raw) {
   return text;
 }
 
+/**
+ * 고유명사가 **낱말로** 들어 있는지 본다.
+ * 단순 포함으로 보면 "ANDIS"(아르헨티나) 안의 "NDIS"(호주)처럼
+ * 다른 나라 약어가 겹쳐 오탐이 난다 — 2026-09-02 실제로 났다.
+ * 앞뒤가 글자·숫자가 아닐 때만 일치로 친다.
+ */
+function hasTerm(text, term) {
+  const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'u').test(text);
+}
+
 async function walk(dir) {
   const out = [];
   for (const e of await readdir(dir, { withFileTypes: true })) {
@@ -142,7 +160,7 @@ for (const file of files) {
     if (group.allow.includes(locale)) continue;
     for (const term of group.terms) {
       if (allowedHere.has(term)) continue;
-      if (text.includes(term)) {
+      if (hasTerm(text, term)) {
         problems.push({ rel, term, where: group.where, allow: group.allow });
       }
     }

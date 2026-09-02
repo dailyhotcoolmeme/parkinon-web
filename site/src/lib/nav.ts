@@ -82,10 +82,12 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
   es: ['news', 'lifestyle', 'clinical'],
   /*
    * 포르투갈어판(브라질 중심) — 2026-09-02 에 열었다. 생활 요령 39편 + 소식 9편.
-   * 기준은 스페인어와 같다: exercise 는 영상이 한국어 자료라 빼고, institutions 는
-   * 브라질 제도 글이 아직 0편이라 뺀다(글이 들어가면 그때 연다).
+   * 기준은 스페인어와 같다: exercise 는 영상이 한국어 자료라 뺀다.
+   * institutions 는 2026-09-02 에 열었다 — 브라질 6편(소득세 면제·INSS·SUS 약제·BPC·
+   * 차량 세금·창구 지도). 파킨슨병이 브라질 법 조문에 **병명으로 직접 적혀 있는 곳이 세 군데**라
+   * (소득세 면제, 카렌시아 면제, 2025년 재심사 면제) 제도 축의 값어치가 특히 크다.
    */
-  pt: ['news', 'lifestyle', 'clinical'],
+  pt: ['news', 'lifestyle', 'institutions', 'clinical'],
 };
 
 export interface NavItem {

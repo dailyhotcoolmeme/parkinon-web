@@ -70,6 +70,11 @@ const INSTITUTIONS = [
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [
     'INSS', 'BPC/LOAS', 'LOAS', 'Sistema Único de Saúde',
+    // 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
+    'CadÚnico', 'CRAS', 'CREAS', 'Meu INSS', 'Receita Federal',
+    'Defensoria Pública', 'Juizado Especial Federal', 'Juizados Especiais Federais',
+    'Lei 7.713', 'Lei 8.213', 'Lei 8.742', 'Lei 8.989', 'Estatuto da Pessoa com Deficiência',
+    'IPVA', 'PCDT', 'Ouvidoria do SUS',
   ]},
 ];
 

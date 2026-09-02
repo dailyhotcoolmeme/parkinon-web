@@ -7,6 +7,7 @@ import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
 import familyImg from '../../../assets/images/family.jpg';
+import AdBanner from '../../../components/article/AdBanner.astro';
 
 const locale = Astro.currentLocale ?? 'pt';
 
@@ -81,7 +82,18 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
         <ArticleSide links={sideLinks} linksTitle="Autres articles sur les aides et le soutien" />
       </div>
 
+      <div class="ad-slot-mobile">
+        <AdBanner size="rect" />
+      </div>
+      <div class="ad-slot-pc">
+        <AdBanner size="leaderboard" />
+      </div>
+
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

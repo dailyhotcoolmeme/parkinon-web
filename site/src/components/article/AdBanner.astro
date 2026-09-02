@@ -1,0 +1,46 @@
+---
+/*
+ * Adcash 배너 자리. **프로덕션 + 한국어가 아닌 페이지에서만** 그린다.
+ * (한국어는 카카오 애드핏 — `AdFitBanner.astro` 를 그대로 쓴다.)
+ *
+ * 여기서는 **빈 칸만** 그린다. 실제 광고 호출은 `Layout.astro` 의 부트스트랩이
+ * 방문자 나라를 확인한 뒤에 한다 — 유럽이면 아무것도 붙이지 않는다(`lib/ads.ts` 참고).
+ * 그래서 라벨도 기본은 숨겨 두고, 광고를 실제로 붙일 때만 `.on` 이 붙어 보인다.
+ * 광고가 안 나가는 지역에서 "광고" 글자만 덩그러니 남지 않게 하기 위해서다.
+ */
+import { t } from '../../i18n';
+import { ACS_ZONE, type AcsSize } from '../../lib/ads';
+
+interface Props {
+  size: AcsSize;
+}
+const { size } = Astro.props;
+const locale = Astro.currentLocale ?? 'ko';
+const enabled = Astro.site?.host === 'parkinon.com' && locale !== 'ko';
+---
+
+{enabled && (
+  <div class="acs-banner" data-acs-zone={ACS_ZONE[size]}>
+    <span class="acs-label">{t(locale, 'ad.label')}</span>
+  </div>
+)}
+
+<style>
+  .acs-banner {
+    margin: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .acs-label {
+    display: none;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--text-sub);
+  }
+  .acs-banner.on .acs-label {
+    display: block;
+  }
+</style>

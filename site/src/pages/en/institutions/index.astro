@@ -9,6 +9,7 @@ import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/art
 import { EN_COUNTRIES, countryOf, assertAllCountried } from '../../../lib/articleCountry';
 import { t, type DictKey } from '../../../i18n';
 import familyImg from '../../../assets/images/family.jpg';
+import AdBanner from '../../../components/article/AdBanner.astro';
 
 const locale = Astro.currentLocale ?? 'en';
 
@@ -95,6 +96,13 @@ const sideLinks = posts
         }
       </nav>
 
+      <div class="ad-slot-mobile">
+        <AdBanner size="rect" />
+      </div>
+      <div class="ad-slot-pc">
+        <AdBanner size="leaderboard" />
+      </div>
+
       <div class="content-body">
         <div class="hub-list" id="hubList">
           {
@@ -121,6 +129,10 @@ const sideLinks = posts
       </div>
 
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

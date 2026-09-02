@@ -4,6 +4,7 @@ import ogSource from '../assets/images/hero.jpg';
 import logoImg from '../assets/images/logo.png';
 import { t } from '../i18n';
 import { localeLinksFor } from '../lib/i18nLinks';
+import { ACS_LIB, ACS_AUTOTAG_ZONE, AD_BLOCKED_COUNTRIES } from '../lib/ads';
 
 type Locale = 'ko' | 'en' | 'fr' | 'ja';
 
@@ -141,6 +142,15 @@ const indexable = Astro.site?.host === 'parkinon.com';
  *   (2026-09-01 — 해외 언어 광고를 어떻게 할지는 오너가 따로 정할 사안).
  */
 const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
+
+/*
+ * 해외 언어 광고 — Adcash(2026-09-02, 오너 지시로 켰다).
+ * 애드핏이 한국어만 채우기 때문에 해외 글 400편 가까이가 수익 0 이던 것을 메운다.
+ * ⚠️ **유럽(EEA·영국·스위스)에는 안 보낸다** — 동의창도 EU 대리인도 없다.
+ *    판정은 서버가 아니라 클라이언트에서 한다(정적 빌드라 빌드 시점엔 나라를 모른다).
+ *    `/api/geo` 가 Cloudflare 의 CF-IPCountry 를 그대로 돌려준다.
+ */
+const acsEnabled = Astro.site?.host === 'parkinon.com' && locale !== 'ko';
 ---
 
 <!doctype html>
@@ -186,6 +196,49 @@ const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
     */}
     {adsEnabled && (
       <script async type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js"></script>
+    )}
+    {/*
+      Adcash 부트스트랩(해외 언어). 나라를 먼저 확인하고, 유럽이면 스크립트를 아예 안 받는다.
+      - 라이브러리는 문서당 한 번만.
+      - Autotag 는 전 페이지 공통, 배너는 페이지에 놓인 [data-acs-zone] 칸마다.
+      - 배너는 `document.createElement('script')` 로 그 칸 **안에** 넣는다. aclib 이
+        currentScript 의 부모에 그리기 때문에, innerHTML 로 넣으면 실행조차 안 된다.
+    */}
+    {acsEnabled && (
+      <script is:inline define:vars={{ acsLib: ACS_LIB, acsAutoTag: ACS_AUTOTAG_ZONE, acsBlocked: AD_BLOCKED_COUNTRIES }}>
+        (async () => {
+          let country = null;
+          try {
+            const res = await fetch('/api/geo');
+            country = (await res.json()).country;
+          } catch (e) {
+            /* 나라를 모르면 띄우지 않는다 — 유럽일 수도 있다. */
+            return;
+          }
+          if (!country || acsBlocked.indexOf(country) !== -1) return;
+
+          const lib = document.createElement('script');
+          lib.id = 'aclib';
+          lib.type = 'text/javascript';
+          lib.src = acsLib;
+          lib.onload = () => {
+            if (typeof aclib === 'undefined') return;
+            try {
+              aclib.runAutoTag({ zoneId: acsAutoTag });
+            } catch (e) {}
+            document.querySelectorAll('[data-acs-zone]').forEach((box) => {
+              const zone = box.getAttribute('data-acs-zone');
+              if (!zone) return;
+              const s = document.createElement('script');
+              s.type = 'text/javascript';
+              s.textContent = "aclib.runBanner({ zoneId: '" + zone + "' });";
+              box.appendChild(s);
+              box.classList.add('on');
+            });
+          };
+          document.head.appendChild(lib);
+        })();
+      </script>
     )}
   </body>
 </html>
@@ -290,6 +343,8 @@ const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
   }
   body {
     margin: 0;
+    /* 가로 넘침 차단 — 아래 `html, body` 규칙과 **짝** 이다. 한쪽만으론 안 먹는다. */
+    overflow-x: clip;
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-body);
@@ -321,6 +376,22 @@ const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
    */
   html {
     --word-break: keep-all;
+  }
+  /*
+   * Adcash Autotag 의 인페이지푸시가 화면 **밖 오른쪽**에 `position:absolute` 요소를
+   * 미리 깔아 두고 슬라이드로 밀어 넣는다. 그대로 두면 문서 폭이 늘어나 PC 에서
+   * 가로 스크롤이 생긴다(2026-09-02 실측: 1700px 화면이 3188px 이 되고 800px 밀렸다).
+   *
+   * ⚠️ 실측으로 확인한 두 가지 — 고치려거든 이 두 줄을 먼저 읽을 것.
+   * 1) **`html` 만, 또는 `body` 만 걸면 안 먹는다.** 각각 계산값은 `clip` 으로 나오는데
+   *    가로 스크롤은 그대로 800px 됐다. **둘 다** 걸어야 실제로 멈춘다.
+   * 2) **`hidden` 이 아니라 `clip`.** hidden 은 스크롤 컨테이너를 만들어 우측 광고
+   *    레일(.ad-rail)과 목차(.article-side)의 `position:sticky` 를 죽인다.
+   *    (실측: hidden 은 애초에 넘침도 못 막았다.)
+   */
+  html,
+  body {
+    overflow-x: clip;
   }
   html[lang='ja'] {
     --word-break: normal;
@@ -507,6 +578,24 @@ const adsEnabled = Astro.site?.host === 'parkinon.com' && locale === 'ko';
   .detail-body > .article-side {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+  /*
+   * 광고 칸 표시 규칙. 한국어 페이지들은 각자 로컬 <style> 에 같은 것을 갖고 있고,
+   * 해외 언어 페이지(Adcash)는 여기 전역 정의를 쓴다.
+   */
+  .ad-slot-mobile {
+    display: block;
+  }
+  .ad-slot-pc {
+    display: none;
+  }
+  @media (min-width: 1280px) {
+    .ad-slot-mobile {
+      display: none;
+    }
+    .ad-slot-pc {
+      display: block;
+    }
   }
   .ad-rail {
     display: none;

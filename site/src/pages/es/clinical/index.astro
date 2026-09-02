@@ -25,6 +25,7 @@ import { t, tv, type DictKey } from '../../../i18n';
 import { fetchAllRecruitingTrials, trialsForCountry, trialsForAll, TRIAL_COUNTRIES } from '../../../lib/clinicalTrials';
 import { fetchResearchPapersForCountry, fetchResearchPapers } from '../../../lib/pubmed';
 import { paragraphizeAbstract } from '../../../lib/abstractFormat';
+import AdBanner from '../../../components/article/AdBanner.astro';
 
 const locale = Astro.currentLocale ?? 'es';
 
@@ -485,7 +486,18 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
         <p class="empty" id="searchEmpty" hidden><Tr k="search.noResults" /></p>
         <button class="load-more" id="searchLoadMore" hidden><Tr k="search.loadMore" /></button>
       </div>
+      <div class="ad-slot-mobile">
+        <AdBanner size="rect" />
+      </div>
+      <div class="ad-slot-pc">
+        <AdBanner size="leaderboard" />
+      </div>
+
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

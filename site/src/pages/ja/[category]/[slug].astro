@@ -17,6 +17,7 @@ import SourceBox from '../../../components/article/SourceBox.astro';
 import AppPromo from '../../../components/article/AppPromo.astro';
 import { categoryLabel, categoryOf, slugOf, formatDate, sortByDateDesc, inCategory, inLocale, findRelatedArticles } from '../../../lib/articles';
 import { t, tv } from '../../../i18n';
+import AdBanner from '../../../components/article/AdBanner.astro';
 
 export async function getStaticPaths() {
   // 이 라우트는 /ja/ 아래다 → 일본어 글만 만든다. 다른 언어는 각자 라우트가 맡는다.
@@ -96,9 +97,13 @@ const catHref = getRelativeLocaleUrl(locale, category);
             </ul>
           </div>
 
+          <AdBanner size="rect" />
+
           <div class:list={['article-body', category === 'news' && 'news-body']}>
             <Content />
           </div>
+
+          <AdBanner size="rect" />
 
           <SourceBox
             basisDate={entry.data.basisDate}
@@ -129,6 +134,10 @@ const catHref = getRelativeLocaleUrl(locale, category);
         <ArticleSide toc={toc} links={sideLinks} linksTitle={tv(locale, 'side.moreIn', { category: catLabel })} />
       </div>
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

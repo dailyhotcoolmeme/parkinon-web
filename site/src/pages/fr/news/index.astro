@@ -7,6 +7,7 @@ import Footer from '../../../components/Footer.astro';
 import ArticleSide from '../../../components/ArticleSide.astro';
 import { slugOf, formatDate, sortByDateDesc, inCategory } from '../../../lib/articles';
 import labImg from '../../../assets/images/lab.jpg';
+import AdBanner from '../../../components/article/AdBanner.astro';
 
 const locale = Astro.currentLocale ?? 'fr';
 
@@ -53,6 +54,13 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
         <a href={getRelativeLocaleUrl(locale, '')}>Accueil</a><span class="sep">/</span><span>Actualités ParkinON</span>
       </nav>
 
+      <div class="ad-slot-mobile">
+        <AdBanner size="rect" />
+      </div>
+      <div class="ad-slot-pc">
+        <AdBanner size="leaderboard" />
+      </div>
+
       <div class="content-body">
         <div class="hub-list">
           {
@@ -74,6 +82,10 @@ const sideLinks = posts.slice(0, 6).map((e) => ({
       </div>
 
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

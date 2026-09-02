@@ -25,6 +25,7 @@ import shot6 from '../../assets/images/appshots/en/06_premium.png';
 
 import { PLAY_STORE_URL, appleStoreUrl } from '../../lib/links';
 import { t, type DictKey } from '../../i18n';
+import AdBanner from '../../components/article/AdBanner.astro';
 const locale = Astro.currentLocale ?? 'pt';
 
 const appShots = [
@@ -250,7 +251,18 @@ const axisCards = [
           </div>
         </div>
       </section>
+      <div class="ad-slot-mobile">
+        <AdBanner size="rect" />
+      </div>
+      <div class="ad-slot-pc">
+        <AdBanner size="leaderboard" />
+      </div>
+
     </main>
+
+    <aside class="ad-rail right">
+      <AdBanner size="skyscraper" />
+    </aside>
   </div>
 
   <Footer />

@@ -236,6 +236,27 @@ TXT 레코드를 추가 → Search Console에서 도메인(`sc-domain:parkinon.c
 상위 개념이라 중복돼도 무해). 앞으로 `/en/` 등 언어가 늘어도 이 도메인 속성이 전부
 커버한다.
 
+### 2026-09-02 색인 점검 — 436편 중 49편만 색인돼 있었다
+
+| 원인 | 조치 |
+|---|---|
+| 사이트맵을 **8/25 이후 안 읽음**(그때 값 "발견 60") | 같은 주소로 **재제출**. 제출창에는 **전체 URL** 을 넣어야 한다 |
+| **robots.txt 차단 58건 = 전부 `/fr/`** (8/16~31 차단 잔재) | 구글 유효성 검사가 8/24 부터 진행 중(접수 58·실패 0) — 재시작 안 하고 둠 |
+| 새 언어·제도 축이 아직 안 알려짐 | `/es/institutions/` `/pt/institutions/` `/es/` `/pt/` **색인 생성 요청** |
+
+- 사이트맵 실측 436개(ko 60·en 93·ja 80·fr 61·es 82·pt 60), 새 제도 글 34편 전부 포함.
+- `/es/` `/pt/` 색인 가능 확인: noindex 없음, canonical 자기 자신, hreflang 7개.
+  (제도 축 개별 글은 hreflang 0 이 정상 — 그 나라 전용이라 번역본이 없다.)
+- ⚠️ **서치콘솔 조작 요령**: URL 검사는 **상단 검색창**으로만 된다
+  (`/search-console/inspect?...` 를 직접 열면 404).
+
+⚠️ **남은 것 — `www.parkinon.com` 이 301 을 안 한다.** Pages 프로젝트에 도메인이 4개
+(`parkinon.com`·`www.parkinon.com`·`parkinon.co.kr`·`www.parkinon.co.kr`). `.co.kr` 둘은
+301 로 잘 넘어가는데 **www.parkinon.com 만 200 으로 같은 내용을 준다.** canonical 이
+apex 를 가리켜 당장 손해는 작지만(대체 페이지 2건) 크롤 예산이 샌다.
+Pages 커스텀 도메인은 자동 리다이렉트를 안 하므로 **Cloudflare Redirect Rules** 가 필요하다
+— **오너 승인 대기.**
+
 ### (아래는 오픈 전 작업 기록)
 
 **콘텐츠·SEO 준비는 끝났다.** 진짜 막힌 것은 인프라였다 — `parkinon.com`은 이미 살아 있는

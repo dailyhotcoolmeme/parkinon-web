@@ -1048,7 +1048,19 @@ es 줄을 다시 지워 실패하는 것까지 확인했다. build·deploy:dev �
 | 브라질 | pt | 6 | ✅ 소득세면제 · INSS · SUS 약 · BPC/LOAS · 차량면세 · 어디로 |
 | **아르헨티나** | es | **5** | ✅ CUD · Ley 24.901 · PNC 무효연금 · 교통·면제 · 어디로 |
 | **칠레** | es | **4** | ✅ GES 62 · COMPIN 장애인증 · PBSI 무효연금 · 어디로 |
-| 콜롬비아 | es | 0 | ⬜ 다음. `minsalud.gov.co` 응답 없음 — 우회로 먼저 찾을 것 |
+| **콜롬비아** | es | **4** | ✅ 장애인증 · **뚜뗄라** · 무효연금 · 어디로 |
+
+**계획 4번(제도 축) 끝.** 미국(es) 11 · 멕시코 4 · 브라질(pt) 6 · 아르헨티나 5 · 칠레 4 · 콜롬비아 4 = **34편**.
+
+⚠️ **콜롬비아 출처 접근 함정**: `minsalud.gov.co`·`colpensiones.gov.co`·`supersalud.gov.co`·
+`suin-juriscol.gov.co`·`legalapp.gov.co` 는 **진짜 크롬으로도 타임아웃**이다.
+- **firecrawl 로는 minsalud 가 열린다.** 단 사이트 개편으로 옛 주소가 **soft-404**(HTTP 200 인데
+  내용은 "Página no encontrada")를 준다 — 내용을 봐야 안다. 유효 경로는 대소문자까지 정확해야
+  한다(`/Proteccion-Social/...` 대문자 P).
+- 실제로 쓴 정부 출처는 **minsalud(firecrawl) · minjusticia LegalApp · funcionpublica 게스토르노르마티보**
+  세 곳이다. 법령 원문 사이트(suin-juriscol)는 못 열어서 **링크를 달지 않고 법령 이름만 본문에 남겼다.**
+- 환자단체 `parkinsoncolombia.org` 는 **인증서 만료**라 독자도 경고를 본다 → 뺐다.
+  대신 `parkinsonbogota.org` 를 썼다.
 
 **칠레가 유난히 값어치 있는 이유**: 파킨슨병이 **GES(AUGE) 62번**으로 법에 명시돼 있다.
 치료 20일·전문의 60일 같은 **최대 대기기간이 법정**이고 Fonasa 본인부담이 0%다.

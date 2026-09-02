@@ -83,6 +83,14 @@ const INSTITUTIONS = [
     'Copago Cero', 'Dipreca', 'Capredena', 'Registro Social de Hogares',
     'Superintendencia de Salud', 'Liga Chilena contra el Mal de Parkinson',
     'Ley N° 20.422', 'Ley 20.422',
+    // 콜롬비아 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
+    'EPS', 'IPS', 'RLCPD', 'CIE-10', 'Colpensiones', 'AFP',
+    'acción de tutela', 'tutela', 'Junta Nacional de Calificación',
+    'junta de calificación de invalidez', 'Defensoría del Pueblo',
+    'Personería Municipal', 'Casas de Justicia', 'Superintendencia de Salud',
+    'Caja de Compensación Familiar', 'Ley 100 de 1993', 'Ley 1751 de 2015',
+    'Resolución 113 de 2020', 'Resolución 1239 de 2022',
+    'Fundación Parkinson Bogotá', 'Inspector del Trabajo',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [

@@ -250,12 +250,29 @@ TXT 레코드를 추가 → Search Console에서 도메인(`sc-domain:parkinon.c
 - ⚠️ **서치콘솔 조작 요령**: URL 검사는 **상단 검색창**으로만 된다
   (`/search-console/inspect?...` 를 직접 열면 404).
 
-⚠️ **남은 것 — `www.parkinon.com` 이 301 을 안 한다.** Pages 프로젝트에 도메인이 4개
-(`parkinon.com`·`www.parkinon.com`·`parkinon.co.kr`·`www.parkinon.co.kr`). `.co.kr` 둘은
-301 로 잘 넘어가는데 **www.parkinon.com 만 200 으로 같은 내용을 준다.** canonical 이
-apex 를 가리켜 당장 손해는 작지만(대체 페이지 2건) 크롤 예산이 샌다.
-Pages 커스텀 도메인은 자동 리다이렉트를 안 하므로 **Cloudflare Redirect Rules** 가 필요하다
-— **오너 승인 대기.**
+### www.parkinon.com → parkinon.com 301 (2026-09-02 해결)
+
+Pages 프로젝트에 도메인이 4개(`parkinon.com`·`www.parkinon.com`·`parkinon.co.kr`·
+`www.parkinon.co.kr`) 붙어 있는데, `.co.kr` 둘만 301 이고 **www.parkinon.com 은 200 으로
+같은 내용을 그대로 주고 있었다.** 같은 글이 두 주소로 크롤당한다.
+
+**해결: `functions/_middleware.ts`** — Host 가 www 면 apex 로 301. `_routes.json` 의
+`include` 를 `/*` 로 열고 `exclude` 에 정적 자산(해시 번들·이미지·폰트·txt/xml)을 넣어
+**HTML 문서 요청에서만** 함수가 돌게 했다.
+
+**막다른 길 두 개 — 다시 시도하지 말 것**
+1. **`_redirects` 로는 안 된다.** 공식 문서가 "Domain-level redirects ❌" 라고 못 박는다.
+   소스에 도메인을 써도 무시되고 경로만 매칭돼 **apex 가 자기 자신으로 무한 리다이렉트** 한다.
+2. **Cloudflare Redirect Rules 가 원래 정석인데 권한이 없다.** wrangler OAuth 토큰은
+   `zone (read)` 까지라 rulesets 조회조차 403. 대시보드 자동 로그인도 실패했다 —
+   오너 본체 크롬에 비번이 저장돼 있지만 **키체인이 GUI 인증을 요구**해서 못 꺼내고,
+   세션 쿠키를 복사해도 만료돼 있었다.
+   → **오너가 Redirect Rule 을 걸어 주면 미들웨어는 지워도 된다.**
+
+실측(배포 직후): www 의 `/` 와 하위 경로 모두 **301 → apex**(쿼리 보존).
+apex 는 그대로 — 루트 302 언어전환, 문서 200, `/api/geo` 200, `/app/` 200,
+`app-ads.txt`·robots·sitemap 200, `.co.kr` 301 유지. 문서 응답 0.2초대.
+브라우저 확인: 광고칸 3/3, 한국어 애드핏 3, JS 오류 0.
 
 ### (아래는 오픈 전 작업 기록)
 

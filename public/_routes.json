@@ -1,9 +1,30 @@
 {
   "version": 1,
   "include": [
-    "/",
-    "/api/*",
-    "/app/*"
+    "/*"
   ],
-  "exclude": []
+  "exclude": [
+    "/_astro/*",
+    "/fonts/*",
+    "/assets/*",
+    "/appshots/*",
+    "/favicon.ico",
+    "/favicon.svg",
+    "/robots.txt",
+    "/sitemap-index.xml",
+    "/sitemap-0.xml",
+    "/app-ads.txt",
+    "/*.png",
+    "/*.jpg",
+    "/*.jpeg",
+    "/*.webp",
+    "/*.svg",
+    "/*.woff",
+    "/*.woff2",
+    "/*.css",
+    "/*.js",
+    "/*.json",
+    "/*.xml",
+    "/*.txt"
+  ]
 }

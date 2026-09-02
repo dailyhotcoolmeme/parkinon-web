@@ -61,6 +61,24 @@ const AVAILABLE: Record<string, readonly NavKey[]> = {
    * 있는 캐나다 연방 제도(DTC·CPP-D·CDB) 글을 프랑스어로 옮기는 것으로 시작한다.
    */
   fr: ['news', 'lifestyle', 'clinical', 'institutions'],
+  /*
+   * 스페인어판(중남미 + 미국 히스패닉) 메뉴 — 2026-09-02.
+   *
+   * ★ 여기 줄이 없으면 **한국어 메뉴로 폴백한다**(아래 navItemsFor 참고). 실제로 그렇게
+   *   돼서 스페인어 헤더에 「Videos de ejercicio」가 떴고, 누르면 /es/exercise/ 404 였다
+   *   (오너 발견 2026-09-02: "메뉴 들어갔을때 나라 선택되는게 맞아?").
+   *
+   * - exercise     : 뺀다. 영상이 parkinson.co.kr 한국어 자료라 중남미에 의미가 없고
+   *                  페이지 자체가 없다. 나라별 영상은 그 언어 단계에서 새로 큐레이션한다.
+   * - news         : 뺀다 — 아직 스페인어 소식 글이 0편이다. 빈 메뉴를 열지 않는다.
+   * - institutions : 뺀다 — 중남미 제도 글이 아직 0편이다. 미국(스페인어)·멕시코부터
+   *                  쓰기로 확정돼 있고(계획서 2026-09-02), 글이 들어가면 그때 연다.
+   * - clinical     : 연다. TRIAL_COUNTRIES 에 멕시코·브라질·칠레·아르헨티나·콜롬비아·페루를
+   *                  추가해서 중남미 독자가 자기 나라 시험을 실제로 볼 수 있다.
+   */
+  es: ['lifestyle', 'clinical'],
+  /* 포르투갈어판 — 아직 글이 없다. 콘텐츠가 들어오면 es 와 같은 기준으로 연다. */
+  pt: ['lifestyle', 'clinical'],
 };
 
 export interface NavItem {

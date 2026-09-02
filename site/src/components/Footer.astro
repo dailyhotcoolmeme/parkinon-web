@@ -4,7 +4,7 @@ import symbolWhite from '../assets/images/logo-symbol-white.png';
 import { navItemsFor } from '../lib/nav';
 import { t } from '../i18n';
 import Tr from '../i18n/Tr.astro';
-import { business, mailOrderNo, supportTel, BIZ_NO, SUPPORT_EMAIL, COMPANY_SITE } from '../lib/business';
+import { business, mailOrderNo, supportTel, BIZ_NO, SUPPORT_EMAIL } from '../lib/business';
 import { localeLinksFor } from '../lib/i18nLinks';
 import { GATE_LANGUAGES } from '../lib/gate';
 
@@ -107,7 +107,6 @@ const localeLinks = (await localeLinksFor(Astro.url.pathname)).filter((l) => lan
         {tel && <><span class="k">{t(locale, 'footer.bizPhone')}</span> {tel} · </>}
         <span class="k">{t(locale, 'footer.bizEmail')}</span> {SUPPORT_EMAIL}
       </p>
-      <p><span class="k">{t(locale, 'footer.bizWebsite')}</span> <a href={COMPANY_SITE} target="_blank" rel="noopener">{COMPANY_SITE}</a></p>
     </div>
     <p class="footer-copyright">© 2026 OURMINE. All rights reserved.</p>
   </div>

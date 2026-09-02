@@ -138,14 +138,36 @@ export function trialsForAll(all: Trial[]): CountryTrials {
  * 국가 선택 목록 — 제도 1급 7개국과 같다(website-plan.md "제도 축을 쓸 수 있는 나라").
  * 라벨은 여기 안 둔다 — 화면에서 사전 키 `country.<code>` 로 가져온다.
  */
+/*
+ * 임상시험 탭에 나오는 나라.
+ *
+ * ⚠️ `research: false` 는 **연구 논문 카드를 그 나라에 대해 조회하지 않는다**는 뜻이다.
+ *   시험 목록은 `fetchAllRecruitingTrials` 한 번으로 받아 나라별로 걸러 쓰므로 나라를
+ *   늘려도 공짜지만, 연구 논문은 **나라마다 Supabase 조회가 한 번씩** 나간다(무거운
+ *   3중 조인이라 예전에 빌드 타임아웃을 낸 적이 있다 — lib/pubmed.ts 위 주석 참고).
+ *   `paper_countries` 에 자료가 없는 나라까지 조회하면 순수한 낭비이므로 끈다.
+ *   그 나라 논문이 쌓이면 그때 켠다.
+ *
+ * 중남미 6개국은 2026-09-02 에 추가했다 — 스페인어판을 열고 나서 오너가 지적했다:
+ * 멕시코 사람이 임상시험 메뉴에 들어갔는데 자기 나라가 목록에 아예 없었다.
+ * ClinicalTrials.gov 실측(모집중 기준): 브라질 23 · 칠레 14 · 멕시코 13 · 아르헨티나 11 ·
+ * 콜롬비아 7 · 페루 6. 빈 탭이 아니라 실제로 볼 것이 있다.
+ */
 export const TRIAL_COUNTRIES = [
-  { code: 'kr', apiName: 'South Korea' },
-  { code: 'us', apiName: 'United States' },
-  { code: 'jp', apiName: 'Japan' },
-  { code: 'fr', apiName: 'France' },
-  { code: 'de', apiName: 'Germany' },
-  { code: 'it', apiName: 'Italy' },
-  { code: 'au', apiName: 'Australia' },
+  { code: 'kr', apiName: 'South Korea', research: true },
+  { code: 'us', apiName: 'United States', research: true },
+  { code: 'jp', apiName: 'Japan', research: true },
+  { code: 'fr', apiName: 'France', research: true },
+  { code: 'de', apiName: 'Germany', research: true },
+  { code: 'it', apiName: 'Italy', research: true },
+  { code: 'au', apiName: 'Australia', research: true },
+  // 중남미 — 스페인어·포르투갈어판 독자의 나라
+  { code: 'br', apiName: 'Brazil', research: false },
+  { code: 'mx', apiName: 'Mexico', research: false },
+  { code: 'cl', apiName: 'Chile', research: false },
+  { code: 'ar', apiName: 'Argentina', research: false },
+  { code: 'co', apiName: 'Colombia', research: false },
+  { code: 'pe', apiName: 'Peru', research: false },
 ] as const;
 
 export type TrialCountryCode = (typeof TRIAL_COUNTRIES)[number]['code'];

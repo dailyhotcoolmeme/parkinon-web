@@ -60,7 +60,10 @@ for (const c of TRIAL_COUNTRIES) {
     ...c,
     label: t(locale, `country.${c.code}` as DictKey),
     data: trialsForCountry(allTrials, c.apiName),
-    research: await fetchResearchPapersForCountry(c.code, locale),
+    // research:false 인 나라는 조회하지 않는다 — lib/clinicalTrials.ts 의 주석 참고
+    research: c.research
+      ? await fetchResearchPapersForCountry(c.code, locale)
+      : { shown: [], total: 0, overflowUrl: null },
   });
 }
 
@@ -478,6 +481,11 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
   값을 여기 한 번만 내려보낸다. functions/api/*.js(순수 JS, i18n 접근 불가)가 아니라
   이 페이지가 서버에서 번역해 내려주는 것이라 한글을 새로 하드코딩하지 않는다.
 */}
+{/* geo 자동선택이 쓰는 국가 코드 목록 — TRIAL_COUNTRIES 를 정본으로 삼는다.
+    예전엔 클라이언트 스크립트에 배열을 손으로 박아 둬서, 나라를 추가해도
+    자동선택이 그 나라를 몰랐다(2026-09-02, 중남미 추가하며 발견). */}
+<script type="application/json" id="trialCountryCodes" set:html={JSON.stringify(TRIAL_COUNTRIES.map((c) => c.code))}></script>
+
 <script type="application/json" id="clientLabels" set:html={JSON.stringify({
   locale,
   phaseGlossaryUrl,
@@ -1211,7 +1219,7 @@ function durationText(trial: { startDate: string | null; startDateEstimated: boo
       const res = await fetch('/api/geo');
       const { country } = (await res.json()) as { country: string | null };
       const code = country?.toLowerCase();
-      const validCodes = ['kr', 'us', 'jp', 'fr', 'de', 'it', 'au'];
+      const validCodes = JSON.parse(document.getElementById('trialCountryCodes')?.textContent ?? '[]');
       if (!code || !validCodes.includes(code)) return;
 
       const allBtn = document.querySelector<HTMLButtonElement>('#countryTabs [data-country="all"]');

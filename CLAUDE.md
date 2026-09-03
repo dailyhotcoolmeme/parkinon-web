@@ -17,6 +17,7 @@
 1. `/Users/ourmine/dev/parkinon-app/CLAUDE.md` — 프로젝트 전체 규칙
 2. `docs/website-plan.md` — **무엇을 왜 하는가**: 목적·콘텐츠 축·정책·미결 (맨 위 "새 세션은 여기서부터")
 3. `docs/site-implementation.md` — **어떻게 되어 있는가**: 라우트·그리드·i18n·SEO·배포·디자인 규칙
+4. `docs/naver-cafe-news.md` — **네이버 카페 「파킨온 소식」 작성법**. 카페 글은 이걸 읽고 쓴다
 
 ---
 

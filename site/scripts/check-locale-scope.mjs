@@ -93,6 +93,13 @@ const INSTITUTIONS = [
     'Caja de Compensación Familiar', 'Ley 100 de 1993', 'Ley 1751 de 2015',
     'Resolución 113 de 2020', 'Resolución 1239 de 2022',
     'Fundación Parkinson Bogotá', 'Inspector del Trabajo',
+    // ⚠️ 'PBS' 는 넣지 않는다 — 호주(Pharmaceutical Benefits Scheme)와 콜롬비아
+    //    (Plan de Beneficios en Salud)가 같은 약어를 쓴다. 약어만으로는 나라를 못 가른다.
+    //    정식 명칭만 넣는다. (2026-09-03 실제로 en 판 호주 글 5편이 오탐으로 걸렸다)
+    'Supersalud', 'Superintendencia Nacional de Salud',
+    'Plan de Beneficios en Salud', 'MIPRES',
+    'PQRD', 'Ley 1949 de 2019', 'Ley 1122 de 2007', 'función jurisdiccional',
+    'medicina prepagada', 'SGSSS',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [

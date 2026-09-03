@@ -79,6 +79,7 @@ const INSTITUTIONS = [
     'ACEPAR', 'Hospital Nacional Alejandro Posadas',
     'CONAMED', 'Comisión Nacional de Arbitraje Médico',
     'Comisiones Estatales de Arbitraje Médico', 'NSS',
+    'RT-09', 'Subdelegación de Prestaciones', 'CLABE', 'INE',
     // 칠레 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
     'GES', 'AUGE', 'AUGE-GES', 'Isapre', 'Isapres', 'COMPIN', 'CESFAM', 'CECOSF',
     'ClaveÚnica', 'RND', 'Registro Nacional de la Discapacidad', 'PBSI', 'PGU',

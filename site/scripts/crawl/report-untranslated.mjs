@@ -47,37 +47,40 @@ async function missing(table, trTable, idCol, titleCol) {
 }
 
 const trials = await missing('clinical_trials', 'trial_translations', 'nct_id', 'title_en');
+
 /*
- * 논문은 1만 건이 넘지만 화면에 나오는 것은 «전체 탭 15편 + 나라 탭마다 15편» 뿐이다.
- * 안 나오는 논문까지 세면 매번 1만 건이 뜨니 의미가 없다 — 실제 표시 집합만 센다.
- * 정렬 기준은 화면(src/lib/pubmed.ts)과 같아야 한다: 발행 연도·월 내림차순.
+ * 🚨 논문 번역 범위는 화면 표시 여부가 아니다 — docs/paper-translation-rule.md 필독.
+ * 규칙: 그 언어를 쓰는 나라에서 나온 pub_year=2026 논문만 그 언어로 번역한다.
+ * (2026-09-03: 이 규칙을 모르고 "화면에 뜨는 전체"로 잘못 짚어 무관한 논문 29건을
+ * 잘못 채웠다가 지운 사고가 있었다 — 다시 화면 기준으로 되돌리지 말 것.)
  */
-const MAX_PAPERS = 15;
-const COUNTRIES = ['kr','us','jp','fr','de','it','au','es','br','mx','cl','ar','co','pe'];
+const PAPER_RULE = { ko: ['kr'], ja: ['jp'], fr: ['fr'], pt: ['br'], es: ['mx', 'cl', 'ar', 'co', 'pe'] };
 
-async function shownPmids() {
-  const ids = new Set();
-  const top = await db.from('research_papers').select('pmid')
-    .order('pub_year', { ascending: false }).order('pub_month', { ascending: false })
-    .limit(MAX_PAPERS);
-  if (top.error) throw top.error;
-  top.data.forEach((r) => ids.add(r.pmid));
+async function missingPapers() {
+  const countries = await selectAll('paper_countries', 'pmid, country_code');
+  const papers = await selectAll('research_papers', 'pmid, title_en, pub_year');
+  const trs = await selectAll('paper_translations', 'pmid, locale');
 
-  for (const code of COUNTRIES) {
-    const r = await db.from('research_papers')
-      .select('pmid, paper_countries!inner(country_code)')
-      .eq('paper_countries.country_code', code)
-      .order('pub_year', { ascending: false }).order('pub_month', { ascending: false })
-      .limit(MAX_PAPERS);
-    if (r.error) throw r.error;
-    r.data.forEach((x) => ids.add(x.pmid));
+  const byPmid = new Map(papers.map((p) => [p.pmid, p]));
+  const have = new Set(trs.map((t) => `${t.pmid}|${t.locale}`));
+  const out = new Map(); // pmid -> {title, langs[]}
+
+  for (const c of countries) {
+    const p = byPmid.get(c.pmid);
+    if (!p || p.pub_year !== '2026') continue;
+    for (const [locale, list] of Object.entries(PAPER_RULE)) {
+      if (!list.includes(c.country_code)) continue;
+      if (have.has(`${c.pmid}|${locale}`)) continue;
+      const entry = out.get(c.pmid) ?? { title: p.title_en, langs: [] };
+      if (!entry.langs.includes(locale)) entry.langs.push(locale);
+      out.set(c.pmid, entry);
+    }
   }
-  return ids;
+  return out;
 }
 
-const papers = await missing('research_papers', 'paper_translations', 'pmid', 'title_en');
-const shown = await shownPmids();
-const shownPapers = [...papers].filter(([id]) => shown.has(id));
+const paperMap = await missingPapers();
+const shownPapers = [...paperMap];
 
 if (trials.size === 0 && shownPapers.length === 0) process.exit(0);
 
@@ -95,5 +98,5 @@ function section(title, entries, linkOf) {
 
 console.log(`## 번역이 필요한 항목\n`);
 section('임상시험', [...trials], (id) => `https://clinicaltrials.gov/study/${id}`);
-section('연구 논문(화면에 나오는 것만)', shownPapers, (id) => `https://pubmed.ncbi.nlm.nih.gov/${id}/`);
+section('연구 논문(그 나라 2026년 것만 — docs/paper-translation-rule.md)', shownPapers, (id) => `https://pubmed.ncbi.nlm.nih.gov/${id}/`);
 console.log(`---\n클로드에게 **"번역해"** 라고 하시면 채웁니다.`);

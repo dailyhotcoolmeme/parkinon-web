@@ -100,7 +100,8 @@ const INSTITUTIONS = [
     'Supersalud', 'Superintendencia Nacional de Salud',
     'Plan de Beneficios en Salud', 'MIPRES',
     'PQRD', 'Ley 1949 de 2019', 'Ley 1122 de 2007', 'función jurisdiccional',
-    'medicina prepagada', 'SGSSS',
+    'medicina prepagada', 'SGSSS', 'UPC', 'INVIMA',
+    'Junta de Profesionales de la Salud', 'Resolución 740 de 2024',
   ]},
   // ── 브라질 ─ 포르투갈어판이 담당 ──────────────────────
   { allow: ['pt'], where: '브라질', terms: [

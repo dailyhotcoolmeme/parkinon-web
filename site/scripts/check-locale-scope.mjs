@@ -104,6 +104,8 @@ const INSTITUTIONS = [
     'ANS', 'NIP', 'plano de saúde', 'planos de saúde', 'operadora', 'operadoras',
     'Rol de Procedimentos', 'RN nº 259', 'RN nº 566', 'Disque ANS',
     'Agência Nacional de Saúde Suplementar',
+    'Passe Livre', 'ANTT', 'GOV.BR', 'Lei nº 8.899', 'Lei nº 10.048',
+    'Conselho Federal de Medicina', 'CRM',
   ]},
 ];
 

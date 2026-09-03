@@ -87,7 +87,8 @@ const INSTITUTIONS = [
     'ClaveÚnica', 'RND', 'Registro Nacional de la Discapacidad', 'PBSI', 'PGU',
     'Copago Cero', 'Dipreca', 'Capredena', 'Registro Social de Hogares',
     'Superintendencia de Salud', 'Liga Chilena contra el Mal de Parkinson',
-    'Ley N° 20.422', 'Ley 20.422',
+    'Ley N° 20.422', 'Ley 20.422', 'SUSESO', 'licencia médica',
+    'Superintendencia de Seguridad Social', 'subsidio por incapacidad laboral',
     // 콜롬비아 제도 축 착수(2026-09-02)로 실제로 쓰기 시작한 고유명사들
     'EPS', 'IPS', 'RLCPD', 'CIE-10', 'Colpensiones', 'AFP',
     'acción de tutela', 'tutela', 'Junta Nacional de Calificación',

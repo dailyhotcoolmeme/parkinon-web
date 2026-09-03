@@ -77,6 +77,8 @@ const INSTITUTIONS = [
     'Mi Argentina', 'SUBE', 'CNRT', 'Símbolo Internacional de Acceso',
     'Clave de la Seguridad Social', 'monotributista', 'CUIL',
     'ACEPAR', 'Hospital Nacional Alejandro Posadas',
+    'Unidad de Gestión Local', 'UGL', 'haber mínimo previsional',
+    'haberes mínimos', 'CIE-10', 'DNI',
     'CONAMED', 'Comisión Nacional de Arbitraje Médico',
     'Comisiones Estatales de Arbitraje Médico', 'NSS',
     'RT-09', 'Subdelegación de Prestaciones', 'CLABE', 'INE',

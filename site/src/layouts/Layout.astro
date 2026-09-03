@@ -369,6 +369,13 @@ const acsEnabled = Astro.site?.host === 'parkinon.com' && locale !== 'ko';
      * (normal이어야 일본어가 글자 사이에서 정상적으로 줄바꿈된다).
      */
     word-break: var(--word-break);
+    /*
+     * 긴 토큰(이메일·URL·전화번호)이 안 잘려 가로로 삐져나가는 것을 막는다.
+     * 2026-09-03 실측: 멕시코 CONAMED 글의 primera_atencion@conamed.gob.mx 하나 때문에
+     * 320px 에서 105px 가로 스크롤이 생겼다. `anywhere` 는 «넘칠 때만» 쪼개서
+     * 평소 줄바꿈(keep-all 등)에는 영향이 없다.
+     */
+    overflow-wrap: anywhere;
   }
   /*
    * 언어별 줄바꿈 기준. Layout이 <html lang={locale}> 을 찍으므로 여기서 갈린다.

@@ -24,8 +24,28 @@ export const ACS_ZONE = {
 
 export type AcsSize = keyof typeof ACS_ZONE;
 
-/** Autotag(팝업언더·전면·인페이지푸시·비디오슬라이더 자동 순환). 수익 목표 $$$ 로 생성. */
-export const ACS_AUTOTAG_ZONE = 'vbzjudlnvz';
+/*
+ * 🚨 Autotag(`vbzjudlnvz`)는 2026-09-04에 껐다 — 절대 다시 켜지 마라.
+ *
+ * Autotag 가 묶어 도는 포맷(팝언더·전면·인페이지푸시) 중 하나가 본문 텍스트·링크
+ * 위에 투명 오버레이(`<div znid=… z-index:2147483647>`)를 깔아서 **실제 클릭을
+ * 통째로 삼켰다.** 재현: 제도 글 링크를 클릭 → 광고 탭만 열리고 원래 페이지는
+ * 10초를 기다려도 이동하지 않음(오너 신고 "아무거나 눌러도 광고로 눌러진다").
+ * 해외 5개 언어 전체에서 사실상 글을 못 읽는 상태였다.
+ *
+ * Adcash 공식 문서: 정상적인 Pop-Under 는 "opened **behind** the browser" —
+ * 클릭을 막지 않는다. Autotag 가 자동으로 고르는 내부 구현이 이 정의를 어기고
+ * 있었던 것이지, 팝언더 자체가 원래 이런 광고가 아니다.
+ *
+ * 대신 **전용 Pop-Under 존**을 새로 만들어 붙였다(아래 ACS_POPUNDER_ZONE) —
+ * "I would like to manage ad formats manually" → "Pop-Under" 로 만든, Autotag를
+ * 거치지 않는 단독 존. `aclib.runPop({ zoneId })` 하나만 부르고 다른 포맷은
+ * 섞이지 않는다.
+ */
+// export const ACS_AUTOTAG_ZONE = 'vbzjudlnvz';
+
+/** 전용 Pop-Under 존(2026-09-04 생성). Autotag 를 거치지 않아 클릭을 막지 않는다. */
+export const ACS_POPUNDER_ZONE = '12101602';
 
 /** 라이브러리. 존 종류와 무관하게 문서 하나당 한 번만 넣는다. */
 export const ACS_LIB = '//acscdn.com/script/aclib.js';

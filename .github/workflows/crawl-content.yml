@@ -16,6 +16,10 @@ on:
 jobs:
   crawl:
     runs-on: ubuntu-latest
+    # 번역 대기 목록을 이슈로 올려 오너에게 메일이 가게 한다
+    permissions:
+      contents: read
+      issues: write
     defaults:
       run:
         working-directory: site
@@ -39,6 +43,38 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node scripts/crawl/crawl-pubmed.mjs
+
+      # 번역은 자동으로 하지 않는다(오너 결정 2026-09-03 — 유료 API 안 씀,
+      # 클라우드플레어 Workers AI 는 다른 프로젝트에 써야 함).
+      # 대신 «번역이 안 된 것»을 세어 이슈로 올린다. 이슈가 생기면 깃허브가
+      # 저장소 소유자에게 메일을 보내 준다 — 새 계정도 시크릿도 필요 없다.
+      - name: 번역 대기 목록 만들기
+        id: report
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          node scripts/crawl/report-untranslated.mjs > "$RUNNER_TEMP/untranslated.md"
+          if [ -s "$RUNNER_TEMP/untranslated.md" ]; then
+            echo "has=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "번역할 것 없음 — 이슈를 만들지 않는다"
+          fi
+
+      - name: 메일 보내기(이슈 등록)
+        if: steps.report.outputs.has == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          {
+            echo "@${{ github.repository_owner }} 크롤이 끝났습니다. 아래가 아직 번역이 없습니다."
+            echo
+            cat "$RUNNER_TEMP/untranslated.md"
+          } > "$RUNNER_TEMP/issue.md"
+          gh issue create \
+            --title "파킨온 번역 대기 — $(TZ=Asia/Seoul date +%Y-%m-%d)" \
+            --body-file "$RUNNER_TEMP/issue.md" \
+            --repo "${{ github.repository }}"
 
       # 나라 표시 다시 붙이기 — 손으로 돌릴 때(workflow_dispatch)만.
       # COUNTRY_AFFILIATION 에 나라를 새로 추가한 뒤 한 번 돌리면 옛날 논문에도 붙는다.

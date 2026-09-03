@@ -8,6 +8,22 @@
 
 ---
 
+## 0. 빠른 시작 (매번 이 순서)
+
+```bash
+cd /Users/ourmine/dev/parkinon-web
+
+node scripts/naver-cafe/launch.mjs        # 크롬 띄우기 → 오너가 직접 로그인
+node scripts/naver-cafe/list-posts.mjs    # 지금까지 올린 소식 = 다음 번호
+node scripts/naver-cafe/dump-post.mjs 48774   # 지난 글 형식 그대로 뽑아 대조
+```
+
+`launch.mjs` 는 이미 떠 있으면 **알려만 주고 절대 죽이지 않는다.** 오너 로그인 세션이다.
+형식은 **기억으로 쓰지 말고 `dump-post.mjs` 로 지난 글을 뽑아 옆에 두고** 쓴다.
+오늘(2026-09-03) 기준 대조용 정본은 **#3(48774)** 이다.
+
+---
+
 ## 1. 어디에 올리나
 
 | 항목 | 값 |

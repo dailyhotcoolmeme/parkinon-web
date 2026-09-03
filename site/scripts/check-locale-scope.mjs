@@ -100,6 +100,10 @@ const INSTITUTIONS = [
     'Defensoria Pública', 'Juizado Especial Federal', 'Juizados Especiais Federais',
     'Lei 7.713', 'Lei 8.213', 'Lei 8.742', 'Lei 8.989', 'Estatuto da Pessoa com Deficiência',
     'IPVA', 'PCDT', 'Ouvidoria do SUS',
+    // 민간 의료보험(plano de saúde) 축 착수(2026-09-03)
+    'ANS', 'NIP', 'plano de saúde', 'planos de saúde', 'operadora', 'operadoras',
+    'Rol de Procedimentos', 'RN nº 259', 'RN nº 566', 'Disque ANS',
+    'Agência Nacional de Saúde Suplementar',
   ]},
 ];
 

@@ -35,6 +35,28 @@
 
 카테고리에 Health 가 없어서 `News` 로 넣었다(소식·정보 기사 사이트라서).
 
+## 🚨 2026-09-05 — 사이트 반려(Insufficient traffic). 고치는 방법 없음
+
+Adcash 메일: *"the content for the site https://parkinon.com (1647146) has been rejected...
+Reason for rejection: **Insufficient traffic**"*. 대시보드 Websites 목록에도 parkinon.com 이
+빨간 X(반려)로 뜬다 — toolshere.app(1641264)은 초록 체크(정상).
+
+**시점이 정확히 들어맞는다.** Adcash 통계 그래프에서 수익이 **9/1부터 $0**으로 떨어져
+있었다(그 전엔 하루 최대 $0.02 정도). 오늘 다룬 Autotag→Pop-Under 교체(9/4)보다 사흘
+먼저 시작된 일이라 **그 작업과는 무관하다.**
+
+**원인은 실제로 트래픽이 적어서다.** parkinon.com 누적 고유 방문자 71명(2026-08-29~09-04,
+Adcash 자체 집계) — 대부분 오너·지인 테스트다. Adcash 최소 기준에 원래 못 미쳤다.
+
+**고치는 방법이 없다.** 설정을 바꾸거나 재신청 버튼을 눌러서 되는 게 아니다(대시보드에
+그런 버튼 자체가 없다 — 편집 아이콘은 사이트 이름만 바꿀 뿐). Adcash 공식 안내와 공개
+포럼 사례 모두 같은 답이다 — **콘텐츠·트래픽을 쌓은 뒤에 재제출하라.** 실제 외부 유입이
+늘어야 풀린다. `project_parkinon_web_traffic_strategy.md`(유입=검색뿐) 전략을 그대로
+따라가는 수밖에 없다.
+
+배너 3개(Display) 존은 반려와 무관하게 그대로 붙어 있다 — 사이트가 반려됐다고 배너
+스크립트 자체가 없어지진 않지만, 채워질 광고가 없으니 실질적으로 수익은 0이다.
+
 ## 존
 
 | 용도 | zoneId | 크기 |

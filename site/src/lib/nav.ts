@@ -34,7 +34,9 @@ const PATH: Record<NavKey, string> = {
  * "페이지를 만든다 → 이 줄에 키를 추가한다" 순서로 간다.
  */
 const AVAILABLE: Record<string, readonly NavKey[]> = {
-  // tools    : 페이지는 있으나 개방 여부가 미정이라 일부러 뺐다(오너 2026-08-07).
+  // tools    : 헤더·푸터 메뉴엔 아직 안 걸었다(오너 2026-08-07). 단, 2026-09-07부터
+  //            robots.txt·sitemap 은 열어서 검색 색인은 된다 — 메뉴 노출과 색인 허용은
+  //            별개 결정이다(Search Console이 robots.txt 차단을 반복 알림해서 색인만 먼저 풀었다).
   // exercise : 0-5 완료(2026-08-07) — 운동 영상 허브
   // clinical : 0-6 완료(2026-08-08) — 임상시험 허브
   ko: ['news', 'lifestyle', 'clinical', 'exercise', 'institutions'],

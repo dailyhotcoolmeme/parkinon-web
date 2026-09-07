@@ -13,7 +13,12 @@ import type { APIRoute } from 'astro';
  * 안심하지 말 것 — 로그는 dev 기준으로 통과해도 프로덕션 env가 빠지면 조용히 틀리게 나간다).
  *
  * /app/ 는 색인에서 뺀다 — 6자리 코드 입력용 로그인 화면이라 검색에 잡힐 콘텐츠가 없다.
- * /ko/tools/ 도 뺀다 — 헤더·푸터엔 안 걸려 있는 "공개 여부 미정" 페이지다(nav.ts 참고).
+ *
+ * ⚠️ /ko/tools/ 는 2026-08-07~09-07 "공개 여부 미정"으로 막아 뒀었다(nav.ts 에도 안 걸어 둠).
+ * 그런데 sitemap 에 없어도 구글이 어딘가에서 이 URL 을 찾아내 크롤했고, robots.txt 가
+ * 막고 있으니 Search Console 이 "robots.txt에 의해 차단됨"을 반복 알림으로 보냈다
+ * (2026-09-06 밤 세 통 연속). 오너 지시(2026-09-07): 막지 말고 열어라 — 색인을 허용한다.
+ * astro.config.mjs 의 sitemap 필터도 같이 열었다. nav.ts 는 그대로 뒀다(메뉴 노출은 별개 결정).
  *
  * ⚠️ 언어 차단은 **지금 없다(2026-09-01)**. 2026-08-16 ~ 08-31 에는 여기에
  * `Disallow: /en/` `/ja/` `/fr/` 가 있었다 — "애드센스 심사는 한국어만 보이게" 해둔
@@ -34,7 +39,6 @@ export const GET: APIRoute = ({ site }) => {
     ? `User-agent: *
 Allow: /
 Disallow: /app/
-Disallow: /ko/tools/
 Disallow: /*/search-index.json
 
 Sitemap: ${new URL('sitemap-index.xml', site).href}

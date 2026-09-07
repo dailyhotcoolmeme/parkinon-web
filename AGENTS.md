@@ -5,12 +5,13 @@
 **[`docs/routine-ops.md`](./docs/routine-ops.md)** 를 가장 먼저 읽어라. "지금 뭐가 밀려
 있는지", "이틀에 1개 소식을 어떻게 쓰고 배포하는지", "네이버 카페에 어떻게 옮기는지",
 "번역 대기 GitHub 이슈를 어떻게 처리하는지"가 전부 순서대로 정리돼 있다.
+2026-09-07, 클로드 코드에서 코덱스로 전환하며 인계용으로 만들었다.
 
 ---
 
 ## ⚠️ 이 폴더로 세션을 열면 맥락이 반쯤 빠진다
 
-파킨온의 **메모리와 프로젝트 지침(`CLAUDE.md`)은 앱 저장소에만** 붙어 있다.
+파킨온의 **메모리와 프로젝트 지침(`AGENTS.md`)은 앱 저장소에만** 붙어 있다.
 
 ```
 /Users/ourmine/dev/parkinon-app
@@ -22,7 +23,7 @@
 
 이미 이 폴더로 열었다면, 아래 두 개를 먼저 읽어라.
 
-1. `/Users/ourmine/dev/parkinon-app/CLAUDE.md` — 프로젝트 전체 규칙
+1. `/Users/ourmine/dev/parkinon-app/AGENTS.md` — 프로젝트 전체 규칙
 2. `docs/website-plan.md` — **무엇을 왜 하는가**: 목적·콘텐츠 축·정책·미결 (맨 위 "새 세션은 여기서부터")
 3. `docs/site-implementation.md` — **어떻게 되어 있는가**: 라우트·그리드·i18n·SEO·배포·디자인 규칙
 4. `docs/naver-cafe-news.md` — **네이버 카페 「파킨온 소식」 작성법**. 카페 글은 이걸 읽고 쓴다

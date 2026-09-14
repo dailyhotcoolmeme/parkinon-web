@@ -15,12 +15,15 @@ cd /Users/ourmine/dev/parkinon-web
 
 node scripts/naver-cafe/launch.mjs        # 크롬 띄우기 → 오너가 직접 로그인
 node scripts/naver-cafe/list-posts.mjs    # 지금까지 올린 소식 = 다음 번호
-node scripts/naver-cafe/dump-post.mjs 48774   # 지난 글 형식 그대로 뽑아 대조
+node scripts/naver-cafe/dump-post.mjs 49162   # 지난 글 형식 그대로 뽑아 대조 (아래 표에서 최신 글번호로 바꿔 쓸 것)
 ```
 
 `launch.mjs` 는 이미 떠 있으면 **알려만 주고 절대 죽이지 않는다.** 오너 로그인 세션이다.
 형식은 **기억으로 쓰지 말고 `dump-post.mjs` 로 지난 글을 뽑아 옆에 두고** 쓴다.
-오늘(2026-09-03) 기준 대조용 정본은 **#3(48774)** 이다.
+
+**본문을 실제로 타이핑해 넣는 건 손으로 하지 말고 `scripts/naver-cafe/write-helpers.mjs`
+를 써라** — 9절에 사용법과, 자동화하며 실측으로 확인한 함정들이 정리돼 있다. 이 문서를
+안 읽고 처음부터 다시 시도하면 같은 함정에 또 빠진다(2026-09-14에 실제로 여러 번 겪음).
 
 ---
 
@@ -46,6 +49,8 @@ node scripts/naver-cafe/dump-post.mjs 48774   # 지난 글 형식 그대로 뽑�
 | #2 | 48736 | `gut-bacteria-comt-levodopa-news.mdx` | 2026-08-21 |
 | #3 | 48774 | `early-rehab-survival-hallucination-cholinergic-news.mdx` | 2026-08-25 |
 | #4 | 48949 | `extended-release-levodopa-eu-blood-gene-score-news.mdx` | 2026-09-01 |
+| #5 | 49161 | `ai-rapid-decline-lrrk2-iron-news.mdx` | 2026-09-07 |
+| #6 | 49162 | `antibody-delivery-mc1r-progression-news.mdx` | 2026-09-14 |
 
 **다음에 올릴 글** = `site/src/content/articles/ko/news/` 에서 위 표에 없는 가장 오래된 글.
 카페 번호는 **웹 글의 태그 번호와 무관한 별도 연번**이다.
@@ -194,3 +199,70 @@ const b = [...document.querySelectorAll('button,a,[role="button"]')]
 - [ ] ※ 면책 문구 있음
 - [ ] **맨 끝 OG링크 카드 → `https://parkinon.com/ko/news/`**
 - [ ] 오너에게 보고하고 "눌러라" 를 받았는가
+
+---
+
+## 9. 쓰기(작성) 자동화 — `scripts/naver-cafe/write-helpers.mjs` (2026-09-14 확보)
+
+🚨 **이 문서를 안 읽고 처음부터 다시 시도하지 마라.** 2026-09-14에 이 부분을 자동화하며
+같은 함정에 여러 번 반복해서 빠졌다 — 여기 적힌 대로 하면 그 시행착오를 안 겪는다.
+
+이 에디터(네이버 SmartEditor)는 **진짜 브라우저 포커스가 화면에 안 보이는 단일
+`contenteditable` 프록시 요소에 있다** — 화면에 보이는 문단(`<p class="se-text-paragraph">`)
+은 그 상태를 반영한 렌더링일 뿐이다. 그래서 겉보기엔 멀쩡해 보여도 클릭·타이핑이 조용히
+씹히는 경우가 흔하다. `write-helpers.mjs`는 이 문제들을 전부 우회해 둔 재사용 가능한
+함수 모음이다.
+
+```js
+import * as H from './write-helpers.mjs';
+
+const page = await H.freshWritePage();           // 새 글쓰기 탭 열기(창 크기도 키움)
+await H.setTitle(page, '파킨온 소식 #N. …');
+await H.clickBody(page);
+
+await H.typePlain(page, '본문 한 문단');
+await H.newParagraph(page, 2);                    // 2 = 빈 줄 하나 두고 다음 문단
+await H.typeStyledLine(page, '[소식 1] …', { size: 19, color: '#54b800', bold: true });
+await H.newParagraph(page, 1);
+await H.typeStyledLine(page, '🔍 이렇게 나왔습니다', { bold: true });
+// ...
+await H.insertQuote(page, '인용구 본문');          // 💡 없이 그냥 텍스트만 넘긴다
+await H.typeStyledLine(page, '🙋 보호자분께', { bold: true });
+// ...
+await H.insertImage(page, '/절대/경로/사진.jpg');  // insertQuote 처럼 그 다음 바로 이어 쓰면 됨
+// ...
+await H.insertClosingLink(page, 'https://parkinon.com/ko/news/');  // 5절 전체를 대신함
+const result = await H.submit(page);              // { url, articleId } 반환, 실패 시 throw
+```
+
+**실측으로 확인된 함정 — 이유를 모르고 다시 부딪히지 않도록:**
+
+1. **타이핑이 가끔 통째로 반영 안 됨.** 원인은 특정 못 함(포커스가 실제로는 다른 데
+   있었던 것으로 추정). `typePlain`/`typeStyledLine`/`insertClosingLink` 전부 타이핑
+   직후 실제로 반영됐는지 확인하고, 안 됐으면 마지막 문단을 다시 클릭해 재시도한다.
+   이 검증 없이 그냥 `page.keyboard.type()`만 부르면 문장이 통째로 사라진 채 넘어간다
+   (2026-09-14 실제로 두 편 다 이 문제로 제목 줄이 사라짐 → 발행 뒤 발견 → 수동 패치).
+2. **인용구 안에서 `Enter`로는 절대 못 빠져나온다.** 계속 인용구 안에 새 줄만 추가된다.
+   `Escape`도 안 먹는다. 문서 맨 끝일 때 "아래 빈 공간"을 좌표로 클릭하는 방식도
+   실패한다 — 태그 입력창(`WritingTag`) 영역과 겹쳐서 거기를 클릭하게 된다.
+   **유일하게 확실한 방법**: 인용구 버튼을 다시 눌러 빈 인용구를 하나 더 만들고
+   (`아직 아무것도 안 썼으니 옆에 잡아먹을 내용도 없음`), 문단서식 드롭다운(`본문`
+   버튼)으로 그 컴포넌트를 일반 텍스트로 바꾼다. `insertQuote`/`insertImage` 둘 다
+   내부적으로 이 방법(`landOnCleanParagraph`)을 쓴다.
+3. **사진을 한 번이라도 넣으면 그 사진의 "떠있는 편집 툴바"가 페이지에 영구히 남는다**
+   (`se-flayer-unified-toolbar`). `Escape`로 안 닫히고, 그 뒤로 **문서 어디를 클릭하든**
+   계속 끼어들어 클릭을 가로챈다. DOM에서 통째로 지우는 것 말고는 방법이 없었다
+   (`removeFloatingToolbars`, `insertClosingLink`가 자동으로 부름).
+4. **맨 끝 링크에서 `Home`/`Shift+Home`이 이 특정 위치(카드 바로 위 문단)에서 안 먹힐
+   때가 있다.** 글자 수만큼 `Backspace`를 반복하는 방식으로 우회했다.
+5. **`.locator('.se-text-paragraph').last()`(문서 전체 기준)가 아니라, 항상 특정
+   컴포넌트 안의 마지막 문단**(`comp.locator('.se-text-paragraph').all()`의 마지막
+   원소)을 쓴다. 문서 전체 기준 `.last()`는 위 3번 문제 때문에 자꾸 엉뚱한 걸 가리켰다.
+6. **`b.close()`를 절대 호출하지 마라** — 오너의 실제 로그인 브라우저 창이 닫힌다.
+   `connect()`로 붙기만 하고, 끝나면 그냥 스크립트를 종료한다.
+
+**등록 전 실제로 눈으로 봐야 한다.** 위 자동화는 안정적이지만 100%는 아니다 —
+`H.screenshotFull(page, '경로.png')`로 전체 캡처해서 스타일(초록/굵게)과 문장이 다
+있는지 사람이 확인한 뒤에만 `submit()`을 부를 것. 빠진 줄을 발견하면: 그 문단을
+찾아 클릭 → `Home` → 누락된 줄 타이핑 → `Enter` → 방금 쓴 줄을 선택해 스타일
+적용(패치 방법은 커밋 이력의 이 문서 추가 시점 근처 세션 참고).

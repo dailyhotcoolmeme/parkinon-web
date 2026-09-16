@@ -26,6 +26,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import { createClient } from '@supabase/supabase-js';
@@ -130,8 +131,8 @@ function contentTypeFor(filePath) {
 }
 
 /** 앱이 커뮤니티 사진을 올릴 때 쓰는 같은 r2-upload 엣지함수 경로로 이미지를 올리고
- * 워커 공개 URL을 반환한다. 키는 keySlug 로 고정해 재실행해도 같은 오브젝트를 덮어쓴다.
- * 히어로 이미지·본문 중간 이미지가 이 함수를 같이 쓴다(키만 다르게 넘긴다). */
+ * 워커 공개 URL을 반환한다. keySlug에는 이미지 내용 해시를 붙여, 같은 글의 이미지를
+ * 교체했을 때도 앱의 URL 기반 이미지 캐시가 이전 파일을 재사용하지 않게 한다. */
 async function uploadImage(localImagePath, keySlug, publishedAt) {
   const yyyyMm = String(publishedAt).slice(0, 7); // 'YYYY-MM'
   const ext = path.extname(localImagePath).toLowerCase().replace('.', '') || 'jpg';
@@ -293,7 +294,12 @@ async function main() {
     if (fm.hero) {
       const heroPath = path.resolve(path.dirname(filePath), fm.hero);
       if (fs.existsSync(heroPath)) {
-        const { key: r2Key, publicUrl: r2Url } = await uploadImage(heroPath, slug, publishedDate || '2026-01-01');
+        const imageHash = createHash('sha256').update(fs.readFileSync(heroPath)).digest('hex').slice(0, 12);
+        const { key: r2Key, publicUrl: r2Url } = await uploadImage(
+          heroPath,
+          `${slug}-${imageHash}`,
+          publishedDate || '2026-01-01',
+        );
         await upsertPostMedia(postId, r2Key, r2Url);
       } else {
         console.warn(`  ⚠ 히어로 이미지 없음(건너뜀): ${heroPath}`);

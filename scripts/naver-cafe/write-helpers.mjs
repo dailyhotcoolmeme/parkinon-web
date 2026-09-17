@@ -277,7 +277,12 @@ export async function insertClosingLink(page, url) {
   // (카드 자체가 마지막 컴포넌트로 새로 생겼으므로). Home/Shift+Home 이 이 특정 위치에서
   // 안 먹힐 때가 있어(실측 확인) 글자수만큼 Backspace 를 반복하는 방식을 쓴다.
   const compsAfter = await page.locator('.se-component').all();
-  const textCompBeforeLink = compsAfter[compsAfter.length - 2];
+  // 자동 임베드 뒤 에디터가 빈 본문 컴포넌트를 하나 더 붙이는 경우가 있다.
+  // 그 경우 단순히 뒤에서 두 번째를 잡으면 OG 카드 자신을 잡게 된다.
+  const linkIndex = await page.locator('.se-component').evaluateAll(comps =>
+    comps.map((c, i) => c.className.includes('se-oglink') ? i : -1).filter(i => i >= 0).at(-1));
+  const textCompBeforeLink = compsAfter[(linkIndex ?? -1) - 1];
+  if (!textCompBeforeLink) throw new Error('insertClosingLink: 링크 앞 본문을 찾지 못했다');
   const parasAfter = await textCompBeforeLink.locator('.se-text-paragraph').all();
   const lastPara = parasAfter[parasAfter.length - 1];
   const leftover = (await lastPara.textContent()) || '';

@@ -1,0 +1,62 @@
+name: Seed clinical-trial translations
+
+on:
+  workflow_dispatch:
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Insert five-language clinical-trial titles
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cat > "$RUNNER_TEMP/trial-translations.json" <<'JSON'
+          [
+            {"nct_id":"NCT07842926","locale":"ko","title":"파킨슨병 환자에서 정전용량-저항성 고주파 치료의 급성 효과"},
+            {"nct_id":"NCT07842926","locale":"ja","title":"パーキンソン病患者における容量・抵抗性高周波療法の急性効果"},
+            {"nct_id":"NCT07842926","locale":"fr","title":"Effets aigus de la thérapie par radiofréquence capacitive-résistive chez les personnes atteintes de la maladie de Parkinson"},
+            {"nct_id":"NCT07842926","locale":"es","title":"Efectos agudos de la terapia de radiofrecuencia capacitiva-resistiva en personas con enfermedad de Parkinson"},
+            {"nct_id":"NCT07842926","locale":"pt","title":"Efeitos agudos da terapia de radiofrequência capacitivo-resistiva em pessoas com doença de Parkinson"},
+            {"nct_id":"NCT06891781","locale":"ko","title":"파킨슨병 관리에서 적응형 뇌심부자극술 연구"},
+            {"nct_id":"NCT06891781","locale":"ja","title":"パーキンソン病管理における適応型脳深部刺激療法の研究"},
+            {"nct_id":"NCT06891781","locale":"fr","title":"Étude de la stimulation cérébrale profonde adaptative dans la prise en charge de la maladie de Parkinson"},
+            {"nct_id":"NCT06891781","locale":"es","title":"Investigación de la estimulación cerebral profunda adaptativa en el manejo de la enfermedad de Parkinson"},
+            {"nct_id":"NCT06891781","locale":"pt","title":"Investigação da estimulação cerebral profunda adaptativa no manejo da doença de Parkinson"},
+            {"nct_id":"NCT07840027","locale":"ko","title":"초기 특발성 파킨슨병 환자에서 TRB-001의 안전성, 면역원성 및 약력학 평가"},
+            {"nct_id":"NCT07840027","locale":"ja","title":"早期特発性パーキンソン病患者におけるTRB-001の安全性、免疫原性、薬力学の評価"},
+            {"nct_id":"NCT07840027","locale":"fr","title":"Évaluation de la sécurité, de l’immunogénicité et de la pharmacodynamie du TRB-001 chez des patients atteints de la maladie de Parkinson idiopathique à un stade précoce"},
+            {"nct_id":"NCT07840027","locale":"es","title":"Evaluación de la seguridad, la inmunogenicidad y la farmacodinámica de TRB-001 en pacientes con enfermedad de Parkinson idiopática temprana"},
+            {"nct_id":"NCT07840027","locale":"pt","title":"Avaliação da segurança, da imunogenicidade e da farmacodinâmica do TRB-001 em pacientes com doença de Parkinson idiopática inicial"},
+            {"nct_id":"NCT07838636","locale":"ko","title":"양측 DBS-STN 자극을 받는 환자에서 신체활동이 파킨슨병 경과에 미치는 영향 - 무작위 대조시험"},
+            {"nct_id":"NCT07838636","locale":"ja","title":"両側DBS-STN刺激を受けている患者における身体活動がパーキンソン病の経過に及ぼす影響—ランダム化比較試験"},
+            {"nct_id":"NCT07838636","locale":"fr","title":"Effet de l’activité physique sur l’évolution de la maladie de Parkinson chez des patients avec stimulation bilatérale DBS-STN — essai contrôlé randomisé"},
+            {"nct_id":"NCT07838636","locale":"es","title":"Efecto de la actividad física en la evolución de la enfermedad de Parkinson en pacientes con estimulación bilateral DBS-STN: ensayo controlado aleatorizado"},
+            {"nct_id":"NCT07838636","locale":"pt","title":"Efeito da atividade física na evolução da doença de Parkinson em pacientes com estimulação bilateral DBS-STN — ensaio clínico randomizado"},
+            {"nct_id":"NCT07839793","locale":"ko","title":"파킨슨병 환자를 대상으로 OraFID 기기 및 앱과 함께 Flexilev를 12주간 평가하는 연구"},
+            {"nct_id":"NCT07839793","locale":"ja","title":"パーキンソン病患者を対象にFlexilevとOraFIDデバイスおよびアプリを12週間評価する研究"},
+            {"nct_id":"NCT07839793","locale":"fr","title":"Étude de 12 semaines de Flexilev avec le dispositif et l’application OraFID chez des patients atteints de la maladie de Parkinson"},
+            {"nct_id":"NCT07839793","locale":"es","title":"Estudio de 12 semanas de Flexilev con el dispositivo y la aplicación OraFID en pacientes con enfermedad de Parkinson"},
+            {"nct_id":"NCT07839793","locale":"pt","title":"Estudo de 12 semanas do Flexilev com o dispositivo e o aplicativo OraFID em pacientes com doença de Parkinson"}
+          ]
+          JSON
+          curl --fail-with-body --silent --show-error \
+            "$SUPABASE_URL/rest/v1/trial_translations" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: resolution=merge-duplicates,return=minimal" \
+            --data-binary @"$RUNNER_TEMP/trial-translations.json"
+      - name: Verify all 25 rows
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          count=$(curl --fail --silent \
+            "$SUPABASE_URL/rest/v1/trial_translations?nct_id=in.(NCT07842926,NCT06891781,NCT07840027,NCT07838636,NCT07839793)&locale=in.(ko,ja,fr,es,pt)&select=nct_id" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" | jq 'length')
+          test "$count" -eq 25
